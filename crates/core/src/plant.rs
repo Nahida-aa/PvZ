@@ -128,7 +128,7 @@ fn shooter_fire(
 fn sun_producer_tick(
     time: Res<Time>,
     mut query: Query<&mut SunProducer>,
-    mut bank: ResMut<crate::ui::SunBank>,
+    mut bank: ResMut<crate::components::menebar::SunBank>,
 ) {
     for mut producer in query.iter_mut() {
         producer.timer += time.delta_secs();

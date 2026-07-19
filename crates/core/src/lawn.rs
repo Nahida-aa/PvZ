@@ -41,7 +41,7 @@ impl GridPos {
 
     pub fn world_bottom(&self) -> Vec2 {
         let sx = GRID_ORIGIN_X + self.col as f32 * CELL_WIDTH + CELL_WIDTH / 2.0;
-        let sy = GRID_ORIGIN_Y + self.row as f32 * CELL_HEIGHT + CELL_HEIGHT * 0.6;
+        let sy = GRID_ORIGIN_Y + self.row as f32 * CELL_HEIGHT + CELL_HEIGHT * 0.8;
         screen_to_world(sx, sy)
     }
 

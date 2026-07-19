@@ -17,9 +17,6 @@ impl Default for SunBank {
 }
 
 #[derive(Component)]
-struct HudRoot;
-
-#[derive(Component)]
 struct SunCounter;
 
 #[derive(Component)]
@@ -27,29 +24,29 @@ struct PlantCard {
     kind: PlantKind,
 }
 
-pub struct GameUiPlugin;
+pub struct GameMenuBarPlugin;
 
-impl Plugin for GameUiPlugin {
+impl Plugin for GameMenuBarPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<SunBank>()
-            .init_resource::<SelectedPlant>()
-            .add_systems(OnEnter(GameState::Playing), setup_hud)
+            .add_systems(OnEnter(GameState::Playing), setup_menubar)
             .add_systems(
                 Update,
-                (update_sun_counter, handle_card_click)
-                    .run_if(in_state(GameState::Playing)),
+                (update_sun_counter, handle_card_click).run_if(in_state(GameState::Playing)),
             );
     }
 }
 
-fn setup_hud(mut commands: Commands, assets: Res<GameAssets>) {
+fn setup_menubar(mut commands: Commands, assets: Res<GameAssets>) {
     let font = assets.font.clone();
     commands
         .spawn((
-            HudRoot,
             Node {
                 width: Val::Px(596.0),
                 height: Val::Px(87.0),
+                position_type: PositionType::Absolute,
+                left: Val::Px(0.0),
+                top: Val::Px(0.0),
                 ..default()
             },
             ImageNode::new(assets.chooser_bg.clone()),
@@ -64,11 +61,11 @@ fn setup_hud(mut commands: Commands, assets: Res<GameAssets>) {
                     ..default()
                 },
                 TextColor(Color::srgb(0.15, 0.15, 0.4)),
-                BackgroundColor(Color::srgb(0.93, 0.92, 0.66)),
+                BackgroundColor(Color::NONE),
                 Node {
                     position_type: PositionType::Absolute,
-                    left: Val::Px(21.0),
-                    bottom: Val::Px(24.0),
+                    left: Val::Px(35.0),
+                    bottom: Val::Px(6.0),
                     width: Val::Px(35.0),
                     height: Val::Px(17.0),
                     justify_content: JustifyContent::End,
@@ -118,22 +115,19 @@ fn setup_hud(mut commands: Commands, assets: Res<GameAssets>) {
                                 ..default()
                             },
                             TextColor(Color::srgb(0.0, 0.0, 0.0)),
-                        Node {
-                            position_type: PositionType::Absolute,
-                            bottom: Val::Px(4.0),
-                            right: Val::Px(18.0),
-                            ..default()
-                        },
+                            Node {
+                                position_type: PositionType::Absolute,
+                                bottom: Val::Px(2.0),
+                                right: Val::Px(18.0),
+                                ..default()
+                            },
                         ));
                     });
             }
         });
 }
 
-fn update_sun_counter(
-    bank: Res<SunBank>,
-    mut query: Query<&mut Text, With<SunCounter>>,
-) {
+fn update_sun_counter(bank: Res<SunBank>, mut query: Query<&mut Text, With<SunCounter>>) {
     if !bank.is_changed() {
         return;
     }
@@ -143,7 +137,10 @@ fn update_sun_counter(
 }
 
 fn handle_card_click(
-    mut interaction_query: Query<(&Interaction, &PlantCard, &mut BackgroundColor), Changed<Interaction>>,
+    mut interaction_query: Query<
+        (&Interaction, &PlantCard, &mut BackgroundColor),
+        Changed<Interaction>,
+    >,
     mut selected: ResMut<SelectedPlant>,
     bank: Res<SunBank>,
 ) {

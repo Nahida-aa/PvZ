@@ -7,7 +7,7 @@ pub mod zombie;
 pub mod projectile;
 pub mod input;
 pub mod level;
-pub mod ui;
+pub mod components;
 pub mod assets;
 pub mod animation;
 
@@ -31,7 +31,7 @@ impl Plugin for CorePlugin {
             .add_plugins(projectile::ProjectilePlugin)
             .add_plugins(input::InputPlugin)
             .add_plugins(level::LevelPlugin)
-            .add_plugins(ui::GameUiPlugin)
+            .add_plugins(components::menebar::GameMenuBarPlugin)
             .add_systems(Update, animation::animate_sprites.in_set(schedule::GameSet::Movement));
     }
 }

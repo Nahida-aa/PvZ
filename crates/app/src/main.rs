@@ -7,8 +7,7 @@ fn main() {
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "Plants vs. Zombies".into(),
-                resolution: WindowResolution::new(800, 600)
-                    .with_scale_factor_override(0.0),
+                resolution: WindowResolution::new(800, 600), // .with_scale_factor_override(1.6)
                 resizable: true,
                 ..default()
             }),
@@ -20,11 +19,7 @@ fn main() {
 }
 
 fn setup_camera(mut commands: Commands) {
-    commands.spawn((
-        Camera2d,
-        Transform::default(),
-        GlobalTransform::default(),
-    ));
+    commands.spawn((Camera2d, Transform::default(), GlobalTransform::default()));
 }
 
 fn start_music(mut commands: Commands, server: Res<AssetServer>) {

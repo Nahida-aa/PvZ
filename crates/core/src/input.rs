@@ -5,7 +5,7 @@ use crate::lawn::GridPos;
 use crate::plant::{PlantKind, SpawnPlant};
 use crate::schedule::GameSet;
 use crate::state::GameState;
-use crate::ui::SunBank;
+use crate::components::menebar::SunBank;
 
 #[derive(Resource, Default)]
 pub struct SelectedPlant {
