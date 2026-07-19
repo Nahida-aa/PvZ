@@ -8,6 +8,7 @@ pub mod projectile;
 pub mod input;
 pub mod level;
 pub mod components;
+pub mod sun;
 pub mod assets;
 pub mod animation;
 
@@ -32,6 +33,7 @@ impl Plugin for CorePlugin {
             .add_plugins(input::InputPlugin)
             .add_plugins(level::LevelPlugin)
             .add_plugins(components::menebar::GameMenuBarPlugin)
+            .add_plugins(sun::SunPlugin)
             .add_systems(Update, animation::animate_sprites.in_set(schedule::GameSet::Movement));
     }
 }

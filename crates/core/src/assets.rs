@@ -6,6 +6,7 @@ pub struct GameAssets {
     pub peashooter_frames: Vec<Handle<Image>>,
     pub sunflower_frames: Vec<Handle<Image>>,
     pub normal_zombie_frames: Vec<Handle<Image>>,
+    pub sun_frames: Vec<Handle<Image>>,
     pub pea_normal: Handle<Image>,
     pub card_peashooter: Handle<Image>,
     pub card_sunflower: Handle<Image>,
@@ -29,6 +30,9 @@ impl Plugin for GameAssetsPlugin {
                 .collect(),
             normal_zombie_frames: (0..22)
                 .map(|i| server.load(format!("graphics/Zombies/NormalZombie/Zombie/Zombie_{i}.png")))
+                .collect(),
+            sun_frames: (0..22)
+                .map(|i| server.load(format!("graphics/Plants/Sun/Sun_{i}.png")))
                 .collect(),
             pea_normal: server.load("graphics/Bullets/PeaNormal/PeaNormal_0.png"),
             card_peashooter: server.load("graphics/Cards/card_peashooter.png"),

@@ -16,7 +16,8 @@ pub struct InputPlugin;
 
 impl Plugin for InputPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
+        app.init_resource::<SelectedPlant>()
+            .add_systems(
             Update,
             handle_click_to_place
                 .in_set(GameSet::Spawn)

@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::ui::ZIndex;
 
 use crate::assets::GameAssets;
 use crate::input::SelectedPlant;
@@ -50,6 +51,7 @@ fn setup_menubar(mut commands: Commands, assets: Res<GameAssets>) {
                 ..default()
             },
             ImageNode::new(assets.chooser_bg.clone()),
+            ZIndex(-1),
         ))
         .with_children(|parent| {
             parent.spawn((
