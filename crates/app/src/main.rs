@@ -1,21 +1,20 @@
-use bevy::audio::{AudioPlayer, AudioSource, PlaybackSettings};
 use bevy::prelude::*;
 use bevy::window::WindowResolution;
 use pvz_core::state::GameState;
-use pvz_core::CorePlugin;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "Plants vs. Zombies".into(),
-                resolution: WindowResolution::new(800, 600),
-                resizable: false,
+                resolution: WindowResolution::new(800, 600)
+                    .with_scale_factor_override(0.0),
+                resizable: true,
                 ..default()
             }),
             ..default()
         }))
-        .add_plugins(CorePlugin)
+        .add_plugins(pvz_core::CorePlugin)
         .add_systems(OnEnter(GameState::Playing), (setup_camera, start_music))
         .run();
 }

@@ -6,9 +6,10 @@ use crate::state::GameState;
 pub const GRID_COLS: u32 = 9;
 pub const GRID_ROWS: u32 = 5;
 pub const CELL_WIDTH: f32 = 80.0;
-pub const CELL_HEIGHT: f32 = 100.0;
+pub const CELL_HEIGHT: f32 = 99.0;
 pub const GRID_ORIGIN_X: f32 = 35.0;
-pub const GRID_ORIGIN_Y: f32 = 100.0;
+/// 草坪网格在屏幕坐标系中的 Y 轴起点
+pub const GRID_ORIGIN_Y: f32 = 80.0;
 
 pub const WIN_W: f32 = 800.0;
 pub const WIN_H: f32 = 600.0;

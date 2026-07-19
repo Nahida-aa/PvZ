@@ -48,11 +48,8 @@ fn setup_hud(mut commands: Commands, assets: Res<GameAssets>) {
         .spawn((
             HudRoot,
             Node {
-                width: Val::Percent(100.0),
+                width: Val::Px(596.0),
                 height: Val::Px(87.0),
-                flex_direction: FlexDirection::Row,
-                align_items: AlignItems::Center,
-                padding: UiRect::new(Val::Px(10.0), Val::Px(10.0), Val::Px(0.0), Val::Px(0.0)),
                 ..default()
             },
             ImageNode::new(assets.chooser_bg.clone()),
@@ -60,47 +57,56 @@ fn setup_hud(mut commands: Commands, assets: Res<GameAssets>) {
         .with_children(|parent| {
             parent.spawn((
                 SunCounter,
-                Text::new("☀ 150"),
+                Text::new("150"),
                 TextFont {
                     font: FontSource::Handle(font.clone()),
-                    font_size: FontSize::Px(24.0),
+                    font_size: FontSize::Px(14.0),
                     ..default()
                 },
-                TextColor(Color::srgb(1.0, 0.9, 0.1)),
+                TextColor(Color::srgb(0.15, 0.15, 0.4)),
+                BackgroundColor(Color::srgb(0.93, 0.92, 0.66)),
                 Node {
-                    margin: UiRect::right(Val::Px(20.0)),
+                    position_type: PositionType::Absolute,
+                    left: Val::Px(21.0),
+                    bottom: Val::Px(24.0),
+                    width: Val::Px(35.0),
+                    height: Val::Px(17.0),
+                    justify_content: JustifyContent::End,
+                    align_items: AlignItems::Center,
                     ..default()
                 },
             ));
 
-            let cards: [(PlantKind, Handle<Image>, &str); 2] = [
-                (PlantKind::Peashooter, assets.card_peashooter.clone(), "Peashooter"),
-                (PlantKind::Sunflower, assets.card_sunflower.clone(), "Sunflower"),
+            let card_x_positions: [f32; 2] = [77.0, 128.0];
+            let cards: [(PlantKind, Handle<Image>); 2] = [
+                (PlantKind::Peashooter, assets.card_peashooter.clone()),
+                (PlantKind::Sunflower, assets.card_sunflower.clone()),
             ];
 
-            for (kind, card_image, _name) in cards {
+            for ((kind, card_image), &x) in cards.iter().zip(card_x_positions.iter()) {
                 let cost = kind.cost();
                 parent
                     .spawn((
                         Button,
-                        PlantCard { kind },
+                        PlantCard { kind: *kind },
                         Node {
-                            width: Val::Px(70.0),
-                            height: Val::Px(60.0),
-                            margin: UiRect::horizontal(Val::Px(4.0)),
-                            flex_direction: FlexDirection::Column,
-                            justify_content: JustifyContent::Center,
+                            position_type: PositionType::Absolute,
+                            left: Val::Px(x),
+                            top: Val::Px(8.0),
+                            width: Val::Px(50.0),
+                            height: Val::Px(70.0),
+                            justify_content: JustifyContent::End,
                             align_items: AlignItems::Center,
                             ..default()
                         },
-                        BackgroundColor(Color::srgb(0.2, 0.5, 0.2)),
+                        BackgroundColor(Color::NONE),
                     ))
                     .with_children(|parent| {
                         parent.spawn((
-                            ImageNode::new(card_image),
+                            ImageNode::new(card_image.clone()),
                             Node {
                                 width: Val::Px(50.0),
-                                height: Val::Px(35.0),
+                                height: Val::Px(70.0),
                                 ..default()
                             },
                         ));
@@ -111,7 +117,13 @@ fn setup_hud(mut commands: Commands, assets: Res<GameAssets>) {
                                 font_size: FontSize::Px(12.0),
                                 ..default()
                             },
-                            TextColor(Color::srgb(1.0, 0.8, 0.3)),
+                            TextColor(Color::srgb(0.0, 0.0, 0.0)),
+                        Node {
+                            position_type: PositionType::Absolute,
+                            bottom: Val::Px(4.0),
+                            right: Val::Px(18.0),
+                            ..default()
+                        },
                         ));
                     });
             }
@@ -126,7 +138,7 @@ fn update_sun_counter(
         return;
     }
     for mut text in query.iter_mut() {
-        **text = format!("☀ {}", bank.amount);
+        **text = format!("{}", bank.amount);
     }
 }
 
