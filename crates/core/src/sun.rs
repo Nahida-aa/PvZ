@@ -32,16 +32,25 @@ impl Plugin for SunPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<SunBank>()
             .add_systems(OnEnter(GameState::Playing), spawn_system_sun_timer)
-            .add_systems(Update, system_sun_tick.in_set(GameSet::Spawn))
-            .add_systems(Update, sun_move.in_set(GameSet::Movement))
-            .add_systems(Update, collect_sun.in_set(GameSet::Cleanup));
+            .add_systems(
+                Update,
+                (
+                    system_sun_tick.in_set(GameSet::Spawn),
+                    sun_move.in_set(GameSet::Movement),
+                    collect_sun.in_set(GameSet::Cleanup),
+                )
+                    .run_if(in_state(GameState::Playing)),
+            );
     }
 }
 
 fn spawn_system_sun_timer(mut commands: Commands) {
-    commands.spawn(SystemSunTimer {
-        timer: Timer::from_seconds(SYSTEM_SUN_INTERVAL_BASE, TimerMode::Repeating),
-    });
+    commands.spawn((
+        SystemSunTimer {
+            timer: Timer::from_seconds(SYSTEM_SUN_INTERVAL_BASE, TimerMode::Repeating),
+        },
+        crate::state::GameplayEntity,
+    ));
 }
 
 fn system_sun_tick(
@@ -75,6 +84,7 @@ fn system_sun_tick(
                 Sprite::from_image(frames[0].clone()),
                 Transform::from_translation(Vec3::new(start_world.x, start_world.y, 3.0)),
                 Visibility::default(),
+                crate::state::GameplayEntity,
             ));
         }
     }

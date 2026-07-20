@@ -7,6 +7,7 @@ use crate::combat::{DeathCleanup, Health, Team};
 use crate::lawn::GridPos;
 use crate::projectile::SpawnProjectile;
 use crate::schedule::GameSet;
+use crate::state::GameState;
 
 #[derive(Component)]
 pub struct Plant {
@@ -51,10 +52,16 @@ pub struct PlantPlugin;
 impl Plugin for PlantPlugin {
     fn build(&self, app: &mut App) {
         app.add_message::<SpawnPlant>()
-            .add_systems(Update, handle_spawn_plant.in_set(GameSet::Spawn))
-            .add_systems(Update, shooter_fire.in_set(GameSet::Movement))
-            .add_systems(Update, sun_producer_tick.in_set(GameSet::Movement))
-            .add_systems(Update, on_plant_death.in_set(GameSet::Cleanup));
+            .add_systems(
+                Update,
+                (
+                    handle_spawn_plant.in_set(GameSet::Spawn),
+                    shooter_fire.in_set(GameSet::Movement),
+                    sun_producer_tick.in_set(GameSet::Movement),
+                    on_plant_death.in_set(GameSet::Cleanup),
+                )
+                    .run_if(in_state(GameState::Playing)),
+            );
     }
 }
 
@@ -80,6 +87,7 @@ fn handle_spawn_plant(
             Health::new(100.0),
             Team::Plant,
             DeathCleanup,
+            crate::state::GameplayEntity,
             ev.pos,
             Sprite::from_image(frames[0].clone()),
             Anchor::BOTTOM_CENTER,

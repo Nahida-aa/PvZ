@@ -5,6 +5,7 @@ use crate::assets::GameAssets;
 use crate::combat::ApplyDamage;
 use crate::lawn::{CELL_WIDTH, WIN_W};
 use crate::schedule::GameSet;
+use crate::state::GameState;
 use crate::zombie::ZombieCollider;
 
 const HIT_ANIM_DURATION: f32 = 0.25;
@@ -32,13 +33,16 @@ pub struct ProjectilePlugin;
 impl Plugin for ProjectilePlugin {
     fn build(&self, app: &mut App) {
         app.add_message::<SpawnProjectile>()
-            .add_systems(Update, handle_spawn_projectile.in_set(GameSet::Spawn))
-            .add_systems(Update, move_projectiles.in_set(GameSet::Movement))
-            .add_systems(Update, projectile_zombie_collision.in_set(GameSet::Combat))
-            .add_systems(Update, hit_anim_tick.in_set(GameSet::Movement))
             .add_systems(
                 Update,
-                cleanup_offscreen_projectiles.in_set(GameSet::Cleanup),
+                (
+                    handle_spawn_projectile.in_set(GameSet::Spawn),
+                    move_projectiles.in_set(GameSet::Movement),
+                    projectile_zombie_collision.in_set(GameSet::Combat),
+                    hit_anim_tick.in_set(GameSet::Movement),
+                    cleanup_offscreen_projectiles.in_set(GameSet::Cleanup),
+                )
+                    .run_if(in_state(GameState::Playing)),
             );
     }
 }
@@ -57,6 +61,7 @@ fn handle_spawn_projectile(
             Sprite::from_image(assets.pea_normal.clone()),
             Transform::from_translation(ev.pos),
             Visibility::default(),
+            crate::state::GameplayEntity,
         ));
         commands.spawn((
             AudioPlayer::<AudioSource>(assets.shoot_sound.clone()),

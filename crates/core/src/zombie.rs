@@ -6,6 +6,7 @@ use crate::assets::GameAssets;
 use crate::combat::{DeathCleanup, Health, Team};
 use crate::lawn::{CELL_WIDTH, GridPos, WIN_W};
 use crate::schedule::GameSet;
+use crate::state::GameState;
 
 #[derive(Component)]
 pub struct Zombie {
@@ -39,9 +40,15 @@ pub struct ZombiePlugin;
 impl Plugin for ZombiePlugin {
     fn build(&self, app: &mut App) {
         app.add_message::<SpawnZombie>()
-            .add_systems(Update, handle_spawn_zombie.in_set(GameSet::Spawn))
-            .add_systems(Update, zombie_walk.in_set(GameSet::Movement))
-            .add_systems(Update, cleanup_offscreen_zombies.in_set(GameSet::Cleanup));
+            .add_systems(
+                Update,
+                (
+                    handle_spawn_zombie.in_set(GameSet::Spawn),
+                    zombie_walk.in_set(GameSet::Movement),
+                    cleanup_offscreen_zombies.in_set(GameSet::Cleanup),
+                )
+                    .run_if(in_state(GameState::Playing)),
+            );
     }
 }
 
@@ -75,6 +82,7 @@ fn handle_spawn_zombie(
                     ],
                 },
             DeathCleanup,
+            crate::state::GameplayEntity,
             grid_pos,
             Sprite::from_image(frames[0].clone()),
             Anchor::BOTTOM_LEFT,

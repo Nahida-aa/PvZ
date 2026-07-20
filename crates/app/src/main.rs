@@ -1,6 +1,6 @@
 use bevy::prelude::*;
+use bevy::log::LogPlugin;
 use bevy::window::WindowResolution;
-use pvz_core::state::GameState;
 
 fn main() {
     App::new()
@@ -12,9 +12,12 @@ fn main() {
                 ..default()
             }),
             ..default()
+        }).set(LogPlugin {
+            filter: "info,icu_segmenter=error".into(),
+            ..default()
         }))
         .add_plugins(pvz_core::CorePlugin)
-        .add_systems(OnEnter(GameState::Playing), (setup_camera, start_music))
+        .add_systems(Startup, (setup_camera, start_music))
         .run();
 }
 

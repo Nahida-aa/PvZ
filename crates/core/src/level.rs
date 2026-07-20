@@ -19,7 +19,7 @@ const WAVES: &[WaveEntry] = &[
 ];
 
 #[derive(Resource)]
-struct LevelRuntime {
+pub struct LevelRuntime {
     elapsed: f32,
     wave_index: usize,
     wave_timer: f32,

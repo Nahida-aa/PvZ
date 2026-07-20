@@ -5,6 +5,10 @@ pub enum GameState {
     Loading,
     #[default]
     Playing,
+    Paused,
     Victory,
     Defeat,
 }
+
+#[derive(Component)]
+pub struct GameplayEntity;

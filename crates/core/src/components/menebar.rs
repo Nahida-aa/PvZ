@@ -73,6 +73,7 @@ fn setup_menubar(mut commands: Commands, assets: Res<GameAssets>) {
             },
             ImageNode::new(assets.chooser_bg.clone()),
             ZIndex(-1),
+            crate::state::GameplayEntity,
         ))
         .with_children(|parent| {
             parent.spawn((

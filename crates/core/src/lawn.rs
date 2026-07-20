@@ -113,6 +113,7 @@ fn draw_background(mut commands: Commands, assets: Res<GameAssets>) {
     commands.spawn((
         Sprite::from_image(assets.background.clone()),
         Transform::from_translation(Vec3::new(ox, oy, -10.0)),
+        crate::state::GameplayEntity,
     ));
 
     let grid_w = GRID_COLS as f32 * CELL_WIDTH;
@@ -124,6 +125,7 @@ fn draw_background(mut commands: Commands, assets: Res<GameAssets>) {
         commands.spawn((
             Sprite::from_color(color, Vec2::new(1.0, grid_h)),
             Transform::from_translation(center.extend(5.0)),
+            crate::state::GameplayEntity,
         ));
     }
     for row in 0..=GRID_ROWS {
@@ -132,6 +134,7 @@ fn draw_background(mut commands: Commands, assets: Res<GameAssets>) {
         commands.spawn((
             Sprite::from_color(color, Vec2::new(grid_w, 1.0)),
             Transform::from_translation(center.extend(5.0)),
+            crate::state::GameplayEntity,
         ));
     }
 }

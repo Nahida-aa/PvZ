@@ -24,6 +24,12 @@ struct PlantGhostHint;
 const GHOST_W: f32 = 73.0;
 const GHOST_H: f32 = 74.0;
 
+fn clear_ghosts(mut commands: Commands, ghosts: Query<Entity, Or<(With<PlantGhost>, With<PlantGhostHint>)>>) {
+    for entity in ghosts.iter() {
+        commands.entity(entity).despawn();
+    }
+}
+
 pub struct InputPlugin;
 
 impl Plugin for InputPlugin {
@@ -36,7 +42,8 @@ impl Plugin for InputPlugin {
                     handle_click_to_place,
                 )
                     .run_if(in_state(GameState::Playing)),
-            );
+            )
+            .add_systems(OnEnter(GameState::Paused), clear_ghosts);
     }
 }
 

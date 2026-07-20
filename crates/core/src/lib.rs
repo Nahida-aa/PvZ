@@ -10,10 +10,13 @@ pub mod level;
 pub mod components;
 pub mod sun;
 pub mod assets;
+pub mod pause_menu;
 pub mod animation;
 pub mod debug;
 
 use bevy::prelude::*;
+
+use crate::state::GameState;
 
 pub use debug::draw_debug_colliders;
 
@@ -37,7 +40,13 @@ impl Plugin for CorePlugin {
             .add_plugins(level::LevelPlugin)
             .add_plugins(components::menebar::GameMenuBarPlugin)
             .add_plugins(sun::SunPlugin)
-            .add_systems(Update, animation::animate_sprites.in_set(schedule::GameSet::Movement))
+            .add_plugins(pause_menu::PauseMenuPlugin)
+            .add_systems(
+                Update,
+                animation::animate_sprites
+                    .in_set(schedule::GameSet::Movement)
+                    .run_if(in_state(GameState::Playing)),
+            )
             .add_systems(Update, draw_debug_colliders.in_set(schedule::GameSet::Debug));
     }
 }
