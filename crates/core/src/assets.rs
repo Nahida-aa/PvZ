@@ -16,6 +16,8 @@ pub struct GameAssets {
     pub cannot_choose_sound: Handle<AudioSource>,
     pub background: Handle<Image>,
     pub chooser_bg: Handle<Image>,
+    pub pause_menu_bg: Handle<Image>,
+    pub pause_return_button: Handle<Image>,
 }
 
 pub struct GameAssetsPlugin;
@@ -46,6 +48,8 @@ impl Plugin for GameAssetsPlugin {
             cannot_choose_sound: server.load("sound/cannotChooseWarning.ogg"),
             background: server.load("graphics/Items/Background/Background_0.jpg"),
             chooser_bg: server.load("graphics/Screen/ChooserBackground.png"),
+            pause_menu_bg: server.load("graphics/Screen/option_dialog.png"),
+            pause_return_button: server.load("graphics/Screen/btn_dialog_back_2.png"),
         };
         app.insert_resource(assets);
     }

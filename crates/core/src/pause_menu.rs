@@ -13,10 +13,16 @@ use crate::state::{GameState, GameplayEntity};
 struct PauseMenuRoot;
 
 #[derive(Component)]
+struct PauseButtonMarker;
+
+#[derive(Component)]
 struct ContinueButton;
 
 #[derive(Component)]
 struct RestartButton;
+
+#[derive(Component)]
+struct MainMenuButton;
 
 pub struct PauseMenuPlugin;
 
@@ -51,6 +57,41 @@ fn toggle_pause(
     }
 }
 
+fn spawn_text_button(
+    parent: &mut ChildSpawnerCommands,
+    marker: impl Bundle,
+    width: f32,
+    height: f32,
+    label: &str,
+    font: &Handle<Font>,
+) {
+    parent
+        .spawn((
+            Button,
+            PauseButtonMarker,
+            marker,
+            Node {
+                width: Val::Px(width),
+                height: Val::Px(height),
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                ..default()
+            },
+            BackgroundColor(Color::srgb(0.82, 0.78, 0.62)),
+        ))
+        .with_children(|b| {
+            b.spawn((
+                Text::new(label),
+                TextFont {
+                    font: FontSource::Handle(font.clone()),
+                    font_size: FontSize::Px(22.0),
+                    ..default()
+                },
+                TextColor(Color::srgb(0.15, 0.12, 0.05)),
+            ));
+        });
+}
+
 fn setup_pause_menu(mut commands: Commands, assets: Res<GameAssets>) {
     let font = assets.font.clone();
     commands
@@ -63,71 +104,70 @@ fn setup_pause_menu(mut commands: Commands, assets: Res<GameAssets>) {
                 height: Val::Px(600.0),
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
-                flex_direction: FlexDirection::Column,
-                row_gap: Val::Px(16.0),
                 ..default()
             },
-            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.55)),
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.45)),
             ZIndex(1000),
             PauseMenuRoot,
         ))
         .with_children(|parent| {
-            parent.spawn((
-                Text::new("已暂停"),
-                TextFont {
-                    font: FontSource::Handle(font.clone()),
-                    font_size: FontSize::Px(32.0),
-                    ..default()
-                },
-                TextColor(Color::srgb(1.0, 1.0, 1.0)),
-            ));
             parent
                 .spawn((
-                    Button,
-                    ContinueButton,
                     Node {
-                        width: Val::Px(200.0),
-                        height: Val::Px(44.0),
+                        position_type: PositionType::Relative,
+                        width: Val::Px(412.0),
+                        height: Val::Px(483.0),
                         align_items: AlignItems::Center,
                         justify_content: JustifyContent::Center,
+                        flex_direction: FlexDirection::Column,
+                        row_gap: Val::Px(20.0),
+                        padding: UiRect::top(Val::Px(60.0)),
                         ..default()
                     },
-                    BackgroundColor(Color::srgb(0.3, 0.6, 0.3)),
+                    ImageNode::new(assets.pause_menu_bg.clone()),
                 ))
-                .with_children(|b| {
-                    b.spawn((
-                        Text::new("继续 (Esc)"),
-                        TextFont {
-                            font: FontSource::Handle(font.clone()),
-                            font_size: FontSize::Px(18.0),
-                            ..default()
-                        },
-                        TextColor(Color::srgb(1.0, 1.0, 1.0)),
-                    ));
-                });
-            parent
-                .spawn((
-                    Button,
-                    RestartButton,
-                    Node {
-                        width: Val::Px(200.0),
-                        height: Val::Px(44.0),
-                        align_items: AlignItems::Center,
-                        justify_content: JustifyContent::Center,
-                        ..default()
-                    },
-                    BackgroundColor(Color::srgb(0.6, 0.4, 0.2)),
-                ))
-                .with_children(|b| {
-                    b.spawn((
-                        Text::new("重新开始"),
-                        TextFont {
-                            font: FontSource::Handle(font.clone()),
-                            font_size: FontSize::Px(18.0),
-                            ..default()
-                        },
-                        TextColor(Color::srgb(1.0, 1.0, 1.0)),
-                    ));
+                .with_children(|panel| {
+                    spawn_text_button(
+                        panel,
+                        RestartButton,
+                        200.0,
+                        44.0,
+                        "重新开始",
+                        &font,
+                    );
+                    spawn_text_button(
+                        panel,
+                        MainMenuButton,
+                        200.0,
+                        44.0,
+                        "主菜单",
+                        &font,
+                    );
+                    panel
+                        .spawn((
+                            Button,
+                            PauseButtonMarker,
+                            ContinueButton,
+                            ImageNode::new(assets.pause_return_button.clone()),
+                            Node {
+                                width: Val::Px(360.0),
+                                height: Val::Px(100.0),
+                                align_items: AlignItems::Center,
+                                justify_content: JustifyContent::Center,
+                                ..default()
+                            },
+                        ))
+                        .with_children(|b| {
+                            b.spawn((
+                                Text::new("返回游戏"),
+                                TextFont {
+                                    font: FontSource::Handle(font.clone()),
+                                    font_size: FontSize::Px(28.0),
+                                    ..default()
+                                },
+                                TextColor(Color::srgb(0.1, 0.1, 0.1)),
+                            ));
+                        });
                 });
         });
 }
@@ -135,24 +175,23 @@ fn setup_pause_menu(mut commands: Commands, assets: Res<GameAssets>) {
 fn button_interaction(
     mut query: Query<
         (&Interaction, &mut BackgroundColor),
-        (Changed<Interaction>, With<Button>),
+        (Changed<Interaction>, With<PauseButtonMarker>, Without<ImageNode>),
     >,
 ) {
     for (interaction, mut bg) in query.iter_mut() {
         *bg = match *interaction {
-            Interaction::Hovered => BackgroundColor(Color::srgb(0.45, 0.75, 0.45)),
-            _ => BackgroundColor(Color::srgb(0.3, 0.6, 0.3)),
-        };
+            Interaction::Hovered => Color::srgb(0.9, 0.86, 0.7),
+            _ => Color::srgb(0.82, 0.78, 0.62),
+        }
+        .into();
     }
 }
 
 fn handle_buttons(
-    interaction: Query<
-        (&Interaction, Entity),
-        (Changed<Interaction>, With<Button>),
-    >,
+    interaction: Query<(&Interaction, Entity), (Changed<Interaction>, With<Button>)>,
     continue_buttons: Query<Entity, With<ContinueButton>>,
     restart_buttons: Query<Entity, With<RestartButton>>,
+    mainmenu_buttons: Query<Entity, With<MainMenuButton>>,
     gameplay: Query<Entity, With<GameplayEntity>>,
     children: Query<&Children>,
     mut selected: ResMut<SelectedPlant>,
@@ -169,7 +208,9 @@ fn handle_buttons(
         }
         if continue_buttons.get(entity).is_ok() {
             next.set(GameState::Playing);
-        } else if restart_buttons.get(entity).is_ok() {
+        } else if restart_buttons.get(entity).is_ok()
+            || mainmenu_buttons.get(entity).is_ok()
+        {
             let entities: Vec<Entity> = gameplay.iter().collect();
             for e in entities {
                 despawn_recursive(&mut commands, e, &children);
