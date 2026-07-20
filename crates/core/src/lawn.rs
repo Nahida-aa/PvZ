@@ -7,11 +7,17 @@ pub const GRID_COLS: u32 = 9;
 pub const GRID_ROWS: u32 = 5;
 pub const CELL_WIDTH: f32 = 80.0;
 pub const CELL_HEIGHT: f32 = 99.0;
-pub const GRID_ORIGIN_X: f32 = 35.0;
+pub const GRID_ORIGIN_X: f32 = 195.0;
 /// 草坪网格在屏幕坐标系中的 Y 轴起点
 pub const GRID_ORIGIN_Y: f32 = 80.0;
 
-pub const WIN_W: f32 = 800.0;
+/// 割草机初始所在的屏幕 X（草坪左侧，紧挨第一列）
+pub const MOWER_SCREEN_X: f32 = GRID_ORIGIN_X - 18.0;
+/// 房子碰撞箱中心 X(屏幕坐标)：矩形宽150, 故覆盖 [20,170], 左缘贴 Godot 最左 x=20
+/// 僵尸越过此线(进入房子区)即触发失败
+pub const DEFEAT_SCREEN_X: f32 = 95.0;
+
+pub const WIN_W: f32 = 1066.0;
 pub const WIN_H: f32 = 600.0;
 
 pub fn screen_to_world(sx: f32, sy: f32) -> Vec2 {
@@ -106,9 +112,15 @@ impl Plugin for LawnPlugin {
 fn draw_background(mut commands: Commands, assets: Res<GameAssets>) {
     const BG_IMG_W: f32 = 1400.0;
     const BG_IMG_H: f32 = 600.0;
-    const BG_VP_X: f32 = 220.0;
+    // 背景视口对齐偏移：值越大背景越靠左，越小越靠右。
+    // 用来微调背景图在画面中的水平位置（右移背景就调小它）。
+    const BG_VP_X: f32 = 60.0;
 
+    // ox: 背景图左上角的世界坐标 X。
+    // 公式把"背景图中心对齐到 (BG_VP_X, 0) 的屏幕点"换算成世界坐标。
+    // BG_VP_X 变小 -> ox 变大 -> 背景整体右移。
     let ox = -WIN_W / 2.0 - (BG_VP_X - BG_IMG_W / 2.0);
+    // oy: 背景图左上角的世界坐标 Y（背景高 600 与窗口同高，故垂直居中）。
     let oy = -WIN_H / 2.0 + BG_IMG_H / 2.0;
     commands.spawn((
         Sprite::from_image(assets.background.clone()),
@@ -118,7 +130,7 @@ fn draw_background(mut commands: Commands, assets: Res<GameAssets>) {
 
     let grid_w = GRID_COLS as f32 * CELL_WIDTH;
     let grid_h = GRID_ROWS as f32 * CELL_HEIGHT;
-    let color = Color::srgba(1.0, 0.0, 0.0, 0.3);
+    let color = Color::srgba(0.0, 1.0, 0.0, 0.3);
     for col in 0..=GRID_COLS {
         let sx = GRID_ORIGIN_X + col as f32 * CELL_WIDTH;
         let center = screen_to_world(sx, GRID_ORIGIN_Y + grid_h / 2.0);
