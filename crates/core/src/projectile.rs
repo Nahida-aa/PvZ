@@ -57,6 +57,8 @@ fn handle_spawn_projectile(
             Sprite::from_image(assets.pea_normal.clone()),
             Transform::from_translation(ev.pos),
             Visibility::default(),
+        ));
+        commands.spawn((
             AudioPlayer::<AudioSource>(assets.shoot_sound.clone()),
             PlaybackSettings::DESPAWN,
         ));

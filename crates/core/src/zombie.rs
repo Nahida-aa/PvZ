@@ -56,8 +56,8 @@ fn handle_spawn_zombie(
                 Team::Zombie,
                 Walker { base_speed: 0.3 },
                 ZombieCollider {
-                    half_size: Vec2::new(20.0, 50.0),
-                    center_offset: Vec2::new(0.0, 50.0),
+                    half_size: Vec2::new(40.0, 60.0),
+                    center_offset: Vec2::new(100.0, 60.0),
                 },
                 DeathCleanup,
                 grid_pos,
