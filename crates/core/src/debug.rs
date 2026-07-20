@@ -40,38 +40,45 @@ pub fn draw_debug_colliders(
     }
 
     for (transform, collider) in zombies.iter() {
-        let center = transform.translation.truncate() + collider.center_offset;
-        let half = collider.half_size;
+        let origin = transform.translation.truncate();
+        for (i, rect) in collider.rects.iter().enumerate() {
+            let center = origin + rect.center_offset;
+            let half = rect.half_size;
 
-        let min_x = center.x - half.x;
-        let max_x = center.x + half.x;
-        let min_y = center.y - half.y;
-        let max_y = center.y + half.y;
+            let min_x = center.x - half.x;
+            let max_x = center.x + half.x;
+            let min_y = center.y - half.y;
+            let max_y = center.y + half.y;
 
-        let color = Color::srgba(1.0, 0.0, 0.0, 0.3);
+            let color = if i == 0 {
+                Color::srgba(1.0, 0.0, 0.0, 0.3)
+            } else {
+                Color::srgba(1.0, 0.5, 0.0, 0.3)
+            };
 
-        let width = max_x - min_x;
-        let height = max_y - min_y;
+            let width = max_x - min_x;
+            let height = max_y - min_y;
 
-        commands.spawn((
-            DebugLine,
-            Sprite::from_color(color, Vec2::new(width, 1.0)),
-            Transform::from_translation(Vec3::new(center.x, min_y, 10.0)),
-        ));
-        commands.spawn((
-            DebugLine,
-            Sprite::from_color(color, Vec2::new(width, 1.0)),
-            Transform::from_translation(Vec3::new(center.x, max_y, 10.0)),
-        ));
-        commands.spawn((
-            DebugLine,
-            Sprite::from_color(color, Vec2::new(1.0, height)),
-            Transform::from_translation(Vec3::new(min_x, center.y, 10.0)),
-        ));
-        commands.spawn((
-            DebugLine,
-            Sprite::from_color(color, Vec2::new(1.0, height)),
-            Transform::from_translation(Vec3::new(max_x, center.y, 10.0)),
-        ));
+            commands.spawn((
+                DebugLine,
+                Sprite::from_color(color, Vec2::new(width, 1.0)),
+                Transform::from_translation(Vec3::new(center.x, min_y, 10.0)),
+            ));
+            commands.spawn((
+                DebugLine,
+                Sprite::from_color(color, Vec2::new(width, 1.0)),
+                Transform::from_translation(Vec3::new(center.x, max_y, 10.0)),
+            ));
+            commands.spawn((
+                DebugLine,
+                Sprite::from_color(color, Vec2::new(1.0, height)),
+                Transform::from_translation(Vec3::new(min_x, center.y, 10.0)),
+            ));
+            commands.spawn((
+                DebugLine,
+                Sprite::from_color(color, Vec2::new(1.0, height)),
+                Transform::from_translation(Vec3::new(max_x, center.y, 10.0)),
+            ));
+        }
     }
 }

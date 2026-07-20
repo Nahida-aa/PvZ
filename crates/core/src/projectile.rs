@@ -81,15 +81,24 @@ fn projectile_zombie_collision(
 ) {
     for (proj_entity, proj_transform, projectile, mut sprite) in projectiles.iter_mut() {
         let proj_pos = proj_transform.translation.truncate();
+        let proj_half: f32 = 8.0;
         for (zombie_entity, zombie_transform, collider) in zombies.iter() {
-            let zombie_center = zombie_transform.translation.truncate() + collider.center_offset;
-            let half = collider.half_size;
-            let proj_half: f32 = 8.0;
+            let zombie_origin = zombie_transform.translation.truncate();
+            let mut hit = false;
+            for rect in &collider.rects {
+                let zombie_center = zombie_origin + rect.center_offset;
+                let half = rect.half_size;
 
-            let overlap_x = (half.x + proj_half) - (proj_pos.x - zombie_center.x).abs();
-            let overlap_y = (half.y + proj_half) - (proj_pos.y - zombie_center.y).abs();
+                let overlap_x = (half.x + proj_half) - (proj_pos.x - zombie_center.x).abs();
+                let overlap_y = (half.y + proj_half) - (proj_pos.y - zombie_center.y).abs();
 
-            if overlap_x > 0.0 && overlap_y > 0.0 {
+                if overlap_x > 0.0 && overlap_y > 0.0 {
+                    hit = true;
+                    break;
+                }
+            }
+
+            if hit {
                 damage_writer.write(ApplyDamage {
                     target: zombie_entity,
                     amount: projectile.damage,

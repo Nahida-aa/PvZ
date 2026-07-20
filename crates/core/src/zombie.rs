@@ -18,10 +18,15 @@ pub struct Walker {
     pub base_speed: f32,
 }
 
-#[derive(Component)]
-pub struct ZombieCollider {
+#[derive(Clone, Copy)]
+pub struct ColliderRect {
     pub half_size: Vec2,
     pub center_offset: Vec2,
+}
+
+#[derive(Component)]
+pub struct ZombieCollider {
+    pub rects: Vec<ColliderRect>,
 }
 
 #[derive(Message)]
@@ -57,10 +62,18 @@ fn handle_spawn_zombie(
             Health::new(200.0),
             Team::Zombie,
             Walker { base_speed: 0.3 },
-            ZombieCollider {
-                half_size: Vec2::new(38.0, 60.0),
-                center_offset: Vec2::new(105.0, 60.0),
-            },
+                ZombieCollider {
+                    rects: vec![
+                        ColliderRect {
+                            half_size: Vec2::new(20.0, 55.0),
+                            center_offset: Vec2::new(105.0, 60.0),
+                        },
+                        ColliderRect {
+                            half_size: Vec2::new(28.0, 18.0),
+                            center_offset: Vec2::new(95.0, 18.0),
+                        },
+                    ],
+                },
             DeathCleanup,
             grid_pos,
             Sprite::from_image(frames[0].clone()),
