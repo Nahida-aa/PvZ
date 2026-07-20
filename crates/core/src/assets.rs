@@ -13,6 +13,7 @@ pub struct GameAssets {
     pub card_sunflower: Handle<Image>,
     pub shoot_sound: Handle<AudioSource>,
     pub bullet_explode_sound: Handle<AudioSource>,
+    pub cannot_choose_sound: Handle<AudioSource>,
     pub background: Handle<Image>,
     pub chooser_bg: Handle<Image>,
 }
@@ -42,6 +43,7 @@ impl Plugin for GameAssetsPlugin {
             card_sunflower: server.load("graphics/Cards/card_sunflower.png"),
             shoot_sound: server.load("sound/shoot.ogg"),
             bullet_explode_sound: server.load("sound/bulletExplode.ogg"),
+            cannot_choose_sound: server.load("sound/cannotChooseWarning.ogg"),
             background: server.load("graphics/Items/Background/Background_0.jpg"),
             chooser_bg: server.load("graphics/Screen/ChooserBackground.png"),
         };

@@ -4,7 +4,7 @@ use bevy::sprite::Anchor;
 use crate::animation::SpriteAnimation;
 use crate::assets::GameAssets;
 use crate::combat::{DeathCleanup, Health, Team};
-use crate::lawn::{GridPos, CELL_WIDTH, WIN_W};
+use crate::lawn::{CELL_WIDTH, GridPos, WIN_W};
 use crate::schedule::GameSet;
 
 #[derive(Component)]
@@ -49,29 +49,31 @@ fn handle_spawn_zombie(
         let grid_pos = GridPos::new(crate::lawn::GRID_COLS - 1, ev.row);
         let start_x = 830.0 - WIN_W / 2.0;
         let frames = assets.normal_zombie_frames.clone();
-        commands
-            .spawn((
-                Zombie { name: "Basic", speed: 0.3 },
-                Health::new(200.0),
-                Team::Zombie,
-                Walker { base_speed: 0.3 },
-                ZombieCollider {
-                    half_size: Vec2::new(40.0, 60.0),
-                    center_offset: Vec2::new(100.0, 60.0),
-                },
-                DeathCleanup,
-                grid_pos,
-                Sprite::from_image(frames[0].clone()),
-                Anchor::BOTTOM_LEFT,
-                SpriteAnimation {
-                    frames,
-                    frame_duration: 0.1,
-                    timer: 0.0,
-                    current: 0,
-                },
-                Transform::from_translation(Vec3::new(start_x, grid_pos.world_bottom().y, 2.0)),
-                Visibility::default(),
-            ));
+        commands.spawn((
+            Zombie {
+                name: "Basic",
+                speed: 0.3,
+            },
+            Health::new(200.0),
+            Team::Zombie,
+            Walker { base_speed: 0.3 },
+            ZombieCollider {
+                half_size: Vec2::new(38.0, 60.0),
+                center_offset: Vec2::new(105.0, 60.0),
+            },
+            DeathCleanup,
+            grid_pos,
+            Sprite::from_image(frames[0].clone()),
+            Anchor::BOTTOM_LEFT,
+            SpriteAnimation {
+                frames,
+                frame_duration: 0.1,
+                timer: 0.0,
+                current: 0,
+            },
+            Transform::from_translation(Vec3::new(start_x, grid_pos.world_bottom().y, 2.0)),
+            Visibility::default(),
+        ));
     }
 }
 

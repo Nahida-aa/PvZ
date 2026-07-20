@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::audio::{AudioPlayer, AudioSource, PlaybackSettings};
 use bevy::ui::ZIndex;
 
 use crate::assets::GameAssets;
@@ -30,6 +31,9 @@ pub struct PlantCard {
 #[derive(Component)]
 pub struct CardCooldownOverlay;
 
+#[derive(Component)]
+pub struct CardSelectedOverlay;
+
 impl Default for PlantCard {
     fn default() -> Self {
         Self {
@@ -49,7 +53,7 @@ impl Plugin for GameMenuBarPlugin {
             .add_systems(OnEnter(GameState::Playing), setup_menubar)
             .add_systems(
                 Update,
-                (update_sun_counter, handle_card_click, cooldown_tick)
+                (update_sun_counter, handle_card_click, sync_selected_overlay, cooldown_tick)
                     .run_if(in_state(GameState::Playing)),
             );
     }
@@ -144,6 +148,18 @@ fn setup_menubar(mut commands: Commands, assets: Res<GameAssets>) {
                             BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.6)),
                         ));
                         parent.spawn((
+                            CardSelectedOverlay,
+                            Node {
+                                position_type: PositionType::Absolute,
+                                left: Val::Px(0.0),
+                                top: Val::Px(0.0),
+                                width: Val::Px(50.0),
+                                height: Val::Px(70.0),
+                                ..default()
+                            },
+                            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)),
+                        ));
+                        parent.spawn((
                             Text::new(format!("{cost}")),
                             TextFont {
                                 font: FontSource::Handle(font.clone()),
@@ -177,25 +193,37 @@ fn handle_card_click(
     mut selected: ResMut<crate::input::SelectedPlant>,
     bank: Res<SunBank>,
     cards: Res<PlantCards>,
-    mut interaction_query: Query<
-        (&Interaction, &mut BackgroundColor, Entity, &mut PlantCard),
-        Changed<Interaction>,
-    >,
+    assets: Res<GameAssets>,
+    mut commands: Commands,
+    interaction_query: Query<(&Interaction, Entity, &PlantCard), Changed<Interaction>>,
 ) {
-    for (interaction, mut bg, _entity, card_data) in interaction_query.iter_mut() {
-        match *interaction {
-            Interaction::Pressed => {
-                if bank.amount >= card_data.kind.cost() {
-                    if cards.ready(&card_data.kind) {
-                        selected.kind = Some(card_data.kind);
-                        *bg = BackgroundColor(Color::srgb(0.4, 0.8, 0.4));
-                    }
-                }
+    for (interaction, _entity, card_data) in interaction_query.iter() {
+        if let Interaction::Pressed = *interaction {
+            let usable = bank.amount >= card_data.kind.cost() && cards.ready(&card_data.kind);
+            if usable {
+                selected.kind = Some(card_data.kind);
+            } else {
+                commands.spawn((
+                    AudioPlayer::<AudioSource>(assets.cannot_choose_sound.clone()),
+                    PlaybackSettings::DESPAWN,
+                ));
             }
-            Interaction::None => {
-                *bg = BackgroundColor(Color::srgb(0.2, 0.5, 0.2));
+        }
+    }
+}
+
+fn sync_selected_overlay(
+    selected: Res<crate::input::SelectedPlant>,
+    cards: Query<(&PlantCard, &Children)>,
+    mut overlay_query: Query<&mut BackgroundColor, With<CardSelectedOverlay>>,
+) {
+    for (card, children) in cards.iter() {
+        let is_selected = selected.kind == Some(card.kind);
+        for child in children.iter() {
+            if let Ok(mut bg) = overlay_query.get_mut(child) {
+                let alpha = if is_selected { 0.35 } else { 0.0 };
+                bg.0 = Color::srgba(0.0, 0.0, 0.0, alpha);
             }
-            _ => {}
         }
     }
 }

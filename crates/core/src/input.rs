@@ -45,6 +45,9 @@ fn handle_click_to_place(
     if bank.amount < plant.cost() {
         return;
     }
+    if !cards.ready(&plant) {
+        return;
+    }
     let Ok(window) = window.single() else {
         return;
     };
