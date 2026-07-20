@@ -4,11 +4,13 @@ use rand::Rng;
 
 use crate::assets::GameAssets;
 use crate::components::menebar::SunBank;
-use crate::lawn::{GridPos, GRID_COLS, GRID_ROWS, WIN_W, screen_to_world};
+use crate::lawn::{GRID_COLS, GRID_ROWS, GridPos, WIN_W, screen_to_world};
 use crate::schedule::GameSet;
 use crate::state::GameState;
 
+/// 阳光 存活 时间
 const SUN_LIVE_TIME: f32 = 10.0;
+/// 系统 阳光 生成 间隔 时间
 const SYSTEM_SUN_INTERVAL_BASE: f32 = 4.25;
 
 #[derive(Component)]

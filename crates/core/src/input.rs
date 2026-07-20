@@ -6,6 +6,7 @@ use crate::plant::{PlantKind, SpawnPlant};
 use crate::schedule::GameSet;
 use crate::state::GameState;
 use crate::components::menebar::SunBank;
+use crate::components::plant_cards::PlantCards;
 
 #[derive(Resource, Default)]
 pub struct SelectedPlant {
@@ -33,6 +34,7 @@ fn handle_click_to_place(
     mut spawner: MessageWriter<SpawnPlant>,
     selected: Res<SelectedPlant>,
     mut bank: ResMut<SunBank>,
+    mut cards: ResMut<PlantCards>,
 ) {
     if !mouse.just_pressed(MouseButton::Left) {
         return;
@@ -60,4 +62,5 @@ fn handle_click_to_place(
     };
     bank.amount -= plant.cost();
     spawner.write(SpawnPlant { kind: plant, pos: grid_pos });
+    cards.trigger(&plant);
 }

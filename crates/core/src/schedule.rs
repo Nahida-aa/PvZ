@@ -6,4 +6,5 @@ pub enum GameSet {
     Movement,
     Combat,
     Cleanup,
+    Debug,
 }

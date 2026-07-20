@@ -8,9 +8,11 @@ pub struct GameAssets {
     pub normal_zombie_frames: Vec<Handle<Image>>,
     pub sun_frames: Vec<Handle<Image>>,
     pub pea_normal: Handle<Image>,
+    pub pea_normal_explode: Handle<Image>,
     pub card_peashooter: Handle<Image>,
     pub card_sunflower: Handle<Image>,
     pub shoot_sound: Handle<AudioSource>,
+    pub bullet_explode_sound: Handle<AudioSource>,
     pub background: Handle<Image>,
     pub chooser_bg: Handle<Image>,
 }
@@ -35,9 +37,11 @@ impl Plugin for GameAssetsPlugin {
                 .map(|i| server.load(format!("graphics/Plants/Sun/Sun_{i}.png")))
                 .collect(),
             pea_normal: server.load("graphics/Bullets/PeaNormal/PeaNormal_0.png"),
+            pea_normal_explode: server.load("graphics/Bullets/PeaNormalExplode/PeaNormalExplode_0.png"),
             card_peashooter: server.load("graphics/Cards/card_peashooter.png"),
             card_sunflower: server.load("graphics/Cards/card_sunflower.png"),
             shoot_sound: server.load("sound/shoot.ogg"),
+            bullet_explode_sound: server.load("sound/bulletExplode.ogg"),
             background: server.load("graphics/Items/Background/Background_0.jpg"),
             chooser_bg: server.load("graphics/Screen/ChooserBackground.png"),
         };

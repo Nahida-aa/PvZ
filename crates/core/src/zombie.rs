@@ -18,6 +18,12 @@ pub struct Walker {
     pub base_speed: f32,
 }
 
+#[derive(Component)]
+pub struct ZombieCollider {
+    pub half_size: Vec2,
+    pub center_offset: Vec2,
+}
+
 #[derive(Message)]
 pub struct SpawnZombie {
     pub row: u32,
@@ -49,6 +55,10 @@ fn handle_spawn_zombie(
                 Health::new(200.0),
                 Team::Zombie,
                 Walker { base_speed: 0.3 },
+                ZombieCollider {
+                    half_size: Vec2::new(20.0, 50.0),
+                    center_offset: Vec2::new(0.0, 50.0),
+                },
                 DeathCleanup,
                 grid_pos,
                 Sprite::from_image(frames[0].clone()),

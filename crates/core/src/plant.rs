@@ -53,7 +53,8 @@ impl Plugin for PlantPlugin {
         app.add_message::<SpawnPlant>()
             .add_systems(Update, handle_spawn_plant.in_set(GameSet::Spawn))
             .add_systems(Update, shooter_fire.in_set(GameSet::Movement))
-            .add_systems(Update, sun_producer_tick.in_set(GameSet::Movement));
+            .add_systems(Update, sun_producer_tick.in_set(GameSet::Movement))
+            .add_systems(Update, on_plant_death.in_set(GameSet::Cleanup));
     }
 }
 
@@ -115,11 +116,12 @@ fn shooter_fire(
             spawner.write(SpawnProjectile {
                 pos: Vec3::new(
                     transform.translation.x + 40.0,
-                    transform.translation.y + 40.0,
+                    // Spawn at mouth position: 54.5px above foot anchor point
+                    transform.translation.y + 54.5,
                     transform.translation.z + 1.0,
                 ),
                 damage: 20.0,
-                speed: 5.0,
+                speed: 200.0,
             });
         }
     }
@@ -136,5 +138,14 @@ fn sun_producer_tick(
             producer.timer = 0.0;
             bank.amount += 25;
         }
+    }
+}
+
+fn on_plant_death(
+    mut commands: Commands,
+    mut query: Query<(Entity, &Plant), With<DeathCleanup>>,
+) {
+    for (entity, _plant) in query.iter_mut() {
+        commands.entity(entity).remove::<DeathCleanup>();
     }
 }

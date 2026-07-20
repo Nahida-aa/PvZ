@@ -2,9 +2,9 @@ use bevy::prelude::*;
 use bevy::ui::ZIndex;
 
 use crate::assets::GameAssets;
-use crate::input::SelectedPlant;
 use crate::plant::PlantKind;
 use crate::state::GameState;
+use crate::components::plant_cards::PlantCards;
 
 #[derive(Resource)]
 pub struct SunBank {
@@ -21,8 +21,23 @@ impl Default for SunBank {
 struct SunCounter;
 
 #[derive(Component)]
-struct PlantCard {
-    kind: PlantKind,
+pub struct PlantCard {
+    pub kind: PlantKind,
+    pub cooldown_timer: f32,
+    pub cooldown_duration: f32,
+}
+
+#[derive(Component)]
+pub struct CardCooldownOverlay;
+
+impl Default for PlantCard {
+    fn default() -> Self {
+        Self {
+            kind: PlantKind::Peashooter,
+            cooldown_timer: 0.0,
+            cooldown_duration: 0.0,
+        }
+    }
 }
 
 pub struct GameMenuBarPlugin;
@@ -30,10 +45,12 @@ pub struct GameMenuBarPlugin;
 impl Plugin for GameMenuBarPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<SunBank>()
+            .init_resource::<PlantCards>()
             .add_systems(OnEnter(GameState::Playing), setup_menubar)
             .add_systems(
                 Update,
-                (update_sun_counter, handle_card_click).run_if(in_state(GameState::Playing)),
+                (update_sun_counter, handle_card_click, cooldown_tick)
+                    .run_if(in_state(GameState::Playing)),
             );
     }
 }
@@ -81,13 +98,18 @@ fn setup_menubar(mut commands: Commands, assets: Res<GameAssets>) {
                 (PlantKind::Peashooter, assets.card_peashooter.clone()),
                 (PlantKind::Sunflower, assets.card_sunflower.clone()),
             ];
+            let cooldowns: [f32; 2] = [7.5, 5.0];
 
-            for ((kind, card_image), &x) in cards.iter().zip(card_x_positions.iter()) {
+            for (((kind, card_image), &x), &cooldown) in cards.iter().zip(card_x_positions.iter()).zip(cooldowns.iter()) {
                 let cost = kind.cost();
                 parent
                     .spawn((
                         Button,
-                        PlantCard { kind: *kind },
+                        PlantCard {
+                            kind: *kind,
+                            cooldown_timer: 0.0,
+                            cooldown_duration: cooldown,
+                        },
                         Node {
                             position_type: PositionType::Absolute,
                             left: Val::Px(x),
@@ -108,6 +130,18 @@ fn setup_menubar(mut commands: Commands, assets: Res<GameAssets>) {
                                 height: Val::Px(70.0),
                                 ..default()
                             },
+                        ));
+                        parent.spawn((
+                            CardCooldownOverlay,
+                            Node {
+                                position_type: PositionType::Absolute,
+                                left: Val::Px(0.0),
+                                top: Val::Px(0.0),
+                                width: Val::Px(50.0),
+                                height: Val::Px(70.0),
+                                ..default()
+                            },
+                            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.6)),
                         ));
                         parent.spawn((
                             Text::new(format!("{cost}")),
@@ -139,25 +173,58 @@ fn update_sun_counter(bank: Res<SunBank>, mut query: Query<&mut Text, With<SunCo
 }
 
 fn handle_card_click(
+    _time: Res<Time>,
+    mut selected: ResMut<crate::input::SelectedPlant>,
+    bank: Res<SunBank>,
+    cards: Res<PlantCards>,
     mut interaction_query: Query<
-        (&Interaction, &PlantCard, &mut BackgroundColor),
+        (&Interaction, &mut BackgroundColor, Entity, &mut PlantCard),
         Changed<Interaction>,
     >,
-    mut selected: ResMut<SelectedPlant>,
-    bank: Res<SunBank>,
 ) {
-    for (interaction, card, mut bg) in interaction_query.iter_mut() {
+    for (interaction, mut bg, _entity, card_data) in interaction_query.iter_mut() {
         match *interaction {
             Interaction::Pressed => {
-                if bank.amount >= card.kind.cost() {
-                    selected.kind = Some(card.kind);
-                    *bg = BackgroundColor(Color::srgb(0.4, 0.8, 0.4));
+                if bank.amount >= card_data.kind.cost() {
+                    if cards.ready(&card_data.kind) {
+                        selected.kind = Some(card_data.kind);
+                        *bg = BackgroundColor(Color::srgb(0.4, 0.8, 0.4));
+                    }
                 }
             }
             Interaction::None => {
                 *bg = BackgroundColor(Color::srgb(0.2, 0.5, 0.2));
             }
             _ => {}
+        }
+    }
+}
+
+fn cooldown_tick(
+    time: Res<Time>,
+    mut cards: ResMut<PlantCards>,
+    card_query: Query<(&PlantCard, &Children)>,
+    mut overlay_query: Query<&mut BackgroundColor, With<CardCooldownOverlay>>,
+    mut overlay_node_query: Query<&mut Node, With<CardCooldownOverlay>>,
+) {
+    cards.peashooter_remaining = (cards.peashooter_remaining - time.delta_secs()).max(0.0);
+    cards.sunflower_remaining = (cards.sunflower_remaining - time.delta_secs()).max(0.0);
+
+    for (card, children) in card_query.iter() {
+        let remaining = cards.remaining(card.kind);
+        let progress = if cards.ready(&card.kind) {
+            0.0
+        } else {
+            (remaining / card.cooldown_duration).clamp(0.0, 1.0)
+        };
+        let overlay_height = progress * 70.0;
+        for child in children.iter() {
+            if let Ok(mut bg) = overlay_query.get_mut(child) {
+                bg.0.set_alpha(0.6);
+            }
+            if let Ok(mut node) = overlay_node_query.get_mut(child) {
+                node.height = Val::Px(overlay_height);
+            }
         }
     }
 }

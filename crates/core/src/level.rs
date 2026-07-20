@@ -12,10 +12,10 @@ struct WaveEntry {
 }
 
 const WAVES: &[WaveEntry] = &[
-    WaveEntry { start_after: 5.0, count: 3, interval: 2.0, rows: 0..3 },
-    WaveEntry { start_after: 20.0, count: 5, interval: 1.5, rows: 1..4 },
-    WaveEntry { start_after: 35.0, count: 8, interval: 1.0, rows: 0..5 },
-    WaveEntry { start_after: 50.0, count: 10, interval: 0.8, rows: 0..5 },
+    WaveEntry { start_after: 5.0, count: 3, interval: 3.0, rows: 0..3 },
+    WaveEntry { start_after: 25.0, count: 5, interval: 2.5, rows: 1..4 },
+    WaveEntry { start_after: 50.0, count: 8, interval: 2.0, rows: 0..5 },
+    WaveEntry { start_after: 80.0, count: 10, interval: 1.5, rows: 0..5 },
 ];
 
 #[derive(Resource)]
