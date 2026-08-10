@@ -12,7 +12,7 @@ pub const GRID_ORIGIN_X: f32 = 195.0;
 pub const GRID_ORIGIN_Y: f32 = 80.0;
 
 /// 割草机初始所在的屏幕 X（草坪左侧，紧挨第一列）
-pub const MOWER_SCREEN_X: f32 = GRID_ORIGIN_X - 18.0;
+pub const MOWER_SCREEN_X: f32 = GRID_ORIGIN_X - 24.0;
 /// 房子碰撞箱中心 X(屏幕坐标)：矩形宽150, 故覆盖 [20,170], 左缘贴 Godot 最左 x=20
 /// 僵尸越过此线(进入房子区)即触发失败
 pub const DEFEAT_SCREEN_X: f32 = 95.0;

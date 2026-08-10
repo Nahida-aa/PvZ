@@ -63,6 +63,8 @@ fn spawn_mowers(mut commands: Commands, assets: Res<GameAssets>) {
         (assets.mower_exhaust.clone(), -4.44, 12.44, 10.0),
     ];
 
+    // 把割草机的屏幕 X (MOWER_SCREEN_X, 以视口左上角为原点, 向右为正)
+    // 转换成世界坐标 X (以画面中心为原点, 向右为正): 减去半屏宽 WIN_W/2。
     let mower_x = MOWER_SCREEN_X - crate::lawn::WIN_W / 2.0;
     for row in 0..GRID_ROWS {
         let grid_pos = GridPos::new(0, row);
