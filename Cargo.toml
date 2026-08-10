@@ -9,3 +9,4 @@ license = "MIT"
 
 [workspace.dependencies]
 bevy = { version = "0.19", features = ["jpeg"] }
+rand = "0.8"
