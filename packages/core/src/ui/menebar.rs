@@ -4,7 +4,7 @@ use bevy::ui::prelude::{BorderRect, NodeImageMode, SliceScaleMode, TextureSlicer
 use bevy::ui::ZIndex;
 
 use crate::assets::GameAssets;
-use crate::config::LevelDefinition;
+use crate::config::{AppConfig, LevelDefinition};
 use crate::debug::DebugBorder;
 use crate::plant::PlantKind;
 use crate::state::GameState;
@@ -77,10 +77,12 @@ fn setup_menubar(
     mut commands: Commands,
     assets: Res<GameAssets>,
     level: Res<LevelDefinition>,
+    config: Res<AppConfig>,
     mut cards: ResMut<PlantCards>,
 ) {
     let font = assets.font.clone();
     let sun_font = assets.sun_font.clone();
+    let mb = &config.menubar;
     // 背景宽度 = 阳光区(78) + 卡槽数 × 50 + 右边距(12)
     let bg_width = 78.0 + level.max_choosed_card_num as f32 * 50.0 + 12.0;
     commands
@@ -93,8 +95,8 @@ fn setup_menubar(
                 width: Val::Px(bg_width),
                 height: Val::Px(87.0),
                 position_type: PositionType::Absolute,
-                left: Val::Px(150.0),
-                top: Val::Px(0.0),
+                left: Val::Px(mb.bar_left),
+                top: Val::Px(mb.bar_top),
                 ..default()
             },
             ImageNode {
@@ -120,19 +122,21 @@ fn setup_menubar(
                 Text::new("150"),
                 TextFont {
                     font: FontSource::Handle(sun_font.clone()),
-                    font_size: FontSize::Px(20.0),
+                    font_size: FontSize::Px(16.0),
                     ..default()
                 },
                 TextColor(Color::srgb(0.0, 0.0, 0.0)),
+                TextLayout::justify(Justify::Center),
                 BackgroundColor(Color::NONE),
                 BorderColor::all(Color::NONE),
                 DebugBorder,
                 Node {
                     position_type: PositionType::Absolute,
-                    left: Val::Px(10.0),
-                    bottom: Val::Px(6.0),
-                    width: Val::Px(58.0),
-                    height: Val::Px(28.0),
+                    left: Val::Px(mb.sun_counter_left),
+                    bottom: Val::Px(mb.sun_counter_bottom),
+                    width: Val::Px(mb.sun_counter_width),
+                    height: Val::Px(mb.sun_counter_height),
+                    padding: UiRect::top(Val::Px(mb.sun_counter_padding_top)),
                     border: UiRect::all(Val::Px(1.0)),
                     justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
@@ -145,8 +149,8 @@ fn setup_menubar(
                 SunTarget,
                 Node {
                     position_type: PositionType::Absolute,
-                    left: Val::Px(39.0),
-                    top: Val::Px(26.0),
+                    left: Val::Px(mb.sun_target_left),
+                    top: Val::Px(mb.sun_target_top),
                     width: Val::Px(0.0),
                     height: Val::Px(0.0),
                     ..default()
@@ -173,9 +177,9 @@ fn setup_menubar(
                     Node {
                         position_type: PositionType::Absolute,
                         left: Val::Px(x),
-                        top: Val::Px(8.0),
-                        width: Val::Px(50.0),
-                        height: Val::Px(70.0),
+                        top: Val::Px(mb.card_slot_top),
+                        width: Val::Px(mb.card_slot_width),
+                        height: Val::Px(mb.card_slot_height),
                         justify_content: JustifyContent::End,
                         align_items: AlignItems::Center,
                         ..default()
@@ -200,8 +204,8 @@ fn setup_menubar(
                     parent.spawn((
                         ImageNode::new(assets.seed_packet_silhouette.clone()),
                         Node {
-                            width: Val::Px(50.0),
-                            height: Val::Px(70.0),
+                            width: Val::Px(mb.card_slot_width),
+                            height: Val::Px(mb.card_slot_height),
                             position_type: PositionType::Absolute,
                             left: Val::Px(0.0),
                             top: Val::Px(0.0),
@@ -216,8 +220,8 @@ fn setup_menubar(
                         parent.spawn((
                             ImageNode::new(image),
                             Node {
-                                width: Val::Px(50.0),
-                                height: Val::Px(70.0),
+                                width: Val::Px(mb.card_slot_width),
+                                height: Val::Px(mb.card_slot_height),
                                 ..default()
                             },
                         ));
@@ -227,8 +231,8 @@ fn setup_menubar(
                                 position_type: PositionType::Absolute,
                                 left: Val::Px(0.0),
                                 top: Val::Px(0.0),
-                                width: Val::Px(50.0),
-                                height: Val::Px(70.0),
+                                width: Val::Px(mb.card_slot_width),
+                                height: Val::Px(mb.card_slot_height),
                                 ..default()
                             },
                             BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.6)),
@@ -239,8 +243,8 @@ fn setup_menubar(
                                 position_type: PositionType::Absolute,
                                 left: Val::Px(0.0),
                                 top: Val::Px(0.0),
-                                width: Val::Px(50.0),
-                                height: Val::Px(70.0),
+                                width: Val::Px(mb.card_slot_width),
+                                height: Val::Px(mb.card_slot_height),
                                 ..default()
                             },
                             BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)),
@@ -253,10 +257,15 @@ fn setup_menubar(
                                 ..default()
                             },
                             TextColor(Color::srgb(0.0, 0.0, 0.0)),
+                            TextLayout::justify(Justify::Center),
+                            DebugBorder,
                             Node {
                                 position_type: PositionType::Absolute,
-                                bottom: Val::Px(2.0),
-                                right: Val::Px(18.0),
+                                bottom: Val::Px(mb.card_cost_bottom),
+                                left: Val::Px(mb.card_cost_left),
+                                width: Val::Px(mb.card_cost_width),
+                                padding: UiRect::top(Val::Px(mb.card_cost_padding_top)),
+                                border: UiRect::all(Val::Px(1.0)),
                                 ..default()
                             },
                         ));
@@ -317,6 +326,7 @@ fn sync_selected_overlay(
 
 fn cooldown_tick(
     time: Res<Time>,
+    config: Res<AppConfig>,
     mut cards: ResMut<PlantCards>,
     card_query: Query<(&PlantCard, &Children)>,
     mut overlay_query: Query<&mut BackgroundColor, With<CardCooldownOverlay>>,
@@ -331,7 +341,7 @@ fn cooldown_tick(
         } else {
             (remaining / card.cooldown_duration).clamp(0.0, 1.0)
         };
-        let overlay_height = progress * 70.0;
+        let overlay_height = progress * config.menubar.card_slot_height;
         for child in children.iter() {
             if let Ok(mut bg) = overlay_query.get_mut(child) {
                 bg.0.set_alpha(0.6);

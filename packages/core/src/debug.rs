@@ -28,11 +28,12 @@ impl Plugin for DebugPlugin {
 }
 
 fn apply_debug_borders(
-    mut query: Query<(&mut BorderColor, &mut BackgroundColor), Added<DebugBorder>>,
+    mut query: Query<(&mut BorderColor, &mut BackgroundColor, &mut Node), Added<DebugBorder>>,
 ) {
-    for (mut border, mut bg) in query.iter_mut() {
+    for (mut border, mut bg, mut node) in query.iter_mut() {
         *border = BorderColor::all(Color::srgb(1.0, 0.0, 0.0));
         *bg = BackgroundColor(Color::NONE);
+        node.border = UiRect::all(Val::Px(1.0));
     }
 }
 
