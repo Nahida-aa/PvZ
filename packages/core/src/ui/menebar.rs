@@ -79,6 +79,7 @@ fn setup_menubar(
     mut cards: ResMut<PlantCards>,
 ) {
     let font = assets.font.clone();
+    let sun_font = assets.sun_font.clone();
     // 背景宽度 = 阳光区(78) + 卡槽数 × 50 + 右边距(12)
     let bg_width = 78.0 + level.max_choosed_card_num as f32 * 50.0 + 12.0;
     commands
@@ -112,16 +113,16 @@ fn setup_menubar(
             crate::state::GameplayEntity,
         ))
         .with_children(|parent| {
-            // 阳光数量文字
+            // 阳光数量文字（对齐 Godot CurrSunValue: font_size=20, color=black）
             parent.spawn((
                 SunCounter,
                 Text::new("150"),
                 TextFont {
-                    font: FontSource::Handle(font.clone()),
-                    font_size: FontSize::Px(14.0),
+                    font: FontSource::Handle(sun_font.clone()),
+                    font_size: FontSize::Px(20.0),
                     ..default()
                 },
-                TextColor(Color::srgb(0.15, 0.15, 0.4)),
+                TextColor(Color::srgb(0.0, 0.0, 0.0)),
                 BackgroundColor(Color::NONE),
                 Node {
                     position_type: PositionType::Absolute,
