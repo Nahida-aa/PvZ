@@ -19,8 +19,6 @@ use bevy::prelude::*;
 
 use crate::state::GameState;
 
-pub use debug::draw_debug_colliders;
-
 pub struct CorePlugin;
 
 impl Plugin for CorePlugin {
@@ -32,6 +30,7 @@ impl Plugin for CorePlugin {
                     .chain(),
             )
             .add_plugins(assets::GameAssetsPlugin)
+            .add_plugins(debug::DebugPlugin)
             .add_plugins(lawn::LawnPlugin)
             .add_plugins(combat::CombatPlugin)
             .add_plugins(plant::PlantPlugin)
@@ -50,6 +49,6 @@ impl Plugin for CorePlugin {
                     .in_set(schedule::GameSet::Movement)
                     .run_if(in_state(GameState::Playing)),
             )
-            .add_systems(Update, draw_debug_colliders.in_set(schedule::GameSet::Debug));
+        ;
     }
 }
