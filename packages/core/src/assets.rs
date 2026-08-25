@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::config::PauseMenuConfig;
+
 /// 背景音乐实体标记。
 ///
 /// 附加到由 `start_music` 创建的音乐实体上，供 `pause_menu.rs`
@@ -12,6 +14,7 @@ pub struct BgmMusic;
 pub struct GameAssets {
     pub font: Handle<Font>,
     pub sun_font: Handle<Font>,
+    pub pause_menu_config: Handle<PauseMenuConfig>,
     pub peashooter_frames: Vec<Handle<Image>>,
     pub sunflower_frames: Vec<Handle<Image>>,
     pub normal_zombie_frames: Vec<Handle<Image>>,
@@ -55,6 +58,7 @@ impl Plugin for GameAssetsPlugin {
         let assets = GameAssets {
             font: server.load("SIMSUN.TTC"),
             sun_font: server.load("fonts/fzktpop.ttf"),
+            pause_menu_config: server.load("ui/pause_menu.ron"),
             peashooter_frames: (0..13)
                 .map(|i| server.load(format!("graphics/Plants/Peashooter/Peashooter_{i}.png")))
                 .collect(),

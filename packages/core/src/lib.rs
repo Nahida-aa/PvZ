@@ -23,7 +23,8 @@ pub struct CorePlugin;
 
 impl Plugin for CorePlugin {
     fn build(&self, app: &mut App) {
-        app.init_state::<state::GameState>()
+        app.init_asset::<config::PauseMenuConfig>()
+            .init_state::<state::GameState>()
             .configure_sets(
                 Update,
                 (schedule::GameSet::Spawn, schedule::GameSet::Movement, schedule::GameSet::Combat, schedule::GameSet::Cleanup)
@@ -41,8 +42,8 @@ impl Plugin for CorePlugin {
             .add_plugins(ui::menebar::GameMenuBarPlugin)
             .add_plugins(sun::SunPlugin)
             .add_plugins(lawn_mower::LawnMowerPlugin)
-            .add_plugins(ui::pause_menu::PauseMenuPlugin)
-            .add_plugins(ui::pause_menu::EndScreenPlugin)
+            .add_plugins(ui::menu::pause_menu::PauseMenuPlugin)
+            .add_plugins(ui::menu::end_screen::EndScreenPlugin)
             .add_systems(
                 Update,
                 animation::animate_sprites
