@@ -22,6 +22,10 @@ impl Default for SunBank {
 #[derive(Component)]
 struct SunCounter;
 
+/// 阳光收集目标点：阳光飘向菜单栏时的终点位置。
+#[derive(Component)]
+pub struct SunTarget;
+
 #[derive(Component)]
 pub struct PlantCard {
     pub kind: PlantKind,
@@ -92,25 +96,38 @@ fn setup_menubar(mut commands: Commands, assets: Res<GameAssets>) {
             crate::state::GameplayEntity,
         ))
         .with_children(|parent| {
-            // 阳光数量文字
+            // 阳光数量文字（对齐 Godot CurrSunValue: font_size=20, color=black）
             parent.spawn((
                 SunCounter,
                 Text::new("150"),
                 TextFont {
                     font: FontSource::Handle(font.clone()),
-                    font_size: FontSize::Px(14.0),
+                    font_size: FontSize::Px(20.0),
                     ..default()
                 },
-                TextColor(Color::srgb(0.15, 0.15, 0.4)),
+                TextColor(Color::srgb(0.0, 0.0, 0.0)),
                 BackgroundColor(Color::NONE),
                 Node {
                     position_type: PositionType::Absolute,
-                    left: Val::Px(35.0),
-                    bottom: Val::Px(6.0),
-                    width: Val::Px(35.0),
-                    height: Val::Px(17.0),
-                    justify_content: JustifyContent::End,
+                    left: Val::Px(0.0),
+                    top: Val::Px(51.0),
+                    width: Val::Px(78.0),
+                    height: Val::Px(28.0),
+                    justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
+                    ..default()
+                },
+            ));
+
+            // 阳光收集目标点（对齐 Godot Marker2DSunTarget: position=(-39, 26)）
+            parent.spawn((
+                SunTarget,
+                Node {
+                    position_type: PositionType::Absolute,
+                    left: Val::Px(39.0),
+                    top: Val::Px(26.0),
+                    width: Val::Px(0.0),
+                    height: Val::Px(0.0),
                     ..default()
                 },
             ));
@@ -146,6 +163,18 @@ fn setup_menubar(mut commands: Commands, assets: Res<GameAssets>) {
                         BackgroundColor(Color::NONE),
                     ))
                     .with_children(|parent| {
+                        // 占位图背景（对齐 Godot CardPlaceholder_ori）
+                        parent.spawn((
+                            ImageNode::new(assets.seed_packet_silhouette.clone()),
+                            Node {
+                                width: Val::Px(50.0),
+                                height: Val::Px(70.0),
+                                position_type: PositionType::Absolute,
+                                left: Val::Px(0.0),
+                                top: Val::Px(0.0),
+                                ..default()
+                            },
+                        ));
                         parent.spawn((
                             ImageNode::new(card_image.clone()),
                             Node {
@@ -221,6 +250,10 @@ fn handle_card_click(
             let usable = bank.amount >= card_data.kind.cost() && cards.ready(&card_data.kind);
             if usable {
                 selected.kind = Some(card_data.kind);
+                commands.spawn((
+                    AudioPlayer::<AudioSource>(assets.tap_sound.clone()),
+                    PlaybackSettings::DESPAWN,
+                ));
             } else {
                 commands.spawn((
                     AudioPlayer::<AudioSource>(assets.cannot_choose_sound.clone()),
