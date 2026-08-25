@@ -69,12 +69,13 @@ pub(crate) fn setup_pause_menu(
     assets: Res<GameAssets>,
     app_config: Res<AppConfig>,
     config: Res<PauseMenuConfig>,
+    server: Res<AssetServer>,
 ) {
     bevy::log::info!(
         "setup_pause_menu: options_button left={}",
         config.options_button.left
     );
-    build_pause_menu_ui(&mut commands, &assets, &app_config, &config);
+    build_pause_menu_ui(&mut commands, &assets, &app_config, &config, &server);
 }
 
 /// 构建暂停菜单 UI 的核心逻辑，供 setup 和热重载共用。
@@ -83,10 +84,12 @@ pub(crate) fn build_pause_menu_ui(
     assets: &GameAssets,
     app_config: &AppConfig,
     config: &PauseMenuConfig,
+    server: &AssetServer,
 ) {
     let font = assets.font.clone();
     let oc = &config.overlay;
     let pc = &config.panel;
+    let bg_handle: Handle<Image> = server.load(&pc.background_image);
 
     commands
         .spawn((
@@ -113,7 +116,7 @@ pub(crate) fn build_pause_menu_ui(
                         height: Val::Px(pc.height),
                         ..default()
                     },
-                    ImageNode::new(assets.pause_menu_bg.clone()),
+                    ImageNode::new(bg_handle),
                 ))
                 .with_children(|panel| {
                     // 音乐滑动条

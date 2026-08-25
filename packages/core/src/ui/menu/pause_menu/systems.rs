@@ -211,6 +211,7 @@ pub(crate) fn hot_reload_pause_menu(
     mut last_mtime: Local<Option<std::time::SystemTime>>,
     query: Query<Entity, With<PauseMenuRoot>>,
     children: Query<&Children>,
+    server: Res<AssetServer>,
 ) {
     // 通过可执行文件位置推算 assets 路径（与 main.rs 的 assets_dir() 一致）
     let Ok(exe) = std::env::current_exe() else { return };
@@ -256,5 +257,5 @@ pub(crate) fn hot_reload_pause_menu(
         "热重载完成 — options_button left={}",
         config.options_button.left
     );
-    super::build_pause_menu_ui(&mut commands, &assets, &app_config, &config);
+    super::build_pause_menu_ui(&mut commands, &assets, &app_config, &config, &server);
 }

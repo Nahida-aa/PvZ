@@ -1,6 +1,6 @@
 (
     overlay: (color: (0.0, 0.0, 0.0, 0.45), z_index: 1000),
-    panel: (width: 412.0, height: 483.0),
+    panel: (width: 412.0, height: 483.0, background_image: "graphics/Screen/option_dialog.png"),
 
     music_slider: (left: 97.0, top: 112.5, width: 218.0, height: 30.0),
     sound_slider: (left: 97.0, top: 152.5, width: 218.0, height: 30.0),
@@ -21,7 +21,7 @@
         bg_9slice_max: (16.0, 20.0),
     ),
     slider: (
-        label_font_size: 14.0,
+        label_font_size: 18.0,
         label_color: (0.38, 0.384, 0.502),
         label_outline_size: 2.0,
         label_shadow_offset: (-2.0, -2.0),

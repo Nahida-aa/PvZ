@@ -36,6 +36,8 @@ pub struct OverlayConfig {
 pub struct PanelConfig {
     pub width: f32,
     pub height: f32,
+    /// 背景图片路径（相对于 assets 目录）。
+    pub background_image: String,
 }
 
 #[derive(Deserialize, Clone, Debug)]
@@ -137,6 +139,7 @@ impl Default for PauseMenuConfig {
             panel: PanelConfig {
                 width: 412.0,
                 height: 483.0,
+                background_image: "graphics/Screen/option_dialog.png".into(),
             },
             music_slider: SliderElement {
                 left: 97.0,
