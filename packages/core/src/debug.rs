@@ -5,11 +5,34 @@ use crate::lawn_mower::LawnMower;
 use crate::schedule::GameSet;
 use crate::zombie::ZombieCollider;
 
+/// UI 调试边框标记。
+///
+/// 插入到任意 UI 节点后，系统自动添加红色1px边框+透明背景，方便查看布局区域。
+/// 调试完毕删除此组件即可恢复原样。
+///
+/// ```ignore
+/// parent.spawn((Node { ... }, DebugBorder));
+/// ```
+#[derive(Component)]
+pub struct DebugBorder;
+
 pub struct DebugPlugin;
 
 impl Plugin for DebugPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, draw_debug_colliders.in_set(GameSet::Debug));
+        app.add_systems(Update, (
+            apply_debug_borders,
+            draw_debug_colliders,
+        ).in_set(GameSet::Debug));
+    }
+}
+
+fn apply_debug_borders(
+    mut query: Query<(&mut BorderColor, &mut BackgroundColor), Added<DebugBorder>>,
+) {
+    for (mut border, mut bg) in query.iter_mut() {
+        *border = BorderColor::all(Color::srgb(1.0, 0.0, 0.0));
+        *bg = BackgroundColor(Color::NONE);
     }
 }
 

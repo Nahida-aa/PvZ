@@ -5,6 +5,7 @@ use bevy::ui::ZIndex;
 
 use crate::assets::GameAssets;
 use crate::config::LevelDefinition;
+use crate::debug::DebugBorder;
 use crate::plant::PlantKind;
 use crate::state::GameState;
 use crate::ui::plant_cards::PlantCards;
@@ -124,12 +125,15 @@ fn setup_menubar(
                 },
                 TextColor(Color::srgb(0.0, 0.0, 0.0)),
                 BackgroundColor(Color::NONE),
+                BorderColor::all(Color::NONE),
+                DebugBorder,
                 Node {
                     position_type: PositionType::Absolute,
                     left: Val::Px(10.0),
                     bottom: Val::Px(6.0),
                     width: Val::Px(58.0),
                     height: Val::Px(28.0),
+                    border: UiRect::all(Val::Px(1.0)),
                     justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
                     ..default()
