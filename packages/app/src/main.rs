@@ -10,7 +10,7 @@ use pvz_core::level::LevelDefinition;
 use pvz_core::ui::menu::pause_menu::config::PauseMenuConfig;
 
 /// 默认关卡文件名（相对于 assets 目录）。
-const DEFAULT_LEVEL: &str = "levels/level_01.ron";
+const DEFAULT_LEVEL: &str = "levels/test_day.ron";
 /// 应用配置文件名（相对于 assets 目录）。
 const APP_CONFIG: &str = "app.ron";
 /// 暂停菜单布局文件名（相对于 assets 目录）。
