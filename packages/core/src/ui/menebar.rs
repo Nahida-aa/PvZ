@@ -91,7 +91,7 @@ fn setup_menubar(
                 width: Val::Px(bg_width),
                 height: Val::Px(87.0),
                 position_type: PositionType::Absolute,
-                left: Val::Px(0.0),
+                left: Val::Px(150.0),
                 top: Val::Px(0.0),
                 ..default()
             },
