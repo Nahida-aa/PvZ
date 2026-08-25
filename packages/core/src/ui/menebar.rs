@@ -79,13 +79,16 @@ fn setup_menubar(
     mut cards: ResMut<PlantCards>,
 ) {
     let font = assets.font.clone();
+    // 背景宽度 = 阳光区(78) + 卡槽数 × 50 + 右边距(12)
+    let bg_width = 78.0 + level.max_choosed_card_num as f32 * 50.0 + 12.0;
     commands
         .spawn((
-            // 顶部菜单栏背景：SeedBank.png (446×87)
+            // 顶部菜单栏背景：SeedBank.png (原始 446×87)
             // 对齐 Godot CardSlotBattle 的 StyleBoxTexture 九宫格切分：
             // texture_margin = (78, 10, 12, 10)
+            // 中间区域根据卡槽数动态拉伸
             Node {
-                width: Val::Px(446.0),
+                width: Val::Px(bg_width),
                 height: Val::Px(87.0),
                 position_type: PositionType::Absolute,
                 left: Val::Px(0.0),
