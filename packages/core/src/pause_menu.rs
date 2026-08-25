@@ -5,6 +5,7 @@ use crate::assets::GameAssets;
 use crate::components::menebar::SunBank;
 use crate::components::plant_cards::PlantCards;
 use crate::input::SelectedPlant;
+use crate::config::LevelDefinition;
 use crate::lawn::LawnOccupancy;
 use crate::level::LevelRuntime;
 use crate::state::{GameState, GameplayEntity};
@@ -182,6 +183,7 @@ fn setup_pause_menu(mut commands: Commands, assets: Res<GameAssets>) {
         });
 }
 
+#[allow(clippy::too_many_arguments)]
 fn handle_buttons(
     interaction: Query<(&Interaction, Entity), (Changed<Interaction>, With<Button>)>,
     continue_buttons: Query<Entity, With<ContinueButton>>,
@@ -194,6 +196,7 @@ fn handle_buttons(
     mut cards: ResMut<PlantCards>,
     mut runtime: ResMut<LevelRuntime>,
     mut occupancy: ResMut<LawnOccupancy>,
+    level: Res<LevelDefinition>,
     mut next: ResMut<NextState<GameState>>,
     mut commands: Commands,
 ) {
@@ -214,7 +217,7 @@ fn handle_buttons(
             *sun = SunBank::default();
             *cards = PlantCards::default();
             *runtime = LevelRuntime::default();
-            *occupancy = LawnOccupancy::default();
+            *occupancy = LawnOccupancy::from_level(&level);
             next.set(GameState::Playing);
         }
     }
@@ -332,6 +335,7 @@ fn setup_end_screen(
         });
 }
 
+#[allow(clippy::too_many_arguments)]
 fn handle_end_screen(
     interaction: Query<(&Interaction, Entity), (Changed<Interaction>, With<EndScreenButton>)>,
     gameplay: Query<Entity, With<GameplayEntity>>,
@@ -341,6 +345,7 @@ fn handle_end_screen(
     mut cards: ResMut<PlantCards>,
     mut runtime: ResMut<LevelRuntime>,
     mut occupancy: ResMut<LawnOccupancy>,
+    level: Res<LevelDefinition>,
     mut next: ResMut<NextState<GameState>>,
     mut commands: Commands,
 ) {
@@ -357,7 +362,7 @@ fn handle_end_screen(
         *sun = SunBank::default();
         *cards = PlantCards::default();
         *runtime = LevelRuntime::default();
-        *occupancy = LawnOccupancy::default();
+        *occupancy = LawnOccupancy::from_level(&level);
         next.set(GameState::Playing);
     }
 }

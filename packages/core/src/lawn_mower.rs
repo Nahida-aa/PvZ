@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 
 use crate::assets::GameAssets;
-use crate::lawn::{DEFEAT_SCREEN_X, GRID_ROWS, GridPos, MOWER_SCREEN_X, screen_to_world};
+use crate::config::{AppConfig, LevelDefinition};
+use crate::lawn::{GridPos, screen_to_world};
 use crate::schedule::GameSet;
 use crate::state::{GameState, GameplayEntity};
 use crate::zombie::Zombie;
@@ -11,17 +12,6 @@ pub struct LawnMower {
     pub row: u32,
     pub running: bool,
 }
-
-const MOWER_SPEED: f32 = 9.0;
-// 割草机碰撞箱(对应 Godot RectangleShape2D 33.5x48)的半宽，用于触发检测
-pub const TRIGGER_RANGE: f32 = 17.0;
-const KILL_RANGE: f32 = 50.0;
-
-// 割草机碰撞箱尺寸(对应 Godot RectangleShape2D 33.5x48)
-pub const MOWER_HIT_W: f32 = 33.5;
-pub const MOWER_HIT_H: f32 = 48.0;
-// 碰撞箱相对割草机根部(脚底)的 y 偏移(Godot Area2D 在 (0,-17))
-pub const MOWER_HIT_Y_OFFSET: f32 = 17.0;
 
 pub struct LawnMowerPlugin;
 
@@ -37,7 +27,12 @@ impl Plugin for LawnMowerPlugin {
     }
 }
 
-fn spawn_mowers(mut commands: Commands, assets: Res<GameAssets>) {
+fn spawn_mowers(
+    mut commands: Commands,
+    assets: Res<GameAssets>,
+    app: Res<AppConfig>,
+    level: Res<LevelDefinition>,
+) {
     // 部件布局对应 Godot lawn_mower.tscn。
     // Godot 变换链: 根 -> Body(position (-39,-55), scale 0.8) -> 部件(position 相对 Body, scale 0.8)
     // 部件在 Godot 中 centered=false, 故 position 为左上角; 转 Bevy 中心锚点需补 size*0.8/2。
@@ -63,12 +58,12 @@ fn spawn_mowers(mut commands: Commands, assets: Res<GameAssets>) {
         (assets.mower_exhaust.clone(), -4.44, 12.44, 10.0),
     ];
 
-    // 把割草机的屏幕 X (MOWER_SCREEN_X, 以视口左上角为原点, 向右为正)
-    // 转换成世界坐标 X (以画面中心为原点, 向右为正): 减去半屏宽 WIN_W/2。
-    let mower_x = MOWER_SCREEN_X - crate::lawn::WIN_W / 2.0;
-    for row in 0..GRID_ROWS {
+    // 把割草机的屏幕 X (以视口左上角为原点, 向右为正)
+    // 转换成世界坐标 X (以画面中心为原点, 向右为正): 减去半屏宽 win_w/2。
+    let mower_x = level.mower.screen_x - app.win_w() / 2.0;
+    for row in 0..level.grid.rows {
         let grid_pos = GridPos::new(0, row);
-        let ground_y = grid_pos.world_bottom().y;
+        let ground_y = grid_pos.world_bottom(&level, &app).y;
         commands
             .spawn((
                 LawnMower {
@@ -96,15 +91,18 @@ fn mower_detect(
     mut mowers: Query<(Entity, &mut LawnMower, &Transform)>,
     zombies: Query<(&Transform, &GridPos), (With<Zombie>, Without<LawnMower>)>,
     assets: Res<GameAssets>,
+    level: Res<LevelDefinition>,
     mut commands: Commands,
 ) {
+    let trigger_range = level.mower.trigger_range;
     for (mower_entity, mut mower, mt) in mowers.iter_mut() {
         if mower.running {
             continue;
         }
         let _ = mower_entity;
         for (zt, zpos) in zombies.iter() {
-            if zpos.row == mower.row && (zt.translation.x - mt.translation.x).abs() < TRIGGER_RANGE
+            if zpos.row == mower.row
+                && (zt.translation.x - mt.translation.x).abs() < trigger_range
             {
                 mower.running = true;
                 commands.spawn((
@@ -121,14 +119,17 @@ fn mower_run(
     mut commands: Commands,
     mut mowers: Query<(Entity, &mut LawnMower, &mut Transform)>,
     zombies: Query<(Entity, &Transform, &GridPos), (With<Zombie>, Without<LawnMower>)>,
+    level: Res<LevelDefinition>,
 ) {
+    let speed = level.mower.speed;
+    let kill_range = level.mower.kill_range;
     for (mower_entity, mower, mut mt) in mowers.iter_mut() {
         if !mower.running {
             continue;
         }
-        mt.translation.x += MOWER_SPEED;
+        mt.translation.x += speed;
         for (z_entity, zt, zpos) in zombies.iter() {
-            if zpos.row == mower.row && zt.translation.x > mt.translation.x - KILL_RANGE {
+            if zpos.row == mower.row && zt.translation.x > mt.translation.x - kill_range {
                 commands.entity(z_entity).despawn();
             }
         }
@@ -140,9 +141,11 @@ fn mower_run(
 
 fn check_defeat(
     zombies: Query<&Transform, (With<Zombie>, Without<LawnMower>)>,
+    level: Res<LevelDefinition>,
+    app: Res<AppConfig>,
     mut next: ResMut<NextState<GameState>>,
 ) {
-    let defeat_world_x = screen_to_world(DEFEAT_SCREEN_X, 0.0).x;
+    let defeat_world_x = screen_to_world(level.defeat_screen_x, 0.0, &app).x;
     for zt in zombies.iter() {
         if zt.translation.x < defeat_world_x {
             next.set(GameState::Defeat);

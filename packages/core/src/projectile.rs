@@ -3,7 +3,7 @@ use bevy::prelude::*;
 
 use crate::assets::GameAssets;
 use crate::combat::ApplyDamage;
-use crate::lawn::{CELL_WIDTH, WIN_W};
+use crate::config::{AppConfig, LevelDefinition};
 use crate::schedule::GameSet;
 use crate::state::GameState;
 use crate::zombie::ZombieCollider;
@@ -137,8 +137,10 @@ fn hit_anim_tick(
 fn cleanup_offscreen_projectiles(
     mut commands: Commands,
     projectiles: Query<(Entity, &Transform), With<Projectile>>,
+    app: Res<AppConfig>,
+    level: Res<LevelDefinition>,
 ) {
-    let threshold = WIN_W / 2.0 + CELL_WIDTH;
+    let threshold = app.win_w() / 2.0 + level.grid.cell_w;
     for (entity, transform) in projectiles.iter() {
         if transform.translation.x > threshold {
             commands.entity(entity).despawn();

@@ -4,7 +4,8 @@ use rand::Rng;
 
 use crate::assets::GameAssets;
 use crate::components::menebar::SunBank;
-use crate::lawn::{GRID_COLS, GRID_ROWS, GridPos, WIN_W, screen_to_world};
+use crate::config::{AppConfig, LevelDefinition};
+use crate::lawn::{GridPos, screen_to_world};
 use crate::schedule::GameSet;
 use crate::state::GameState;
 
@@ -58,20 +59,23 @@ fn system_sun_tick(
     mut timers: Query<&mut SystemSunTimer>,
     mut commands: Commands,
     assets: Res<GameAssets>,
+    app: Res<AppConfig>,
+    level: Res<LevelDefinition>,
 ) {
     for mut timer_entity in timers.iter_mut() {
         timer_entity.timer.tick(time.delta());
         if timer_entity.timer.just_finished() {
             let mut rng = rand::thread_rng();
-            let row = rng.gen_range(0..GRID_ROWS as usize);
-            let col = rng.gen_range(0..GRID_COLS as usize);
+            let row = rng.gen_range(0..level.grid.rows as usize);
+            let col = rng.gen_range(0..level.grid.cols as usize);
             let grid_pos = GridPos::new(col as u32, row as u32);
-            let dest = grid_pos.world_bottom();
+            let dest = grid_pos.world_bottom(&level, &app);
 
             let mut rng = rand::thread_rng();
-            let start_screen_x = WIN_W / 2.0 - (WIN_W / 2.0 - 100.0) + rng.gen_range(0.0..200.0);
+            let start_screen_x =
+                app.win_w() / 2.0 - (app.win_w() / 2.0 - 100.0) + rng.gen_range(0.0..200.0);
             let start_screen_y = 10.0;
-            let start_world = screen_to_world(start_screen_x, start_screen_y);
+            let start_world = screen_to_world(start_screen_x, start_screen_y, &app);
 
             let frames = assets.sun_frames.clone();
             commands.spawn((

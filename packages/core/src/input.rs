@@ -4,6 +4,7 @@ use bevy::ui::ZIndex;
 use bevy::window::PrimaryWindow;
 
 use crate::assets::GameAssets;
+use crate::config::{AppConfig, LevelDefinition};
 use crate::lawn::GridPos;
 use crate::plant::{PlantKind, SpawnPlant};
 use crate::state::GameState;
@@ -54,10 +55,13 @@ fn plant_texture(kind: PlantKind, assets: &GameAssets) -> Handle<Image> {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn update_ghost(
     mut commands: Commands,
     selected: Res<SelectedPlant>,
     assets: Res<GameAssets>,
+    app: Res<AppConfig>,
+    level: Res<LevelDefinition>,
     window: Query<&Window, With<PrimaryWindow>>,
     camera: Query<(&Camera, &GlobalTransform)>,
     ghost: Query<(Entity, &PlantGhost)>,
@@ -85,8 +89,8 @@ fn update_ghost(
             });
 
             let snapped = world_pos
-                .and_then(|p| GridPos::from_world(p))
-                .map(|g| g.world_bottom());
+                .and_then(|p| GridPos::from_world(p, &level, &app))
+                .map(|g| g.world_bottom(&level, &app));
 
             // 跟手影子（UI 层，满透明，不被工具栏遮挡）
             match (ghost.single(), cursor) {
@@ -148,6 +152,7 @@ fn update_ghost(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn handle_click_to_place(
     mouse: Res<ButtonInput<MouseButton>>,
     window: Query<&Window, With<PrimaryWindow>>,
@@ -156,6 +161,8 @@ fn handle_click_to_place(
     mut selected: ResMut<SelectedPlant>,
     mut bank: ResMut<SunBank>,
     mut cards: ResMut<PlantCards>,
+    app: Res<AppConfig>,
+    level: Res<LevelDefinition>,
 ) {
     if mouse.just_pressed(MouseButton::Right) {
         selected.kind = None;
@@ -185,7 +192,7 @@ fn handle_click_to_place(
     let Ok(world_pos) = camera.viewport_to_world_2d(camera_transform, cursor) else {
         return;
     };
-    let Some(grid_pos) = GridPos::from_world(world_pos) else {
+    let Some(grid_pos) = GridPos::from_world(world_pos, &level, &app) else {
         return;
     };
     bank.amount -= plant.cost();

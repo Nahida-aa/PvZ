@@ -1,31 +1,15 @@
 use bevy::prelude::*;
 
 use crate::assets::GameAssets;
+use crate::config::{AppConfig, LevelDefinition};
 use crate::state::GameState;
 
-pub const GRID_COLS: u32 = 9;
-pub const GRID_ROWS: u32 = 5;
-pub const CELL_WIDTH: f32 = 80.0;
-pub const CELL_HEIGHT: f32 = 99.0;
-pub const GRID_ORIGIN_X: f32 = 195.0;
-/// 草坪网格在屏幕坐标系中的 Y 轴起点
-pub const GRID_ORIGIN_Y: f32 = 80.0;
-
-/// 割草机初始所在的屏幕 X（草坪左侧，紧挨第一列）
-pub const MOWER_SCREEN_X: f32 = GRID_ORIGIN_X - 24.0;
-/// 房子碰撞箱中心 X(屏幕坐标)：矩形宽150, 故覆盖 [20,170], 左缘贴 Godot 最左 x=20
-/// 僵尸越过此线(进入房子区)即触发失败
-pub const DEFEAT_SCREEN_X: f32 = 95.0;
-
-pub const WIN_W: f32 = 1066.0;
-pub const WIN_H: f32 = 600.0;
-
-pub fn screen_to_world(sx: f32, sy: f32) -> Vec2 {
-    Vec2::new(sx - WIN_W / 2.0, WIN_H / 2.0 - sy)
+pub fn screen_to_world(sx: f32, sy: f32, app: &AppConfig) -> Vec2 {
+    Vec2::new(sx - app.win_w() / 2.0, app.win_h() / 2.0 - sy)
 }
 
-pub fn world_to_screen(pos: Vec2) -> Vec2 {
-    Vec2::new(pos.x + WIN_W / 2.0, WIN_H / 2.0 - pos.y)
+pub fn world_to_screen(pos: Vec2, app: &AppConfig) -> Vec2 {
+    Vec2::new(pos.x + app.win_w() / 2.0, app.win_h() / 2.0 - pos.y)
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
@@ -39,26 +23,29 @@ impl GridPos {
         Self { col, row }
     }
 
-    pub fn world_pos(&self) -> Vec2 {
-        let sx = GRID_ORIGIN_X + self.col as f32 * CELL_WIDTH + CELL_WIDTH / 2.0;
-        let sy = GRID_ORIGIN_Y + self.row as f32 * CELL_HEIGHT + CELL_HEIGHT / 2.0;
-        screen_to_world(sx, sy)
+    pub fn world_pos(&self, level: &LevelDefinition, app: &AppConfig) -> Vec2 {
+        let g = &level.grid;
+        let sx = g.origin_x + self.col as f32 * g.cell_w + g.cell_w / 2.0;
+        let sy = g.origin_y + self.row as f32 * g.cell_h + g.cell_h / 2.0;
+        screen_to_world(sx, sy, app)
     }
 
-    pub fn world_bottom(&self) -> Vec2 {
-        let sx = GRID_ORIGIN_X + self.col as f32 * CELL_WIDTH + CELL_WIDTH / 2.0;
-        let sy = GRID_ORIGIN_Y + self.row as f32 * CELL_HEIGHT + CELL_HEIGHT * 0.81;
-        screen_to_world(sx, sy)
+    pub fn world_bottom(&self, level: &LevelDefinition, app: &AppConfig) -> Vec2 {
+        let g = &level.grid;
+        let sx = g.origin_x + self.col as f32 * g.cell_w + g.cell_w / 2.0;
+        let sy = g.origin_y + self.row as f32 * g.cell_h + g.cell_h * 0.81;
+        screen_to_world(sx, sy, app)
     }
 
-    pub fn from_world(pos: Vec2) -> Option<Self> {
-        let sp = world_to_screen(pos);
-        if sp.y < GRID_ORIGIN_Y || sp.x < GRID_ORIGIN_X {
+    pub fn from_world(pos: Vec2, level: &LevelDefinition, app: &AppConfig) -> Option<Self> {
+        let g = &level.grid;
+        let sp = world_to_screen(pos, app);
+        if sp.y < g.origin_y || sp.x < g.origin_x {
             return None;
         }
-        let col = ((sp.x - GRID_ORIGIN_X) / CELL_WIDTH) as i32;
-        let row = ((sp.y - GRID_ORIGIN_Y) / CELL_HEIGHT) as i32;
-        if col >= 0 && col < GRID_COLS as i32 && row >= 0 && row < GRID_ROWS as i32 {
+        let col = ((sp.x - g.origin_x) / g.cell_w) as i32;
+        let row = ((sp.y - g.origin_y) / g.cell_h) as i32;
+        if col >= 0 && col < g.cols as i32 && row >= 0 && row < g.rows as i32 {
             Some(Self::new(col as u32, row as u32))
         } else {
             None
@@ -68,35 +55,48 @@ impl GridPos {
 
 #[derive(Resource, Debug)]
 pub struct LawnOccupancy {
-    cells: [[bool; GRID_ROWS as usize]; GRID_COLS as usize],
-}
-
-impl Default for LawnOccupancy {
-    fn default() -> Self {
-        Self {
-            cells: [[false; GRID_ROWS as usize]; GRID_COLS as usize],
-        }
-    }
+    cells: Vec<Vec<bool>>,
 }
 
 impl LawnOccupancy {
+    pub fn from_level(level: &LevelDefinition) -> Self {
+        let g = &level.grid;
+        Self {
+            cells: vec![vec![false; g.rows as usize]; g.cols as usize],
+        }
+    }
+
     pub fn is_free(&self, pos: GridPos) -> bool {
-        if pos.col >= GRID_COLS || pos.row >= GRID_ROWS {
+        if pos.col as usize >= self.cells.len() {
             return false;
         }
-        !self.cells[pos.col as usize][pos.row as usize]
+        let col = &self.cells[pos.col as usize];
+        if pos.row as usize >= col.len() {
+            return false;
+        }
+        !col[pos.row as usize]
     }
 
     pub fn occupy(&mut self, pos: GridPos) {
-        if pos.col < GRID_COLS && pos.row < GRID_ROWS {
-            self.cells[pos.col as usize][pos.row as usize] = true;
+        if pos.col as usize >= self.cells.len() {
+            return;
         }
+        let col = &mut self.cells[pos.col as usize];
+        if pos.row as usize >= col.len() {
+            return;
+        }
+        col[pos.row as usize] = true;
     }
 
     pub fn free(&mut self, pos: GridPos) {
-        if pos.col < GRID_COLS && pos.row < GRID_ROWS {
-            self.cells[pos.col as usize][pos.row as usize] = false;
+        if pos.col as usize >= self.cells.len() {
+            return;
         }
+        let col = &mut self.cells[pos.col as usize];
+        if pos.row as usize >= col.len() {
+            return;
+        }
+        col[pos.row as usize] = false;
     }
 }
 
@@ -104,45 +104,54 @@ pub struct LawnPlugin;
 
 impl Plugin for LawnPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(LawnOccupancy::default())
-            .add_systems(OnEnter(GameState::Playing), draw_background);
+        app.add_systems(
+            OnEnter(GameState::Playing),
+            (setup_lawn_occupancy, draw_background),
+        );
     }
 }
 
-fn draw_background(mut commands: Commands, assets: Res<GameAssets>) {
-    const BG_IMG_W: f32 = 1400.0;
-    const BG_IMG_H: f32 = 600.0;
-    // 背景视口对齐偏移：值越大背景越靠左，越小越靠右。
-    // 用来微调背景图在画面中的水平位置（右移背景就调小它）。
-    const BG_VP_X: f32 = 60.0;
+/// 进入关卡时用当前关卡布局初始化草坪占用表。
+fn setup_lawn_occupancy(mut commands: Commands, level: Res<LevelDefinition>) {
+    commands.insert_resource(LawnOccupancy::from_level(&level));
+}
+
+fn draw_background(
+    mut commands: Commands,
+    assets: Res<GameAssets>,
+    app: Res<AppConfig>,
+    level: Res<LevelDefinition>,
+) {
+    let bg = &app.bg;
 
     // ox: 背景图左上角的世界坐标 X。
-    // 公式把"背景图中心对齐到 (BG_VP_X, 0) 的屏幕点"换算成世界坐标。
-    // BG_VP_X 变小 -> ox 变大 -> 背景整体右移。
-    let ox = -WIN_W / 2.0 - (BG_VP_X - BG_IMG_W / 2.0);
-    // oy: 背景图左上角的世界坐标 Y（背景高 600 与窗口同高，故垂直居中）。
-    let oy = -WIN_H / 2.0 + BG_IMG_H / 2.0;
+    // 公式把"背景图中心对齐到 (viewport_x, 0) 的屏幕点"换算成世界坐标。
+    // viewport_x 变小 -> ox 变大 -> 背景整体右移。
+    let ox = -app.win_w() / 2.0 - (bg.viewport_x - bg.img_w / 2.0);
+    // oy: 背景图左上角的世界坐标 Y（背景高与窗口同高，故垂直居中）。
+    let oy = -app.win_h() / 2.0 + bg.img_h / 2.0;
     commands.spawn((
         Sprite::from_image(assets.background.clone()),
         Transform::from_translation(Vec3::new(ox, oy, -10.0)),
         crate::state::GameplayEntity,
     ));
 
-    let grid_w = GRID_COLS as f32 * CELL_WIDTH;
-    let grid_h = GRID_ROWS as f32 * CELL_HEIGHT;
+    let g = &level.grid;
+    let grid_w = g.cols as f32 * g.cell_w;
+    let grid_h = g.rows as f32 * g.cell_h;
     let color = Color::srgba(0.0, 1.0, 0.0, 0.3);
-    for col in 0..=GRID_COLS {
-        let sx = GRID_ORIGIN_X + col as f32 * CELL_WIDTH;
-        let center = screen_to_world(sx, GRID_ORIGIN_Y + grid_h / 2.0);
+    for col in 0..=g.cols {
+        let sx = g.origin_x + col as f32 * g.cell_w;
+        let center = screen_to_world(sx, g.origin_y + grid_h / 2.0, &app);
         commands.spawn((
             Sprite::from_color(color, Vec2::new(1.0, grid_h)),
             Transform::from_translation(center.extend(5.0)),
             crate::state::GameplayEntity,
         ));
     }
-    for row in 0..=GRID_ROWS {
-        let sy = GRID_ORIGIN_Y + row as f32 * CELL_HEIGHT;
-        let center = screen_to_world(GRID_ORIGIN_X + grid_w / 2.0, sy);
+    for row in 0..=g.rows {
+        let sy = g.origin_y + row as f32 * g.cell_h;
+        let center = screen_to_world(g.origin_x + grid_w / 2.0, sy, &app);
         commands.spawn((
             Sprite::from_color(color, Vec2::new(grid_w, 1.0)),
             Transform::from_translation(center.extend(5.0)),
@@ -150,3 +159,4 @@ fn draw_background(mut commands: Commands, assets: Res<GameAssets>) {
         ));
     }
 }
+

@@ -4,7 +4,8 @@ use bevy::sprite::Anchor;
 use crate::animation::SpriteAnimation;
 use crate::assets::GameAssets;
 use crate::combat::{DeathCleanup, Health, Team};
-use crate::lawn::{CELL_WIDTH, GridPos, WIN_W};
+use crate::config::{AppConfig, LevelDefinition};
+use crate::lawn::GridPos;
 use crate::schedule::GameSet;
 use crate::state::GameState;
 
@@ -56,10 +57,12 @@ fn handle_spawn_zombie(
     mut events: MessageReader<SpawnZombie>,
     mut commands: Commands,
     assets: Res<GameAssets>,
+    app: Res<AppConfig>,
+    level: Res<LevelDefinition>,
 ) {
     for ev in events.read() {
-        let grid_pos = GridPos::new(crate::lawn::GRID_COLS - 1, ev.row);
-        let start_x = 830.0 - WIN_W / 2.0;
+        let grid_pos = GridPos::new(level.grid.cols - 1, ev.row);
+        let start_x = 830.0 - app.win_w() / 2.0;
         let frames = assets.normal_zombie_frames.clone();
         commands.spawn((
             Zombie {
@@ -92,7 +95,7 @@ fn handle_spawn_zombie(
                 timer: 0.0,
                 current: 0,
             },
-            Transform::from_translation(Vec3::new(start_x, grid_pos.world_bottom().y, 2.0)),
+            Transform::from_translation(Vec3::new(start_x, grid_pos.world_bottom(&level, &app).y, 2.0)),
             Visibility::default(),
         ));
     }
@@ -107,8 +110,10 @@ fn zombie_walk(mut query: Query<(&mut Transform, &Walker)>) {
 fn cleanup_offscreen_zombies(
     mut commands: Commands,
     zombies: Query<(Entity, &Transform), With<Zombie>>,
+    app: Res<AppConfig>,
+    level: Res<LevelDefinition>,
 ) {
-    let threshold = -WIN_W / 2.0 - CELL_WIDTH;
+    let threshold = -app.win_w() / 2.0 - level.grid.cell_w;
     for (entity, transform) in zombies.iter() {
         if transform.translation.x < threshold {
             commands.entity(entity).despawn();
