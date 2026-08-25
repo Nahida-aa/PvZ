@@ -1,5 +1,10 @@
 use bevy::prelude::*;
 
+/// 背景音乐实体标记。
+///
+/// 附加到由 `start_music` 创建的音乐实体上，供 `pause_menu.rs`
+/// 中的 `pause_bgm` / `resume_bgm` 系统通过 `Query<&AudioSink, With<BgmMusic>>`
+/// 查询并控制播放状态。
 #[derive(Component)]
 pub struct BgmMusic;
 

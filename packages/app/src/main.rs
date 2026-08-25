@@ -7,9 +7,16 @@ use bevy::window::WindowResolution;
 use pvz_core::assets::BgmMusic;
 use pvz_core::config::{AppConfig, LevelDefinition};
 
+/// 默认关卡文件名（相对于 assets 目录）。
 const DEFAULT_LEVEL: &str = "levels/level_01.ron";
+/// 应用配置文件名（相对于 assets 目录）。
 const APP_CONFIG: &str = "app.ron";
 
+/// 获取 assets 目录的绝对路径。
+///
+/// 基于可执行文件位置推算：binary 位于 `target/{profile}/pvz-app`，
+/// 往上两级回到 workspace 根目录，再进入 `assets/`。
+/// 这样无论从哪个目录运行都能正确找到资源。
 fn assets_dir() -> PathBuf {
     let exe = std::env::current_exe().expect("无法获取可执行文件路径");
     exe.parent().unwrap().join("../../assets")
@@ -45,7 +52,9 @@ fn main() {
         }).set(LogPlugin {
             filter: "info,icu_segmenter=error".into(),
             ..default()
-        }).set(AssetPlugin {
+        })        // Bevy AssetPlugin: 指定资源目录相对于 CWD 的路径。
+        // 路径 "../../assets" 与 assets_dir() 保持一致，指向 workspace 根目录的 assets/。
+        .set(AssetPlugin {
             file_path: "../../assets".into(),
             ..default()
         }))
@@ -82,6 +91,10 @@ fn setup_camera(mut commands: Commands) {
     commands.spawn((Camera2d, Transform::default(), GlobalTransform::default()));
 }
 
+/// 启动背景音乐，循环播放。
+///
+/// 音乐实体附加 `BgmMusic` 标记组件，供 `pause_menu.rs` 中的
+/// `pause_bgm` / `resume_bgm` 系统查询 `AudioSink` 进行暂停/恢复控制。
 fn start_music(mut commands: Commands, server: Res<AssetServer>) {
     commands.spawn((
         BgmMusic,
