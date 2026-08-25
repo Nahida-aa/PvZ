@@ -17,7 +17,20 @@ pub struct AppConfig {
     pub window: (f32, f32),
     /// 背景图摆位。
     pub bg: BgConfig,
+    /// 主音量 (0.0 ~ 1.0)。
+    #[serde(default = "default_master_volume")]
+    pub master_volume: f32,
+    /// 背景音乐音量 (0.0 ~ 1.0)。
+    #[serde(default = "default_bgm_volume")]
+    pub bgm_volume: f32,
+    /// 音效音量 (0.0 ~ 1.0)。
+    #[serde(default = "default_sfx_volume")]
+    pub sfx_volume: f32,
 }
+
+fn default_master_volume() -> f32 { 1.0 }
+fn default_bgm_volume() -> f32 { 0.5 }
+fn default_sfx_volume() -> f32 { 0.5 }
 
 /// 背景图布局参数。
 #[derive(Deserialize, Clone, Copy, Debug)]
@@ -58,6 +71,9 @@ impl Default for AppConfig {
                 img_h: 600.0,
                 viewport_x: 60.0,
             },
+            master_volume: 1.0,
+            bgm_volume: 0.5,
+            sfx_volume: 0.5,
         }
     }
 }

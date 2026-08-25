@@ -23,7 +23,7 @@ pub struct GameAssets {
     pub bullet_explode_sound: Handle<AudioSource>,
     pub cannot_choose_sound: Handle<AudioSource>,
     pub background: Handle<Image>,
-    pub chooser_bg: Handle<Image>,
+    pub seed_bank: Handle<Image>,
     pub pause_menu_bg: Handle<Image>,
     pub pause_return_button: Handle<Image>,
     pub small_button_bg: Handle<Image>,
@@ -71,7 +71,7 @@ impl Plugin for GameAssetsPlugin {
             bullet_explode_sound: server.load("sound/bulletExplode.ogg"),
             cannot_choose_sound: server.load("sound/cannotChooseWarning.ogg"),
             background: server.load("graphics/Items/Background/Background_0.jpg"),
-            chooser_bg: server.load("graphics/Screen/ChooserBackground.png"),
+            seed_bank: server.load("image/ui/ui_card/SeedBank.png"),
             pause_menu_bg: server.load("graphics/Screen/option_dialog.png"),
             pause_return_button: server.load("graphics/Screen/btn_dialog_back_2.png"),
             small_button_bg: server

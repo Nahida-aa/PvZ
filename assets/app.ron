@@ -1,4 +1,7 @@
 (
     window: (1066.0, 600.0),
     bg: (img_w: 1400.0, img_h: 600.0, viewport_x: 60.0),
+    master_volume: 1.0,
+    bgm_volume: 0.5,
+    sfx_volume: 0.5,
 )

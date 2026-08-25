@@ -34,8 +34,8 @@ use bevy::ui::ZIndex;
 use bevy::ui::prelude::{BorderColor, BorderRect, NodeImageMode, SliceScaleMode, TextureSlicer, UiRect};
 
 use crate::assets::{BgmMusic, GameAssets};
-use crate::components::menebar::SunBank;
-use crate::components::plant_cards::PlantCards;
+use crate::ui::menebar::SunBank;
+use crate::ui::plant_cards::PlantCards;
 use crate::input::SelectedPlant;
 use crate::config::LevelDefinition;
 use crate::lawn::LawnOccupancy;

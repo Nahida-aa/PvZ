@@ -8,11 +8,10 @@ pub mod zombie;
 pub mod projectile;
 pub mod input;
 pub mod level;
-pub mod components;
+pub mod ui;
 pub mod sun;
 pub mod lawn_mower;
 pub mod assets;
-pub mod pause_menu;
 pub mod animation;
 pub mod debug;
 
@@ -40,11 +39,11 @@ impl Plugin for CorePlugin {
             .add_plugins(projectile::ProjectilePlugin)
             .add_plugins(input::InputPlugin)
             .add_plugins(level::LevelPlugin)
-            .add_plugins(components::menebar::GameMenuBarPlugin)
+            .add_plugins(ui::menebar::GameMenuBarPlugin)
             .add_plugins(sun::SunPlugin)
             .add_plugins(lawn_mower::LawnMowerPlugin)
-            .add_plugins(pause_menu::PauseMenuPlugin)
-            .add_plugins(pause_menu::EndScreenPlugin)
+            .add_plugins(ui::pause_menu::PauseMenuPlugin)
+            .add_plugins(ui::pause_menu::EndScreenPlugin)
             .add_systems(
                 Update,
                 animation::animate_sprites

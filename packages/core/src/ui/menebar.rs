@@ -1,11 +1,12 @@
 use bevy::prelude::*;
 use bevy::audio::{AudioPlayer, AudioSource, PlaybackSettings};
+use bevy::ui::prelude::{BorderRect, NodeImageMode, SliceScaleMode, TextureSlicer};
 use bevy::ui::ZIndex;
 
 use crate::assets::GameAssets;
 use crate::plant::PlantKind;
 use crate::state::GameState;
-use crate::components::plant_cards::PlantCards;
+use crate::ui::plant_cards::PlantCards;
 
 #[derive(Resource)]
 pub struct SunBank {
@@ -63,19 +64,35 @@ fn setup_menubar(mut commands: Commands, assets: Res<GameAssets>) {
     let font = assets.font.clone();
     commands
         .spawn((
+            // 顶部菜单栏背景：SeedBank.png (446×87)
+            // 对齐 Godot CardSlotBattle 的 StyleBoxTexture 九宫格切分：
+            // texture_margin = (78, 10, 12, 10)
             Node {
-                width: Val::Px(596.0),
+                width: Val::Px(446.0),
                 height: Val::Px(87.0),
                 position_type: PositionType::Absolute,
                 left: Val::Px(0.0),
                 top: Val::Px(0.0),
                 ..default()
             },
-            ImageNode::new(assets.chooser_bg.clone()),
+            ImageNode {
+                image: assets.seed_bank.clone(),
+                image_mode: NodeImageMode::Sliced(TextureSlicer {
+                    border: BorderRect {
+                        min_inset: Vec2::new(78.0, 10.0),
+                        max_inset: Vec2::new(12.0, 10.0),
+                    },
+                    center_scale_mode: SliceScaleMode::Stretch,
+                    sides_scale_mode: SliceScaleMode::Stretch,
+                    max_corner_scale: 100.0,
+                }),
+                ..default()
+            },
             ZIndex(-1),
             crate::state::GameplayEntity,
         ))
         .with_children(|parent| {
+            // 阳光数量文字
             parent.spawn((
                 SunCounter,
                 Text::new("150"),
@@ -98,7 +115,8 @@ fn setup_menubar(mut commands: Commands, assets: Res<GameAssets>) {
                 },
             ));
 
-            let card_x_positions: [f32; 2] = [77.0, 128.0];
+            // 卡牌槽位：从 SunBank 区域右侧开始 (x=78)
+            let card_x_positions: [f32; 2] = [78.0, 129.0];
             let cards: [(PlantKind, Handle<Image>); 2] = [
                 (PlantKind::Peashooter, assets.card_peashooter.clone()),
                 (PlantKind::Sunflower, assets.card_sunflower.clone()),

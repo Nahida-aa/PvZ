@@ -8,9 +8,9 @@ use crate::config::{AppConfig, LevelDefinition};
 use crate::lawn::GridPos;
 use crate::plant::{PlantKind, SpawnPlant};
 use crate::state::GameState;
-use crate::components::menebar::SunBank;
-use crate::components::plant_cards::PlantCards;
+use crate::ui::menebar::SunBank;
 
+use crate::ui::plant_cards::PlantCards;
 #[derive(Resource, Default)]
 pub struct SelectedPlant {
     pub kind: Option<PlantKind>,
