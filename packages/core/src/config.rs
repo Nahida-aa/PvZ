@@ -87,7 +87,15 @@ pub struct LevelDefinition {
     pub mower: MowerConfig,
     /// 房子碰撞箱中心 X（屏幕坐标），僵尸越过即失败。
     pub defeat_screen_x: f32,
+    /// 出战卡槽最大数量（对齐 Godot max_choosed_card_num，默认 10）。
+    #[serde(default = "default_max_choosed_card_num")]
+    pub max_choosed_card_num: u32,
+    /// 本关可用的卡牌列表（植物类型），未填满则剩余槽位显示占位图。
+    #[serde(default)]
+    pub card_kinds: Vec<String>,
 }
+
+fn default_max_choosed_card_num() -> u32 { 10 }
 
 /// 草坪网格几何。
 #[derive(Deserialize, Clone, Copy, Debug)]
@@ -155,6 +163,8 @@ impl Default for LevelDefinition {
                 screen_x: 171.0,
             },
             defeat_screen_x: 95.0,
+            max_choosed_card_num: 10,
+            card_kinds: vec![],
         }
     }
 }

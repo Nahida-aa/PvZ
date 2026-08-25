@@ -14,7 +14,7 @@ pub struct Plant {
     pub kind: PlantKind,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum PlantKind {
     Peashooter,
     Sunflower,
@@ -25,6 +25,14 @@ impl PlantKind {
         match self {
             PlantKind::Peashooter => 100,
             PlantKind::Sunflower => 50,
+        }
+    }
+
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s {
+            "Peashooter" => Some(PlantKind::Peashooter),
+            "Sunflower" => Some(PlantKind::Sunflower),
+            _ => None,
         }
     }
 }

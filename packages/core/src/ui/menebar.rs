@@ -4,6 +4,7 @@ use bevy::ui::prelude::{BorderRect, NodeImageMode, SliceScaleMode, TextureSlicer
 use bevy::ui::ZIndex;
 
 use crate::assets::GameAssets;
+use crate::config::LevelDefinition;
 use crate::plant::PlantKind;
 use crate::state::GameState;
 use crate::ui::plant_cards::PlantCards;
@@ -64,7 +65,19 @@ impl Plugin for GameMenuBarPlugin {
     }
 }
 
-fn setup_menubar(mut commands: Commands, assets: Res<GameAssets>) {
+fn card_image(kind: PlantKind, assets: &GameAssets) -> Handle<Image> {
+    match kind {
+        PlantKind::Peashooter => assets.card_peashooter.clone(),
+        PlantKind::Sunflower => assets.card_sunflower.clone(),
+    }
+}
+
+fn setup_menubar(
+    mut commands: Commands,
+    assets: Res<GameAssets>,
+    level: Res<LevelDefinition>,
+    mut cards: ResMut<PlantCards>,
+) {
     let font = assets.font.clone();
     commands
         .spawn((
@@ -132,23 +145,26 @@ fn setup_menubar(mut commands: Commands, assets: Res<GameAssets>) {
                 },
             ));
 
-            // 卡牌槽位：从 SunBank 区域右侧开始 (x=78)
-            let card_x_positions: [f32; 2] = [78.0, 129.0];
-            let cards: [(PlantKind, Handle<Image>); 2] = [
-                (PlantKind::Peashooter, assets.card_peashooter.clone()),
-                (PlantKind::Sunflower, assets.card_sunflower.clone()),
-            ];
-            let cooldowns: [f32; 2] = [7.5, 5.0];
+            // 从关卡配置解析出战卡牌
+            let slot_kinds: Vec<PlantKind> = level
+                .card_kinds
+                .iter()
+                .filter_map(|s| PlantKind::from_str(s))
+                .collect();
+            cards.init(&slot_kinds);
 
-            for (((kind, card_image), &x), &cooldown) in cards.iter().zip(card_x_positions.iter()).zip(cooldowns.iter()) {
+            // 卡牌槽位：从 SunBank 区域右侧开始 (x=78)，每个 50px 宽
+            for (i, &kind) in slot_kinds.iter().enumerate() {
+                let x = 78.0 + i as f32 * 50.0;
                 let cost = kind.cost();
+                let image = card_image(kind, &assets);
                 parent
                     .spawn((
                         Button,
                         PlantCard {
-                            kind: *kind,
+                            kind,
                             cooldown_timer: 0.0,
-                            cooldown_duration: cooldown,
+                            cooldown_duration: crate::ui::plant_cards::cooldown_duration(kind),
                         },
                         Node {
                             position_type: PositionType::Absolute,
@@ -176,7 +192,7 @@ fn setup_menubar(mut commands: Commands, assets: Res<GameAssets>) {
                             },
                         ));
                         parent.spawn((
-                            ImageNode::new(card_image.clone()),
+                            ImageNode::new(image),
                             Node {
                                 width: Val::Px(50.0),
                                 height: Val::Px(70.0),
@@ -283,8 +299,7 @@ fn cooldown_tick(
     mut overlay_query: Query<&mut BackgroundColor, With<CardCooldownOverlay>>,
     mut overlay_node_query: Query<&mut Node, With<CardCooldownOverlay>>,
 ) {
-    cards.peashooter_remaining = (cards.peashooter_remaining - time.delta_secs()).max(0.0);
-    cards.sunflower_remaining = (cards.sunflower_remaining - time.delta_secs()).max(0.0);
+    cards.tick(time.delta_secs());
 
     for (card, children) in card_query.iter() {
         let remaining = cards.remaining(card.kind);

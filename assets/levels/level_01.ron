@@ -2,4 +2,6 @@
     grid: (cols: 9, rows: 5, cell_w: 80.0, cell_h: 99.0, origin_x: 195.0, origin_y: 80.0),
     mower: (speed: 9.0, trigger_range: 17.0, kill_range: 50.0, hit_w: 33.5, hit_h: 48.0, y_offset: 17.0, screen_x: 171.0),
     defeat_screen_x: 95.0,
+    max_choosed_card_num: 10,
+    card_kinds: ["Peashooter", "Sunflower"],
 )
