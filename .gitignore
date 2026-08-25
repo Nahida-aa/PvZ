@@ -5,3 +5,5 @@
 .DS_Store
 .vscode
 .idea
+
+.agents/*.local.md
