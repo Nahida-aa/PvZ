@@ -153,44 +153,58 @@ fn setup_menubar(
                 .collect();
             cards.init(&slot_kinds);
 
-            // 卡牌槽位：从 SunBank 区域右侧开始 (x=78)，每个 50px 宽
-            for (i, &kind) in slot_kinds.iter().enumerate() {
+            let max_slots = level.max_choosed_card_num;
+
+            // 先按 max_choosed_card_num 创建所有槽位，有卡牌的再覆盖
+            for i in 0..max_slots {
                 let x = 78.0 + i as f32 * 50.0;
-                let cost = kind.cost();
-                let image = card_image(kind, &assets);
-                parent
-                    .spawn((
+                let has_card = (i as usize) < slot_kinds.len();
+                let kind = if has_card { slot_kinds[i as usize] } else { PlantKind::Peashooter };
+
+                let mut entity_cmds = parent.spawn((
+                    Node {
+                        position_type: PositionType::Absolute,
+                        left: Val::Px(x),
+                        top: Val::Px(8.0),
+                        width: Val::Px(50.0),
+                        height: Val::Px(70.0),
+                        justify_content: JustifyContent::End,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    BackgroundColor(Color::NONE),
+                ));
+
+                // 有卡牌的槽位加 Button + PlantCard 组件
+                if has_card {
+                    entity_cmds.insert((
                         Button,
                         PlantCard {
                             kind,
                             cooldown_timer: 0.0,
                             cooldown_duration: crate::ui::plant_cards::cooldown_duration(kind),
                         },
+                    ));
+                }
+
+                entity_cmds.with_children(|parent| {
+                    // 所有槽位都有占位图背景
+                    parent.spawn((
+                        ImageNode::new(assets.seed_packet_silhouette.clone()),
                         Node {
-                            position_type: PositionType::Absolute,
-                            left: Val::Px(x),
-                            top: Val::Px(8.0),
                             width: Val::Px(50.0),
                             height: Val::Px(70.0),
-                            justify_content: JustifyContent::End,
-                            align_items: AlignItems::Center,
+                            position_type: PositionType::Absolute,
+                            left: Val::Px(0.0),
+                            top: Val::Px(0.0),
                             ..default()
                         },
-                        BackgroundColor(Color::NONE),
-                    ))
-                    .with_children(|parent| {
-                        // 占位图背景（对齐 Godot CardPlaceholder_ori）
-                        parent.spawn((
-                            ImageNode::new(assets.seed_packet_silhouette.clone()),
-                            Node {
-                                width: Val::Px(50.0),
-                                height: Val::Px(70.0),
-                                position_type: PositionType::Absolute,
-                                left: Val::Px(0.0),
-                                top: Val::Px(0.0),
-                                ..default()
-                            },
-                        ));
+                    ));
+
+                    // 有卡牌的槽位覆盖卡牌图 + 交互组件
+                    if has_card {
+                        let cost = kind.cost();
+                        let image = card_image(kind, &assets);
                         parent.spawn((
                             ImageNode::new(image),
                             Node {
@@ -238,7 +252,8 @@ fn setup_menubar(
                                 ..default()
                             },
                         ));
-                    });
+                    }
+                });
             }
         });
 }
