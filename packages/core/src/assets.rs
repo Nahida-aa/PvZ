@@ -45,7 +45,7 @@ impl Plugin for GameAssetsPlugin {
     fn build(&self, app: &mut App) {
         let server = app.world().resource::<AssetServer>().clone();
         let assets = GameAssets {
-            font: server.load("DroidSansFallback.ttf"),
+            font: server.load("SIMSUN.TTC"),
             peashooter_frames: (0..13)
                 .map(|i| server.load(format!("graphics/Plants/Peashooter/Peashooter_{i}.png")))
                 .collect(),
@@ -74,7 +74,8 @@ impl Plugin for GameAssetsPlugin {
             chooser_bg: server.load("graphics/Screen/ChooserBackground.png"),
             pause_menu_bg: server.load("graphics/Screen/option_dialog.png"),
             pause_return_button: server.load("graphics/Screen/btn_dialog_back_2.png"),
-            small_button_bg: server.load("graphics/Screen/button_BG.png"),
+            small_button_bg: server
+                .load("image/ui/ui_main_game_menu/UI_BG/button_BG.png"),
             lawn_mower: server.load("graphics/Items/LawnMower_body.png"),
             lawn_mower_sound: server.load("sound/lawnmower.ogg"),
             mower_body: server.load("graphics/Items/LawnMower_body.png"),

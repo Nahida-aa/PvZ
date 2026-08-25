@@ -8,8 +8,8 @@
 //! |                                            |
 //! |    +-- panel (412×483, option_dialog.png) -+|
 //! |    |                                      ||
-//! |    |  [重新开始]  195×37, 居中             ||
-//! |    |  [主菜单]    195×37, 居中             ||
+//! |    |  [重新开始]  195×37, 左102 顶279.5   ||
+//! |    |  [主菜单]    195×37, 左102 顶323.5   ||
 //! |    |                                      ||
 //! |    |  [==== 返回游戏 360×100 ====] 贴底    ||
 //! |    +--------------------------------------+|
@@ -31,6 +31,7 @@
 use bevy::audio::AudioSink;
 use bevy::prelude::*;
 use bevy::ui::ZIndex;
+use bevy::ui::prelude::{BorderColor, BorderRect, NodeImageMode, SliceScaleMode, TextureSlicer, UiRect};
 
 use crate::assets::{BgmMusic, GameAssets};
 use crate::components::menebar::SunBank;
@@ -63,6 +64,10 @@ struct RestartButton;
 #[derive(Component)]
 struct MainMenuButton;
 
+/// 记录按钮未按下时的原始 `top`，用于按下时轻微位移反馈。
+#[derive(Component)]
+struct OriginalTop(pub f32);
+
 /// 暂停菜单插件。
 ///
 /// 注册以下系统：
@@ -85,6 +90,10 @@ impl Plugin for PauseMenuPlugin {
         .add_systems(
             Update,
             handle_buttons.run_if(in_state(GameState::Paused)),
+        )
+        .add_systems(
+            Update,
+            button_press_feedback.run_if(in_state(GameState::Paused)),
         )
         .add_systems(OnExit(GameState::Paused), despawn_pause_menu);
     }
@@ -155,7 +164,9 @@ fn spawn_small_button(
             Button,
             PauseButtonMarker,
             marker,
-            ImageNode::new(bg.clone()),
+            OriginalTop(top),
+            // 按钮本体 Node：尺寸 195×37，对应 Godot 控件 Node 尺寸（点击区 + 质心对齐坐标）。
+            // 背景图按原图 120×50 的真实高度显示，见下方背景子节点。
             Node {
                 position_type: PositionType::Absolute,
                 left: Val::Px(left),
@@ -168,15 +179,62 @@ fn spawn_small_button(
             },
         ))
         .with_children(|b| {
+            // 背景图：用原图 120×50 的真实尺寸（宽195铺满、高50），
+            // 相对 37 高的按钮 Node 向上溢出 (37-50)/2 = -6.5px，
+            // 使背景视觉高度 50（与 Godot 一致），上下透明边溢出、两图自然连片。
+            b.spawn((
+                ImageNode {
+                    image: bg.clone(),
+                    image_mode: NodeImageMode::Sliced(TextureSlicer {
+                        // 对齐 Godot PVZ_theme.tres 中 PanelButtonBG 的九宫格切分：
+                        // texture_margin = (16, 16, 16, 20)
+                        border: BorderRect {
+                            min_inset: Vec2::new(16.0, 16.0),
+                            max_inset: Vec2::new(16.0, 20.0),
+                        },
+                        center_scale_mode: SliceScaleMode::Stretch,
+                        sides_scale_mode: SliceScaleMode::Stretch,
+                        // 允许四角按尺寸放大，否则 Node 比原图大时角块被限为原尺寸、
+                        // 中间区被压缩、整体渲染高度小于 Node 高度。
+                        max_corner_scale: 100.0,
+                    }),
+                    ..default()
+                },
+                Node {
+                    position_type: PositionType::Absolute,
+                    left: Val::Px(0.0),
+                    top: Val::Px(-6.5),
+                    width: Val::Px(195.0),
+                    height: Val::Px(50.0),
+                    ..default()
+                },
+            ));
+            // 文字：居中于 37 高按钮 Node，对齐 Godot PVZ_theme 的 Label 默认（font_size=18, 绿色）
             b.spawn((
                 Text::new(label),
                 TextFont {
                     font: FontSource::Handle(font.clone()),
-                    font_size: FontSize::Px(20.0),
+                    font_size: FontSize::Px(18.0),
                     ..default()
                 },
-                TextColor(Color::srgb(0.2, 0.15, 0.05)),
+                TextColor(Color::srgb(0.0, 1.0, 0.0)),
             ));
+            // === 调试尺：绘制 5 个 37×37 的"框"（透明填充+边框），目测按钮真实高度 ===
+            for i in 0..5 {
+                b.spawn((
+                    Node {
+                        position_type: PositionType::Absolute,
+                        left: Val::Px(i as f32 * 37.0),
+                        top: Val::Px(0.0),
+                        width: Val::Px(37.0),
+                        height: Val::Px(37.0),
+                        border: UiRect::all(Val::Px(1.0)),
+                        ..default()
+                    },
+                    BackgroundColor(Color::NONE),
+                    BorderColor::all(Color::srgb(1.0, 0.3, 0.0)),
+                ));
+            }
         });
 }
 
@@ -220,24 +278,32 @@ fn setup_pause_menu(mut commands: Commands, assets: Res<GameAssets>) {
                     ImageNode::new(assets.pause_menu_bg.clone()),
                 ))
                 .with_children(|panel| {
-                    // "重新开始" 按钮：水平居中 (412-195)/2=108.5≈109
+                    // 坐标严格对齐 Godot MainGame00Base.tscn 暂停菜单（相对面板左上角）：
+                    // Option 容器左上角在面板 (97, 112.5)，按钮坐标相对该容器。
+                    //   重新开始: (97+5, 112.5+167) = (102, 279.5)  高 37
+                    //   主菜单:   (97+5, 112.5+211) = (102, 323.5)  高 37
+                    //   中心间距 44px，两按钮间隙 7px（与 Godot 一致）。
+                    // 注：button_BG.png 由 StyleBoxTexture(texture_margin=16/16/16/20) 绘制，
+                    // Godot 实际显示高度 = Node 高 37（纹理铺满 Node），故 Rust 高度取 37，
+                    // Slice 的 border 已对齐 Godot 的九宫格切分，不会压扁。
+                    // "重新开始" 按钮
                     spawn_small_button(
                         panel,
                         RestartButton,
-                        109.0,
-                        160.0,
+                        102.0,
+                        279.5,
                         195.0,
                         37.0,
                         "重新开始",
                         &font,
                         &assets.small_button_bg,
                     );
-                    // "主菜单" 按钮：紧挨"重新开始"下方，间距 10px
+                    // "主菜单" 按钮：紧贴"重新开始"下方
                     spawn_small_button(
                         panel,
                         MainMenuButton,
-                        109.0,
-                        207.0,
+                        102.0,
+                        323.5,
                         195.0,
                         37.0,
                         "主菜单",
@@ -250,6 +316,7 @@ fn setup_pause_menu(mut commands: Commands, assets: Res<GameAssets>) {
                             Button,
                             PauseButtonMarker,
                             ContinueButton,
+                            OriginalTop(383.0),
                             ImageNode::new(assets.pause_return_button.clone()),
                             Node {
                                 position_type: PositionType::Absolute,
@@ -269,10 +336,12 @@ fn setup_pause_menu(mut commands: Commands, assets: Res<GameAssets>) {
                                 Text::new("返回游戏"),
                                 TextFont {
                                     font: FontSource::Handle(font.clone()),
-                                    font_size: FontSize::Px(28.0),
+                                    // 对齐 Godot：Return 的 Label 设 theme_override font_size=50
+                                    font_size: FontSize::Px(50.0),
                                     ..default()
                                 },
-                                TextColor(Color::srgb(0.1, 0.1, 0.1)),
+                                // Godot 未 override 颜色，用默认 Label 绿 (0,1,0)
+                                TextColor(Color::srgb(0.0, 1.0, 0.0)),
                             ));
                         });
                 });
@@ -322,6 +391,22 @@ fn handle_buttons(
             *occupancy = LawnOccupancy::from_level(&level);
             next.set(GameState::Playing);
         }
+    }
+}
+
+/// 按钮按下时的轻微位移反馈（比 Godot 默认的明显位移更克制）。
+///
+/// `Pressed` 时整体下沉 2px，松开即恢复。位移量记录在 `OriginalTop` 中。
+fn button_press_feedback(
+    mut buttons: Query<(&Interaction, &OriginalTop, &mut Node), With<PauseButtonMarker>>,
+) {
+    for (interaction, original, mut node) in buttons.iter_mut() {
+        let offset = if *interaction == Interaction::Pressed {
+            2.0
+        } else {
+            0.0
+        };
+        node.top = Val::Px(original.0 + offset);
     }
 }
 
