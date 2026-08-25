@@ -2,80 +2,83 @@
 //!
 //! # 暂停菜单布局 (option_dialog.png, 412×483)
 //!
-//! ```text
-//! +--------------------------------------------+
-//! |  (半透明黑色遮罩 1066×600, ZIndex=1000)     |
-//! |                                            |
-//! |    +-- panel (412×483, option_dialog.png) -+|
-//! |    |                                      ||
-//! |    |  [重新开始]  195×37, 左102 顶279.5   ||
-//! |    |  [主菜单]    195×37, 左102 顶323.5   ||
-//! |    |                                      ||
-//! |    |  [==== 返回游戏 360×100 ====] 贴底    ||
-//! |    +--------------------------------------+|
-//! +--------------------------------------------+
-//! ```
+//! 对齐 Godot MainGame00Base.tscn 中的暂停菜单。
 //!
 //! # 状态流转
 //!
 //! - `Playing` ←Escape→ `Paused`（暂停/恢复切换）
 //! - `Paused` → 点击"返回游戏" → `Playing`
 //! - `Paused` → 点击"重新开始"/"主菜单" → 重置所有游戏状态 → `Playing`
-//!
-//! # 音频控制
-//!
-//! - 进入 `Paused` 时暂停 BGM（`pause_bgm`）
-//! - 进入 `Playing` 时恢复 BGM（`resume_bgm`）
-//! - 音乐实体通过 `BgmMusic` 标记组件查询
 
-use bevy::audio::AudioSink;
+use bevy::audio::{AudioSink, PlaybackSettings};
 use bevy::prelude::*;
 use bevy::ui::ZIndex;
-use bevy::ui::prelude::{BorderColor, BorderRect, NodeImageMode, SliceScaleMode, TextureSlicer, UiRect};
+use bevy::ui::prelude::{BorderRect, NodeImageMode, SliceScaleMode, TextureSlicer};
+use bevy::audio::AudioSource;
 
 use crate::assets::{BgmMusic, GameAssets};
-use crate::ui::menebar::SunBank;
-use crate::ui::plant_cards::PlantCards;
+use crate::config::AppConfig;
 use crate::input::SelectedPlant;
-use crate::config::LevelDefinition;
 use crate::lawn::LawnOccupancy;
 use crate::level::LevelRuntime;
 use crate::state::{GameState, GameplayEntity};
+use crate::ui::menebar::SunBank;
+use crate::ui::plant_cards::PlantCards;
 
 // ===== 暂停菜单 =====
 
-/// 暂停菜单根节点标记，用于整体销毁。
 #[derive(Component)]
 struct PauseMenuRoot;
 
-/// 暂停菜单按钮通用标记，用于区分游戏内其他按钮。
 #[derive(Component)]
 struct PauseButtonMarker;
 
-/// "返回游戏" 按钮标记。
 #[derive(Component)]
 struct ContinueButton;
 
-/// "重新开始" 按钮标记。
 #[derive(Component)]
 struct RestartButton;
 
-/// "主菜单" 按钮标记。
 #[derive(Component)]
 struct MainMenuButton;
+
+#[derive(Component)]
+struct AlmanacButton;
+
+#[derive(Component)]
+struct OptionsButton;
 
 /// 记录按钮未按下时的原始 `top`，用于按下时轻微位移反馈。
 #[derive(Component)]
 struct OriginalTop(pub f32);
 
+/// 滑动条类型标记。
+#[derive(Component, Clone, Copy, PartialEq, Eq)]
+enum SliderType {
+    Music,
+    Sound,
+    Speed,
+}
+
+/// 滑动条标记。
+#[derive(Component)]
+struct SliderMarker {
+    slider_type: SliderType,
+    min: f32,
+    max: f32,
+    step: f32,
+    value: f32,
+}
+
+/// 滑动条旋钮标记。
+#[derive(Component)]
+struct SliderKnob;
+
+/// 倍速显示标签（"倍速 1.0 倍"）。
+#[derive(Component)]
+struct SpeedLabel;
+
 /// 暂停菜单插件。
-///
-/// 注册以下系统：
-/// - `toggle_pause`：Escape 键切换暂停/恢复
-/// - `setup_pause_menu`：进入 Paused 时创建 UI
-/// - `pause_bgm` / `resume_bgm`：暂停/恢复背景音乐
-/// - `handle_buttons`：处理按钮点击
-/// - `despawn_pause_menu`：退出 Paused 时销毁 UI
 pub struct PauseMenuPlugin;
 
 impl Plugin for PauseMenuPlugin {
@@ -89,68 +92,86 @@ impl Plugin for PauseMenuPlugin {
         .add_systems(OnEnter(GameState::Playing), resume_bgm)
         .add_systems(
             Update,
-            handle_buttons.run_if(in_state(GameState::Paused)),
+            (handle_buttons, handle_sliders, play_button_sounds)
+                .run_if(in_state(GameState::Paused)),
         )
         .add_systems(
             Update,
             button_press_feedback.run_if(in_state(GameState::Paused)),
         )
-        .add_systems(OnExit(GameState::Paused), despawn_pause_menu);
+        .add_systems(OnExit(GameState::Paused), despawn_pause_menu)
+        .add_systems(Update, apply_time_scale);
     }
 }
 
-/// Escape 键切换暂停状态。
-///
-/// 仅在 `Playing` ↔ `Paused` 之间切换，其他状态忽略。
+/// 将 AppConfig.time_scale 应用到 Bevy Time。
+fn apply_time_scale(config: Res<AppConfig>, mut time: ResMut<Time<Virtual>>) {
+    time.set_relative_speed(config.time_scale);
+}
+
 fn toggle_pause(
     keys: Res<ButtonInput<KeyCode>>,
     state: Res<State<GameState>>,
     mut next: ResMut<NextState<GameState>>,
+    assets: Res<GameAssets>,
+    mut commands: Commands,
 ) {
     if !keys.just_pressed(KeyCode::Escape) {
         return;
     }
     match state.get() {
-        GameState::Playing => next.set(GameState::Paused),
-        GameState::Paused => next.set(GameState::Playing),
+        GameState::Playing => {
+            commands.spawn((
+                AudioPlayer::<AudioSource>(assets.pause_sound.clone()),
+                PlaybackSettings::DESPAWN,
+            ));
+            next.set(GameState::Paused);
+        }
+        GameState::Paused => {
+            commands.spawn((
+                AudioPlayer::<AudioSource>(assets.pause_sound.clone()),
+                PlaybackSettings::DESPAWN,
+            ));
+            next.set(GameState::Playing);
+        }
         _ => {}
     }
 }
 
-/// 暂停背景音乐。
-///
-/// 查询带 `BgmMusic` 标记的 `AudioSink` 组件，调用 `pause()` 暂停播放。
-fn pause_bgm(sink: Query<&AudioSink, With<BgmMusic>>) {
-    if let Ok(sink) = sink.single() {
+fn pause_bgm(mut sink: Query<&mut AudioSink, With<BgmMusic>>, config: Res<AppConfig>) {
+    if let Ok(mut sink) = sink.single_mut() {
         sink.pause();
+        sink.set_volume(bevy::audio::Volume::Linear(config.bgm_volume));
     }
 }
 
-/// 恢复背景音乐。
-///
-/// 进入 `Playing` 状态时触发，包括：
-/// - 从 Paused 恢复
-/// - 重新开始/主菜单后重新进入 Playing
-/// - 游戏首次启动（Startup 阶段音乐已创建，此时 sink 可能尚未就绪，`single()` 会失败但无影响）
-fn resume_bgm(sink: Query<&AudioSink, With<BgmMusic>>) {
-    if let Ok(sink) = sink.single() {
+fn resume_bgm(mut sink: Query<&mut AudioSink, With<BgmMusic>>, config: Res<AppConfig>) {
+    if let Ok(mut sink) = sink.single_mut() {
+        sink.set_volume(bevy::audio::Volume::Linear(config.bgm_volume));
         sink.play();
     }
 }
 
-/// 创建暂停菜单中的小按钮（"重新开始"、"主菜单"）。
-///
-/// 按钮使用绝对定位，背景图片为 `bg`，文字居中显示。
-///
-/// # 参数
-/// - `left`, `top`：按钮在面板内的绝对像素坐标
-/// - `width`, `height`：按钮尺寸（像素）
-/// - `label`：按钮文字
-/// - `font`：字体句柄
-/// - `bg`：背景图片句柄（button_BG.png）
+/// 按钮按下时播放 gravebutton 音效。
+fn play_button_sounds(
+    interaction: Query<&Interaction, (Changed<Interaction>, With<PauseButtonMarker>)>,
+    assets: Res<GameAssets>,
+    mut commands: Commands,
+) {
+    for interaction in interaction.iter() {
+        if *interaction == Interaction::Pressed {
+            commands.spawn((
+                AudioPlayer::<AudioSource>(assets.gravebutton_sound.clone()),
+                PlaybackSettings::DESPAWN,
+            ));
+        }
+    }
+}
+
+/// 创建暂停菜单中的小按钮（"重新开始"、"主菜单"、"查看图鉴"、"选项设置"）。
 fn spawn_small_button(
     parent: &mut ChildSpawnerCommands,
-    marker: impl Bundle,
+    btn_marker: impl Bundle,
     left: f32,
     top: f32,
     width: f32,
@@ -163,10 +184,8 @@ fn spawn_small_button(
         .spawn((
             Button,
             PauseButtonMarker,
-            marker,
+            btn_marker,
             OriginalTop(top),
-            // 按钮本体 Node：尺寸 195×37，对应 Godot 控件 Node 尺寸（点击区 + 质心对齐坐标）。
-            // 背景图按原图 120×50 的真实高度显示，见下方背景子节点。
             Node {
                 position_type: PositionType::Absolute,
                 left: Val::Px(left),
@@ -179,23 +198,16 @@ fn spawn_small_button(
             },
         ))
         .with_children(|b| {
-            // 背景图：用原图 120×50 的真实尺寸（宽195铺满、高50），
-            // 相对 37 高的按钮 Node 向上溢出 (37-50)/2 = -6.5px，
-            // 使背景视觉高度 50（与 Godot 一致），上下透明边溢出、两图自然连片。
             b.spawn((
                 ImageNode {
                     image: bg.clone(),
                     image_mode: NodeImageMode::Sliced(TextureSlicer {
-                        // 对齐 Godot PVZ_theme.tres 中 PanelButtonBG 的九宫格切分：
-                        // texture_margin = (16, 16, 16, 20)
                         border: BorderRect {
                             min_inset: Vec2::new(16.0, 16.0),
                             max_inset: Vec2::new(16.0, 20.0),
                         },
                         center_scale_mode: SliceScaleMode::Stretch,
                         sides_scale_mode: SliceScaleMode::Stretch,
-                        // 允许四角按尺寸放大，否则 Node 比原图大时角块被限为原尺寸、
-                        // 中间区被压缩、整体渲染高度小于 Node 高度。
                         max_corner_scale: 100.0,
                     }),
                     ..default()
@@ -209,7 +221,6 @@ fn spawn_small_button(
                     ..default()
                 },
             ));
-            // 文字：居中于 37 高按钮 Node，对齐 Godot PVZ_theme 的 Label 默认（font_size=18, 绿色）
             b.spawn((
                 Text::new(label),
                 TextFont {
@@ -219,38 +230,110 @@ fn spawn_small_button(
                 },
                 TextColor(Color::srgb(0.0, 1.0, 0.0)),
             ));
-            // === 调试尺：绘制 5 个 37×37 的"框"（透明填充+边框），目测按钮真实高度 ===
-            for i in 0..5 {
-                b.spawn((
+        });
+}
+
+/// 创建滑动条（对齐 Godot HSlider + 自定义主题）。
+///
+/// 布局：一行内左边 Label + 右边滑动条（track + knob）。
+fn spawn_slider(
+    parent: &mut ChildSpawnerCommands,
+    left: f32,
+    top: f32,
+    width: f32,
+    height: f32,
+    label: &str,
+    slider_type: SliderType,
+    min: f32,
+    max: f32,
+    step: f32,
+    value: f32,
+    font: &Handle<Font>,
+    slot_image: &Handle<Image>,
+    knob_image: &Handle<Image>,
+) {
+    let track_width = width - 62.0;
+    parent
+        .spawn((
+            Node {
+                position_type: PositionType::Absolute,
+                left: Val::Px(left),
+                top: Val::Px(top),
+                width: Val::Px(width),
+                height: Val::Px(height),
+                ..default()
+            },
+        ))
+        .with_children(|row| {
+            // Label（蓝灰色，对齐 Godot Label2）
+            row.spawn((
+                Text::new(label),
+                TextFont {
+                    font: FontSource::Handle(font.clone()),
+                    font_size: FontSize::Px(14.0),
+                    ..default()
+                },
+                TextColor(Color::srgb(0.38, 0.384, 0.502)),
+                Node {
+                    position_type: PositionType::Absolute,
+                    left: Val::Px(0.0),
+                    top: Val::Px(8.0),
+                    ..default()
+                },
+            ));
+
+            // 滑动条轨道
+            let ratio = (value - min) / (max - min);
+            row.spawn((
+                SliderMarker { slider_type, min, max, step, value },
+                Node {
+                    position_type: PositionType::Absolute,
+                    left: Val::Px(62.0),
+                    top: Val::Px(10.0),
+                    width: Val::Px(track_width),
+                    height: Val::Px(10.0),
+                    ..default()
+                },
+                ImageNode {
+                    image: slot_image.clone(),
+                    image_mode: NodeImageMode::Sliced(TextureSlicer {
+                        border: BorderRect {
+                            min_inset: Vec2::new(0.0, 5.0),
+                            max_inset: Vec2::new(0.0, 5.0),
+                        },
+                        center_scale_mode: SliceScaleMode::Stretch,
+                        sides_scale_mode: SliceScaleMode::Stretch,
+                        max_corner_scale: 100.0,
+                    }),
+                    ..default()
+                },
+            ))
+            .with_children(|track| {
+                // 旋钮
+                track.spawn((
+                    SliderKnob,
+                    ImageNode::new(knob_image.clone()),
                     Node {
                         position_type: PositionType::Absolute,
-                        left: Val::Px(i as f32 * 37.0),
-                        top: Val::Px(0.0),
-                        width: Val::Px(37.0),
-                        height: Val::Px(37.0),
-                        border: UiRect::all(Val::Px(1.0)),
+                        left: Val::Px(ratio * (track_width - 22.0)),
+                        top: Val::Px(-10.0),
+                        width: Val::Px(22.0),
+                        height: Val::Px(29.0),
                         ..default()
                     },
-                    BackgroundColor(Color::NONE),
-                    BorderColor::all(Color::srgb(1.0, 0.3, 0.0)),
                 ));
-            }
+            });
         });
 }
 
 /// 构建暂停菜单 UI。
 ///
-/// 层级结构：
-/// 1. `PauseMenuRoot`：全屏半透明遮罩（1066×600, ZIndex=1000）
-/// 2. Panel：暂停菜单面板（412×483, option_dialog.png）
-/// 3. 按钮：重新开始 / 主菜单 / 返回游戏
-///
-/// 所有坐标基于 Godot 参考项目 `MainGame00Base.tscn` 中的暂停菜单布局。
-fn setup_pause_menu(mut commands: Commands, assets: Res<GameAssets>) {
+/// 布局对齐 Godot MainGame00Base.tscn 中的暂停菜单。
+/// Option 容器左上角在面板 (97, 112.5)，尺寸 218×258。
+fn setup_pause_menu(mut commands: Commands, assets: Res<GameAssets>, config: Res<AppConfig>) {
     let font = assets.font.clone();
     commands
         .spawn((
-            // 全屏遮罩层：绝对定位覆盖整个窗口，半透明黑色背景
             Node {
                 position_type: PositionType::Absolute,
                 left: Val::Px(0.0),
@@ -266,7 +349,6 @@ fn setup_pause_menu(mut commands: Commands, assets: Res<GameAssets>) {
             PauseMenuRoot,
         ))
         .with_children(|parent| {
-            // 暂停菜单面板：option_dialog.png (412×483)
             parent
                 .spawn((
                     Node {
@@ -278,38 +360,102 @@ fn setup_pause_menu(mut commands: Commands, assets: Res<GameAssets>) {
                     ImageNode::new(assets.pause_menu_bg.clone()),
                 ))
                 .with_children(|panel| {
-                    // 坐标严格对齐 Godot MainGame00Base.tscn 暂停菜单（相对面板左上角）：
-                    // Option 容器左上角在面板 (97, 112.5)，按钮坐标相对该容器。
-                    //   重新开始: (97+5, 112.5+167) = (102, 279.5)  高 37
-                    //   主菜单:   (97+5, 112.5+211) = (102, 323.5)  高 37
-                    //   中心间距 44px，两按钮间隙 7px（与 Godot 一致）。
-                    // 注：button_BG.png 由 StyleBoxTexture(texture_margin=16/16/16/20) 绘制，
-                    // Godot 实际显示高度 = Node 高 37（纹理铺满 Node），故 Rust 高度取 37，
-                    // Slice 的 border 已对齐 Godot 的九宫格切分，不会压扁。
-                    // "重新开始" 按钮
+                    // ===== Option 容器 (97, 112.5) 218×258 =====
+
+                    // 音乐滑动条
+                    spawn_slider(
+                        panel,
+                        97.0, 112.5, 218.0, 30.0,
+                        "音乐",
+                        SliderType::Music,
+                        0.0, 1.0, 0.01, config.bgm_volume,
+                        &font,
+                        &assets.slider_slot,
+                        &assets.slider_knob,
+                    );
+
+                    // 音效滑动条
+                    spawn_slider(
+                        panel,
+                        97.0, 152.5, 218.0, 30.0,
+                        "音效",
+                        SliderType::Sound,
+                        0.0, 1.0, 0.01, config.sfx_volume,
+                        &font,
+                        &assets.slider_slot,
+                        &assets.slider_knob,
+                    );
+
+                    // 倍速滑动条
+                    spawn_slider(
+                        panel,
+                        97.0, 192.5, 218.0, 30.0,
+                        "倍速",
+                        SliderType::Speed,
+                        0.5, 3.0, 0.5, config.time_scale,
+                        &font,
+                        &assets.slider_slot,
+                        &assets.slider_knob,
+                    );
+
+                    // 倍速文字标签（显示 "1.0 倍"）
+                    panel.spawn((
+                        SpeedLabel,
+                        Text::new(format!("{:.1} 倍", config.time_scale)),
+                        TextFont {
+                            font: FontSource::Handle(font.clone()),
+                            font_size: FontSize::Px(14.0),
+                            ..default()
+                        },
+                        TextColor(Color::srgb(0.38, 0.384, 0.502)),
+                        Node {
+                            position_type: PositionType::Absolute,
+                            left: Val::Px(175.0),
+                            top: Val::Px(192.5 + 8.0),
+                            ..default()
+                        },
+                    ));
+
+                    // "查看图鉴" 按钮 (6, 123.5) 88×37
+                    spawn_small_button(
+                        panel,
+                        AlmanacButton,
+                        103.0, 236.0, 88.0, 37.0,
+                        "查看图鉴",
+                        &font,
+                        &assets.small_button_bg,
+                    );
+
+                    // "选项设置" 按钮 (113, 124) 88×37
+                    spawn_small_button(
+                        panel,
+                        OptionsButton,
+                        195.0, 236.0, 88.0, 37.0,
+                        "选项设置",
+                        &font,
+                        &assets.small_button_bg,
+                    );
+
+                    // "重新开始" 按钮 (5, 167) 195×37
                     spawn_small_button(
                         panel,
                         RestartButton,
-                        102.0,
-                        279.5,
-                        195.0,
-                        37.0,
+                        102.0, 279.5, 195.0, 37.0,
                         "重新开始",
                         &font,
                         &assets.small_button_bg,
                     );
-                    // "主菜单" 按钮：紧贴"重新开始"下方
+
+                    // "主菜单" 按钮 (5, 211) 195×37
                     spawn_small_button(
                         panel,
                         MainMenuButton,
-                        102.0,
-                        323.5,
-                        195.0,
-                        37.0,
+                        102.0, 323.5, 195.0, 37.0,
                         "主菜单",
                         &font,
                         &assets.small_button_bg,
                     );
+
                     // "返回游戏" 按钮：贴底居中，btn_dialog_back_2.png (360×100)
                     panel
                         .spawn((
@@ -320,9 +466,7 @@ fn setup_pause_menu(mut commands: Commands, assets: Res<GameAssets>) {
                             ImageNode::new(assets.pause_return_button.clone()),
                             Node {
                                 position_type: PositionType::Absolute,
-                                // (412-360)/2 = 26，水平居中
                                 left: Val::Px(26.0),
-                                // 483-100 = 383，贴底
                                 top: Val::Px(383.0),
                                 width: Val::Px(360.0),
                                 height: Val::Px(100.0),
@@ -336,11 +480,9 @@ fn setup_pause_menu(mut commands: Commands, assets: Res<GameAssets>) {
                                 Text::new("返回游戏"),
                                 TextFont {
                                     font: FontSource::Handle(font.clone()),
-                                    // 对齐 Godot：Return 的 Label 设 theme_override font_size=50
                                     font_size: FontSize::Px(50.0),
                                     ..default()
                                 },
-                                // Godot 未 override 颜色，用默认 Label 绿 (0,1,0)
                                 TextColor(Color::srgb(0.0, 1.0, 0.0)),
                             ));
                         });
@@ -349,9 +491,6 @@ fn setup_pause_menu(mut commands: Commands, assets: Res<GameAssets>) {
 }
 
 /// 处理暂停菜单按钮点击。
-///
-/// - **返回游戏**：直接切换到 `Playing`
-/// - **重新开始 / 主菜单**：销毁所有 `GameplayEntity`，重置游戏资源（阳光、卡牌、关卡状态、草坪占用），切换到 `Playing`
 #[allow(clippy::too_many_arguments)]
 fn handle_buttons(
     interaction: Query<(&Interaction, Entity), (Changed<Interaction>, With<Button>)>,
@@ -365,7 +504,7 @@ fn handle_buttons(
     mut cards: ResMut<PlantCards>,
     mut runtime: ResMut<LevelRuntime>,
     mut occupancy: ResMut<LawnOccupancy>,
-    level: Res<LevelDefinition>,
+    level: Res<crate::config::LevelDefinition>,
     mut next: ResMut<NextState<GameState>>,
     mut commands: Commands,
 ) {
@@ -374,12 +513,10 @@ fn handle_buttons(
             continue;
         }
         if continue_buttons.get(entity).is_ok() {
-            // "返回游戏"：恢复游戏状态
             next.set(GameState::Playing);
         } else if restart_buttons.get(entity).is_ok()
             || mainmenu_buttons.get(entity).is_ok()
         {
-            // "重新开始" / "主菜单"：销毁所有游戏实体，重置资源
             let entities: Vec<Entity> = gameplay.iter().collect();
             for e in entities {
                 despawn_recursive(&mut commands, e, &children);
@@ -394,9 +531,86 @@ fn handle_buttons(
     }
 }
 
-/// 按钮按下时的轻微位移反馈（比 Godot 默认的明显位移更克制）。
-///
-/// `Pressed` 时整体下沉 2px，松开即恢复。位移量记录在 `OriginalTop` 中。
+/// 处理滑动条拖拽。
+fn handle_sliders(
+    mouse: Res<ButtonInput<MouseButton>>,
+    window: Query<&Window, With<bevy::window::PrimaryWindow>>,
+    mut sliders: Query<(Entity, &mut SliderMarker, &Node)>,
+    children_query: Query<&Children>,
+    mut knob_query: Query<&mut Node, With<SliderKnob>>,
+    mut speed_label: Query<&mut Text, With<SpeedLabel>>,
+    mut config: ResMut<AppConfig>,
+    mut bgm_sink: Query<&mut AudioSink, With<BgmMusic>>,
+) {
+    let Ok(window) = window.single() else {
+        return;
+    };
+    let Some(cursor) = window.cursor_position() else {
+        return;
+    };
+
+    if !mouse.pressed(MouseButton::Left) {
+        return;
+    }
+
+    for (entity, mut marker, node) in sliders.iter_mut() {
+        let node_left = match node.left {
+            Val::Px(v) => v,
+            _ => continue,
+        };
+        let node_width = match node.width {
+            Val::Px(v) => v,
+            _ => continue,
+        };
+
+        let track_left = node_left + 62.0;
+        let track_width = node_width - 62.0;
+
+        if cursor.x < track_left || cursor.x > track_left + track_width {
+            continue;
+        }
+
+        let ratio = ((cursor.x - track_left) / track_width).clamp(0.0, 1.0);
+        let raw_value = marker.min + ratio * (marker.max - marker.min);
+        let snapped = (raw_value / marker.step).round() * marker.step;
+        let new_value = snapped.clamp(marker.min, marker.max);
+
+        if (new_value - marker.value).abs() < f32::EPSILON {
+            continue;
+        }
+
+        marker.value = new_value;
+
+        // 更新旋钮位置
+        if let Ok(children) = children_query.get(entity) {
+            for child in children.iter() {
+                if let Ok(mut knob_node) = knob_query.get_mut(child) {
+                    knob_node.left = Val::Px(ratio * (track_width - 22.0));
+                }
+            }
+        }
+
+        match marker.slider_type {
+            SliderType::Music => {
+                config.bgm_volume = new_value;
+                if let Ok(mut sink) = bgm_sink.single_mut() {
+                    sink.set_volume(bevy::audio::Volume::Linear(new_value));
+                }
+            }
+            SliderType::Sound => {
+                config.sfx_volume = new_value;
+            }
+            SliderType::Speed => {
+                config.time_scale = new_value;
+                for mut text in speed_label.iter_mut() {
+                    **text = format!("{:.1} 倍", new_value);
+                }
+            }
+        }
+    }
+}
+
+/// 按钮按下时的轻微位移反馈。
 fn button_press_feedback(
     mut buttons: Query<(&Interaction, &OriginalTop, &mut Node), With<PauseButtonMarker>>,
 ) {
@@ -410,7 +624,7 @@ fn button_press_feedback(
     }
 }
 
-/// 销毁暂停菜单 UI（退出 Paused 状态时触发）。
+/// 销毁暂停菜单 UI。
 fn despawn_pause_menu(
     mut commands: Commands,
     query: Query<Entity, With<PauseMenuRoot>>,
@@ -437,17 +651,12 @@ fn despawn_recursive(
 
 // ===== 结算画面 (Victory / Defeat) =====
 
-/// 结算画面根节点标记。
 #[derive(Component)]
 struct EndScreenRoot;
 
-/// 结算画面"重新开始"按钮标记。
 #[derive(Component)]
 struct EndScreenButton;
 
-/// 结算画面插件。
-///
-/// 在 `Victory` 或 `Defeat` 状态时显示结算界面，包含标题和"重新开始"按钮。
 pub struct EndScreenPlugin;
 
 impl Plugin for EndScreenPlugin {
@@ -464,9 +673,6 @@ impl Plugin for EndScreenPlugin {
     }
 }
 
-/// 构建结算画面 UI。
-///
-/// 布局：全屏半透明遮罩 → 居中标题 + "重新开始"按钮（Flexbox 纵向排列）。
 fn setup_end_screen(
     mut commands: Commands,
     state: Res<State<GameState>>,
@@ -496,7 +702,6 @@ fn setup_end_screen(
             EndScreenRoot,
         ))
         .with_children(|parent| {
-            // 标题文字
             parent.spawn((
                 Text::new(title),
                 TextFont {
@@ -506,7 +711,6 @@ fn setup_end_screen(
                 },
                 TextColor(color),
             ));
-            // "重新开始" 按钮
             parent
                 .spawn((
                     Button,
@@ -534,9 +738,6 @@ fn setup_end_screen(
         });
 }
 
-/// 处理结算画面"重新开始"按钮点击。
-///
-/// 销毁所有 `GameplayEntity`，重置游戏资源，切换到 `Playing` 状态。
 #[allow(clippy::too_many_arguments)]
 fn handle_end_screen(
     interaction: Query<(&Interaction, Entity), (Changed<Interaction>, With<EndScreenButton>)>,
@@ -547,7 +748,7 @@ fn handle_end_screen(
     mut cards: ResMut<PlantCards>,
     mut runtime: ResMut<LevelRuntime>,
     mut occupancy: ResMut<LawnOccupancy>,
-    level: Res<LevelDefinition>,
+    level: Res<crate::config::LevelDefinition>,
     mut next: ResMut<NextState<GameState>>,
     mut commands: Commands,
 ) {
@@ -569,7 +770,6 @@ fn handle_end_screen(
     }
 }
 
-/// 销毁结算画面 UI（退出 Victory/Defeat 状态时触发）。
 fn despawn_end_screen(
     mut commands: Commands,
     query: Query<Entity, With<EndScreenRoot>>,

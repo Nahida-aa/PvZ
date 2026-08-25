@@ -4,6 +4,7 @@
     master_volume: 1.0,
     bgm_volume: 0.1,
     sfx_volume: 0.5,
+    time_scale: 1.0,
     menubar: (
         bar_left: 150.0,
         bar_top: 0.0,

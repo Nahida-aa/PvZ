@@ -26,6 +26,9 @@ pub struct AppConfig {
     /// 音效音量 (0.0 ~ 1.0)。
     #[serde(default = "default_sfx_volume")]
     pub sfx_volume: f32,
+    /// 游戏倍速 (0.5 ~ 3.0)。
+    #[serde(default = "default_time_scale")]
+    pub time_scale: f32,
     /// 顶部菜单栏布局参数。
     #[serde(default)]
     pub menubar: MenubarConfig,
@@ -34,6 +37,7 @@ pub struct AppConfig {
 fn default_master_volume() -> f32 { 1.0 }
 fn default_bgm_volume() -> f32 { 0.5 }
 fn default_sfx_volume() -> f32 { 0.5 }
+fn default_time_scale() -> f32 { 1.0 }
 
 /// 背景图布局参数。
 #[derive(Deserialize, Clone, Copy, Debug)]
@@ -131,6 +135,7 @@ impl Default for AppConfig {
             master_volume: 1.0,
             bgm_volume: 0.5,
             sfx_volume: 0.5,
+            time_scale: 1.0,
             menubar: MenubarConfig::default(),
         }
     }
