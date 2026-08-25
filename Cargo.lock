@@ -4223,6 +4223,8 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "rand 0.8.7",
+ "ron",
+ "serde",
 ]
 
 [[package]]

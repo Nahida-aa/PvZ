@@ -1,5 +1,6 @@
 pub mod state;
 pub mod schedule;
+pub mod config;
 pub mod lawn;
 pub mod combat;
 pub mod plant;

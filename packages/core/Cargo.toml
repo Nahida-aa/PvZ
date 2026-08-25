@@ -7,3 +7,5 @@ license.workspace = true
 [dependencies]
 bevy = { workspace = true }
 rand = { workspace = true }
+ron = { workspace = true }
+serde = { version = "1", features = ["derive"] }
