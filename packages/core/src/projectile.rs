@@ -3,7 +3,8 @@ use bevy::prelude::*;
 
 use crate::assets::GameAssets;
 use crate::combat::ApplyDamage;
-use crate::config::{AppConfig, LevelDefinition};
+use crate::settings::AppConfig;
+use crate::level::LevelDefinition;
 use crate::schedule::GameSet;
 use crate::state::GameState;
 use crate::zombie::ZombieCollider;

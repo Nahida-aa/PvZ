@@ -116,7 +116,7 @@ fn handle_end_screen(
     mut cards: ResMut<PlantCards>,
     mut runtime: ResMut<LevelRuntime>,
     mut occupancy: ResMut<LawnOccupancy>,
-    level: Res<crate::config::LevelDefinition>,
+    level: Res<crate::level::LevelDefinition>,
     mut next: ResMut<NextState<GameState>>,
     mut commands: Commands,
 ) {

@@ -12,6 +12,7 @@
 //! - `Paused` → 点击"重新开始"/"主菜单" → 重置所有游戏状态 → `Playing`
 
 mod almanac_button;
+pub(crate) mod config;
 mod components;
 mod continue_button;
 mod main_menu_button;
@@ -26,8 +27,10 @@ use bevy::prelude::*;
 use bevy::ui::ZIndex;
 
 use crate::assets::GameAssets;
-use crate::config::{AppConfig, PauseMenuConfig};
+use crate::settings::AppConfig;
 use crate::state::GameState;
+
+use self::config::PauseMenuConfig;
 
 /// 暂停菜单插件。
 pub struct PauseMenuPlugin;

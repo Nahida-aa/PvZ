@@ -78,8 +78,8 @@ fn handle_spawn_plant(
     mut commands: Commands,
     mut occupancy: ResMut<crate::lawn::LawnOccupancy>,
     assets: Res<GameAssets>,
-    app: Res<crate::config::AppConfig>,
-    level: Res<crate::config::LevelDefinition>,
+    app: Res<crate::settings::AppConfig>,
+    level: Res<crate::level::LevelDefinition>,
 ) {
     for ev in events.read() {
         if !occupancy.is_free(ev.pos) {

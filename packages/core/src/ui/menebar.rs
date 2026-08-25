@@ -4,7 +4,8 @@ use bevy::ui::prelude::{BorderRect, NodeImageMode, SliceScaleMode, TextureSlicer
 use bevy::ui::ZIndex;
 
 use crate::assets::GameAssets;
-use crate::config::{AppConfig, LevelDefinition};
+use crate::settings::AppConfig;
+use crate::level::LevelDefinition;
 use crate::debug::DebugBorder;
 use crate::plant::PlantKind;
 use crate::state::GameState;

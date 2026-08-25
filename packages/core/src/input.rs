@@ -4,7 +4,8 @@ use bevy::ui::ZIndex;
 use bevy::window::PrimaryWindow;
 
 use crate::assets::GameAssets;
-use crate::config::{AppConfig, LevelDefinition};
+use crate::settings::AppConfig;
+use crate::level::LevelDefinition;
 use crate::lawn::GridPos;
 use crate::plant::{PlantKind, SpawnPlant};
 use crate::state::GameState;

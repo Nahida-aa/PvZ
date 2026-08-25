@@ -5,13 +5,14 @@ use bevy::audio::AudioSource;
 use bevy_ui_widgets::{Slider, SliderRange, SliderThumb, SliderValue};
 
 use crate::assets::{BgmMusic, GameAssets};
-use crate::config::{AppConfig, PauseMenuConfig};
+use crate::settings::AppConfig;
 use crate::input::SelectedPlant;
 use crate::lawn::LawnOccupancy;
 use crate::level::LevelRuntime;
 use crate::state::{GameState, GameplayEntity};
 use crate::ui::menebar::SunBank;
 use crate::ui::plant_cards::PlantCards;
+use super::config::PauseMenuConfig;
 
 use super::components::*;
 use super::super::despawn_recursive;
@@ -150,7 +151,7 @@ pub(crate) fn handle_buttons(
     mut cards: ResMut<PlantCards>,
     mut runtime: ResMut<LevelRuntime>,
     mut occupancy: ResMut<LawnOccupancy>,
-    level: Res<crate::config::LevelDefinition>,
+    level: Res<crate::level::LevelDefinition>,
     mut next: ResMut<NextState<GameState>>,
     mut commands: Commands,
 ) {

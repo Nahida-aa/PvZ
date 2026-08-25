@@ -3,7 +3,7 @@ use bevy::ui::prelude::{BorderRect, NodeImageMode, SliceScaleMode, TextureSlicer
 use bevy_ui_widgets::{Slider, SliderRange, SliderStep, SliderThumb, SliderValue, TrackClick, slider_self_update};
 
 use super::components::*;
-use crate::config::PauseMenuConfig;
+use crate::ui::menu::pause_menu::config::PauseMenuConfig;
 
 /// 创建暂停菜单中的小按钮（"重新开始"、"主菜单"、"查看图鉴"、"选项设置"）。
 pub(crate) fn spawn_small_button(

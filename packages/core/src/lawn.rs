@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 
 use crate::assets::GameAssets;
-use crate::config::{AppConfig, LevelDefinition};
+use crate::settings::AppConfig;
+use crate::level::LevelDefinition;
 use crate::state::GameState;
 
 pub fn screen_to_world(sx: f32, sy: f32, app: &AppConfig) -> Vec2 {

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::assets::GameAssets;
-use crate::config::PauseMenuConfig;
+use crate::ui::menu::pause_menu::config::PauseMenuConfig;
 
 use super::components::*;
 

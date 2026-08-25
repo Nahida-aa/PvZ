@@ -5,7 +5,8 @@ use bevy::log::LogPlugin;
 use bevy::window::WindowResolution;
 
 use pvz_core::assets::BgmMusic;
-use pvz_core::config::{AppConfig, LevelDefinition};
+use pvz_core::settings::AppConfig;
+use pvz_core::level::LevelDefinition;
 
 /// 默认关卡文件名（相对于 assets 目录）。
 const DEFAULT_LEVEL: &str = "levels/level_01.ron";

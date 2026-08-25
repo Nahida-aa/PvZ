@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::config::PauseMenuConfig;
+use crate::ui::menu::pause_menu::config::PauseMenuConfig;
 
 /// 背景音乐实体标记。
 ///

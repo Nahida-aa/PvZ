@@ -4,7 +4,8 @@ use rand::Rng;
 
 use crate::assets::GameAssets;
 use crate::ui::menebar::SunBank;
-use crate::config::{AppConfig, LevelDefinition};
+use crate::settings::AppConfig;
+use crate::level::LevelDefinition;
 use crate::lawn::{GridPos, screen_to_world};
 use crate::schedule::GameSet;
 use crate::state::GameState;

@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
-use crate::config::{AppConfig, LevelDefinition};
+use crate::settings::AppConfig;
+use crate::level::LevelDefinition;
 use crate::lawn_mower::LawnMower;
 use crate::schedule::GameSet;
 use crate::zombie::ZombieCollider;

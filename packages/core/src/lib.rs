@@ -1,6 +1,6 @@
 pub mod state;
 pub mod schedule;
-pub mod config;
+pub mod settings;
 pub mod lawn;
 pub mod combat;
 pub mod plant;
@@ -23,7 +23,7 @@ pub struct CorePlugin;
 
 impl Plugin for CorePlugin {
     fn build(&self, app: &mut App) {
-        app.init_asset::<config::PauseMenuConfig>()
+        app.init_asset::<ui::menu::pause_menu::config::PauseMenuConfig>()
             .init_state::<state::GameState>()
             .configure_sets(
                 Update,
