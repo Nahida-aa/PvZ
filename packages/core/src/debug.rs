@@ -28,7 +28,7 @@ impl Plugin for DebugPlugin {
 }
 
 fn apply_debug_borders(
-    mut query: Query<(&mut BorderColor, &mut BackgroundColor), Added<DebugBorder>>,
+    mut query: Query<(&mut BorderColor, &mut BackgroundColor), With<DebugBorder>>,
 ) {
     for (mut border, mut bg) in query.iter_mut() {
         *border = BorderColor::all(Color::srgb(1.0, 0.0, 0.0));
