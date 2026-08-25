@@ -83,6 +83,7 @@ pub struct SmallButtonConfig {
 }
 
 #[derive(Deserialize, Clone, Debug)]
+#[serde(default)]
 pub struct SliderConfig {
     pub label_font_size: f32,
     pub label_color: [f32; 3],
@@ -99,6 +100,23 @@ pub struct SliderConfig {
     pub label_top_offset: f32,
     /// Track 垂直偏移（相对滑动条根节点 top）。
     pub track_top_offset: f32,
+}
+
+impl Default for SliderConfig {
+    fn default() -> Self {
+        Self {
+            label_font_size: 18.0,
+            label_color: [0.38, 0.384, 0.502],
+            label_outline_size: 2.0,
+            label_shadow_offset: [-2.0, -2.0],
+            track_height: 10.0,
+            knob_width: 22.0,
+            knob_height: 29.0,
+            label_area_width: 62.0,
+            label_top_offset: 8.0,
+            track_top_offset: 10.0,
+        }
+    }
 }
 
 impl PauseMenuConfig {
