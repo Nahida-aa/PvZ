@@ -25,6 +25,7 @@ pub(crate) use components::*;
 
 use bevy::prelude::*;
 use bevy::ui::ZIndex;
+use bevy::ui::widget::TextShadow;
 
 use crate::assets::GameAssets;
 use crate::settings::AppConfig;
@@ -153,6 +154,10 @@ pub(crate) fn build_pause_menu_ui(
                             ..default()
                         },
                         TextColor(Color::srgb(sl.color[0], sl.color[1], sl.color[2])),
+                        TextShadow {
+                            offset: Vec2::new(-2.0, -2.0),
+                            color: Color::BLACK,
+                        },
                         Node {
                             position_type: PositionType::Absolute,
                             left: Val::Px(sl.left),

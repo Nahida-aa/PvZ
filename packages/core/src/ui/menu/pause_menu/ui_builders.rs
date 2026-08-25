@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy::ui::prelude::{BorderRect, NodeImageMode, SliceScaleMode, TextureSlicer};
+use bevy::ui::widget::TextShadow;
 use bevy_ui_widgets::{Slider, SliderRange, SliderStep, SliderThumb, SliderValue, TrackClick, slider_self_update};
 
 use super::components::*;
@@ -131,6 +132,10 @@ pub(crate) fn spawn_slider(
                 ..default()
             },
             TextColor(Color::srgb(sc.label_color[0], sc.label_color[1], sc.label_color[2])),
+            TextShadow {
+                offset: Vec2::new(sc.label_shadow_offset[0], sc.label_shadow_offset[1]),
+                color: Color::BLACK,
+            },
             Node {
                 position_type: PositionType::Absolute,
                 left: Val::Px(0.0),

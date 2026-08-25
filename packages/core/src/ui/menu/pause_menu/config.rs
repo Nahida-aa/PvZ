@@ -86,6 +86,10 @@ pub struct SmallButtonConfig {
 pub struct SliderConfig {
     pub label_font_size: f32,
     pub label_color: [f32; 3],
+    /// 描边宽度（Godot Label2 outline_size=2）。
+    pub label_outline_size: f32,
+    /// 阴影偏移 (x, y)（Godot Label2 shadow_offset=(-2,-2)）。
+    pub label_shadow_offset: [f32; 2],
     pub track_height: f32,
     pub knob_width: f32,
     pub knob_height: f32,
@@ -137,7 +141,7 @@ impl Default for PauseMenuConfig {
             speed_label: LabelElement {
                 left: 175.0,
                 top: 200.5,
-                font_size: 14.0,
+                font_size: 18.0,
                 color: [0.38, 0.384, 0.502],
             },
             almanac_button: ButtonElement {
@@ -180,8 +184,10 @@ impl Default for PauseMenuConfig {
                 bg_9slice_max: [16.0, 20.0],
             },
             slider: SliderConfig {
-                label_font_size: 14.0,
+                label_font_size: 18.0,
                 label_color: [0.38, 0.384, 0.502],
+                label_outline_size: 2.0,
+                label_shadow_offset: [-2.0, -2.0],
                 track_height: 10.0,
                 knob_width: 22.0,
                 knob_height: 29.0,
