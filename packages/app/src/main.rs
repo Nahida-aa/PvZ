@@ -68,6 +68,7 @@ fn main() {
         // 路径 "../../assets" 与 assets_dir() 保持一致，指向 workspace 根目录的 assets/。
         .set(AssetPlugin {
             file_path: "../../assets".into(),
+            meta_check: bevy::asset::AssetMetaCheck::Never,
             ..default()
         }))
         .add_plugins(pvz_core::CorePlugin)
