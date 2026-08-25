@@ -126,11 +126,11 @@ fn setup_menubar(
                 BackgroundColor(Color::NONE),
                 Node {
                     position_type: PositionType::Absolute,
-                    left: Val::Px(35.0),
+                    left: Val::Px(10.0),
                     bottom: Val::Px(6.0),
-                    width: Val::Px(35.0),
-                    height: Val::Px(17.0),
-                    justify_content: JustifyContent::End,
+                    width: Val::Px(58.0),
+                    height: Val::Px(28.0),
+                    justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
                     ..default()
                 },

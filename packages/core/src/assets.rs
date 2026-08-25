@@ -48,7 +48,7 @@ impl Plugin for GameAssetsPlugin {
         let server = app.world().resource::<AssetServer>().clone();
         let assets = GameAssets {
             font: server.load("SIMSUN.TTC"),
-            sun_font: server.load("fonts/方圆卡通POP字.ttf"),
+            sun_font: server.load("fonts/fzktpop.ttf"),
             peashooter_frames: (0..13)
                 .map(|i| server.load(format!("graphics/Plants/Peashooter/Peashooter_{i}.png")))
                 .collect(),
