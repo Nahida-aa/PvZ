@@ -1,7 +1,8 @@
+use bevy::audio::AudioSink;
 use bevy::prelude::*;
 use bevy::ui::ZIndex;
 
-use crate::assets::GameAssets;
+use crate::assets::{BgmMusic, GameAssets};
 use crate::components::menebar::SunBank;
 use crate::components::plant_cards::PlantCards;
 use crate::input::SelectedPlant;
@@ -34,7 +35,8 @@ impl Plugin for PauseMenuPlugin {
             toggle_pause
                 .run_if(in_state(GameState::Playing).or_eager(in_state(GameState::Paused))),
         )
-        .add_systems(OnEnter(GameState::Paused), setup_pause_menu)
+        .add_systems(OnEnter(GameState::Paused), (setup_pause_menu, pause_bgm))
+        .add_systems(OnEnter(GameState::Playing), resume_bgm)
         .add_systems(
             Update,
             handle_buttons.run_if(in_state(GameState::Paused)),
@@ -55,6 +57,18 @@ fn toggle_pause(
         GameState::Playing => next.set(GameState::Paused),
         GameState::Paused => next.set(GameState::Playing),
         _ => {}
+    }
+}
+
+fn pause_bgm(sink: Query<&AudioSink, With<BgmMusic>>) {
+    if let Ok(sink) = sink.single() {
+        sink.pause();
+    }
+}
+
+fn resume_bgm(sink: Query<&AudioSink, With<BgmMusic>>) {
+    if let Ok(sink) = sink.single() {
+        sink.play();
     }
 }
 

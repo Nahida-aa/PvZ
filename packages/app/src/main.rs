@@ -4,6 +4,7 @@ use bevy::prelude::*;
 use bevy::log::LogPlugin;
 use bevy::window::WindowResolution;
 
+use pvz_core::assets::BgmMusic;
 use pvz_core::config::{AppConfig, LevelDefinition};
 
 const DEFAULT_LEVEL: &str = "levels/level_01.ron";
@@ -83,6 +84,7 @@ fn setup_camera(mut commands: Commands) {
 
 fn start_music(mut commands: Commands, server: Res<AssetServer>) {
     commands.spawn((
+        BgmMusic,
         AudioPlayer::<AudioSource>(server.load("music/dayLevel.ogg")),
         PlaybackSettings::LOOP,
     ));

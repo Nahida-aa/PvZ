@@ -1,5 +1,8 @@
 use bevy::prelude::*;
 
+#[derive(Component)]
+pub struct BgmMusic;
+
 #[derive(Resource)]
 pub struct GameAssets {
     pub font: Handle<Font>,
