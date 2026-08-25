@@ -1,22 +1,32 @@
+use std::path::PathBuf;
+
 use bevy::prelude::*;
 use bevy::log::LogPlugin;
 use bevy::window::WindowResolution;
 
 use pvz_core::config::{AppConfig, LevelDefinition};
 
-const DEFAULT_LEVEL_PATH: &str = "assets/levels/level_01.ron";
-const APP_CONFIG_PATH: &str = "assets/app.ron";
+const DEFAULT_LEVEL: &str = "levels/level_01.ron";
+const APP_CONFIG: &str = "app.ron";
+
+fn assets_dir() -> PathBuf {
+    let exe = std::env::current_exe().expect("无法获取可执行文件路径");
+    exe.parent().unwrap().join("../../assets")
+}
 
 fn main() {
+    let assets = assets_dir();
     let level_path = parse_level_arg(std::env::args().skip(1)).unwrap_or_else(|msg| {
         eprintln!("{msg}");
         std::process::exit(2);
     });
 
-    let app_config = AppConfig::load_from_file(APP_CONFIG_PATH)
-        .unwrap_or_else(|e| panic!("加载 {APP_CONFIG_PATH} 失败: {e}"));
-    let level = LevelDefinition::load_from_file(&level_path)
-        .unwrap_or_else(|e| panic!("加载 {level_path} 失败: {e}"));
+    let app_config_path = assets.join(APP_CONFIG);
+    let level_path = assets.join(&level_path);
+    let app_config = AppConfig::load_from_file(app_config_path.to_str().unwrap())
+        .unwrap_or_else(|e| panic!("加载 {} 失败: {e}", app_config_path.display()));
+    let level = LevelDefinition::load_from_file(level_path.to_str().unwrap())
+        .unwrap_or_else(|e| panic!("加载 {} 失败: {e}", level_path.display()));
 
     let window_size = (app_config.win_w() as u32, app_config.win_h() as u32);
 
@@ -33,6 +43,9 @@ fn main() {
             ..default()
         }).set(LogPlugin {
             filter: "info,icu_segmenter=error".into(),
+            ..default()
+        }).set(AssetPlugin {
+            file_path: "../../assets".into(),
             ..default()
         }))
         .add_plugins(pvz_core::CorePlugin)
@@ -61,7 +74,7 @@ fn parse_level_arg(args: impl IntoIterator<Item = String>) -> Result<String, Str
             unknown => return Err(format!("未知参数: {unknown}")),
         }
     }
-    Ok(DEFAULT_LEVEL_PATH.to_string())
+    Ok(DEFAULT_LEVEL.to_string())
 }
 
 fn setup_camera(mut commands: Commands) {
