@@ -1,28 +1,28 @@
 (
-    overlay: (color: [0.0, 0.0, 0.0, 0.45], z_index: 1000),
+    overlay: (color: (0.0, 0.0, 0.0, 0.45), z_index: 1000),
     panel: (width: 412.0, height: 483.0),
 
     music_slider: (left: 97.0, top: 112.5, width: 218.0, height: 30.0),
     sound_slider: (left: 97.0, top: 152.5, width: 218.0, height: 30.0),
     speed_slider: (left: 97.0, top: 192.5, width: 218.0, height: 30.0),
-    speed_label: (left: 175.0, top: 200.5, font_size: 14.0, color: [0.38, 0.384, 0.502]),
+    speed_label: (left: 175.0, top: 200.5, font_size: 14.0, color: (0.38, 0.384, 0.502)),
 
     almanac_button: (left: 103.0, top: 236.0, width: 88.0, height: 37.0),
-    options_button: (left: 210.0, top: 236.5, width: 88.0, height: 37.0),
+    options_button: (left: 200.0, top: 236.5, width: 88.0, height: 37.0),
     restart_button: (left: 102.0, top: 279.5, width: 195.0, height: 37.0),
     main_menu_button: (left: 102.0, top: 323.5, width: 195.0, height: 37.0),
-    continue_button: (left: 26.0, top: 383.0, width: 360.0, height: 100.0, font_size: 50.0, text_color: [0.0, 1.0, 0.0]),
+    continue_button: (left: 26.0, top: 383.0, width: 360.0, height: 100.0, font_size: 50.0, text_color: (0.0, 1.0, 0.0)),
 
     small_button: (
         font_size: 18.0,
-        text_color: [0.0, 1.0, 0.0],
-        bg_expand: [8.0, 5.0, 5.0, 8.0],
-        bg_9slice_min: [16.0, 16.0],
-        bg_9slice_max: [16.0, 20.0],
+        text_color: (0.0, 1.0, 0.0),
+        bg_expand: (8.0, 5.0, 5.0, 8.0),
+        bg_9slice_min: (16.0, 16.0),
+        bg_9slice_max: (16.0, 20.0),
     ),
     slider: (
         label_font_size: 14.0,
-        label_color: [0.38, 0.384, 0.502],
+        label_color: (0.38, 0.384, 0.502),
         track_height: 10.0,
         knob_width: 22.0,
         knob_height: 29.0,

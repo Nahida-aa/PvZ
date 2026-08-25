@@ -12,7 +12,7 @@
 //! - `Paused` → 点击"重新开始"/"主菜单" → 重置所有游戏状态 → `Playing`
 
 mod almanac_button;
-pub(crate) mod config;
+pub mod config;
 mod components;
 mod continue_button;
 mod main_menu_button;
@@ -67,12 +67,12 @@ pub(crate) fn setup_pause_menu(
     mut commands: Commands,
     assets: Res<GameAssets>,
     app_config: Res<AppConfig>,
-    pause_configs: Res<Assets<PauseMenuConfig>>,
+    config: Res<PauseMenuConfig>,
 ) {
-    let config = pause_configs
-        .get(&assets.pause_menu_config)
-        .cloned()
-        .unwrap_or_default();
+    bevy::log::info!(
+        "setup_pause_menu: options_button left={}",
+        config.options_button.left
+    );
     build_pause_menu_ui(&mut commands, &assets, &app_config, &config);
 }
 

@@ -7,11 +7,14 @@ use bevy::window::WindowResolution;
 use pvz_core::assets::BgmMusic;
 use pvz_core::settings::AppConfig;
 use pvz_core::level::LevelDefinition;
+use pvz_core::ui::menu::pause_menu::config::PauseMenuConfig;
 
 /// 默认关卡文件名（相对于 assets 目录）。
 const DEFAULT_LEVEL: &str = "levels/level_01.ron";
 /// 应用配置文件名（相对于 assets 目录）。
 const APP_CONFIG: &str = "app.ron";
+/// 暂停菜单布局文件名（相对于 assets 目录）。
+const PAUSE_MENU_CONFIG: &str = "ui/pause_menu.ron";
 
 /// 获取 assets 目录的绝对路径。
 ///
@@ -32,16 +35,24 @@ fn main() {
 
     let app_config_path = assets.join(APP_CONFIG);
     let level_path = assets.join(&level_path);
+    let pause_menu_config_path = assets.join(PAUSE_MENU_CONFIG);
     let app_config = AppConfig::load_from_file(app_config_path.to_str().unwrap())
         .unwrap_or_else(|e| panic!("加载 {} 失败: {e}", app_config_path.display()));
     let level = LevelDefinition::load_from_file(level_path.to_str().unwrap())
         .unwrap_or_else(|e| panic!("加载 {} 失败: {e}", level_path.display()));
+    let pause_menu_config =
+        PauseMenuConfig::load_from_file(pause_menu_config_path.to_str().unwrap())
+            .unwrap_or_else(|e| {
+                eprintln!("加载 {} 失败: {e}，使用默认值", pause_menu_config_path.display());
+                PauseMenuConfig::default()
+            });
 
     let window_size = (app_config.win_w() as u32, app_config.win_h() as u32);
 
     App::new()
         .insert_resource(app_config)
         .insert_resource(level)
+        .insert_resource(pause_menu_config)
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "Plants vs. Zombies".into(),
@@ -96,10 +107,10 @@ fn setup_camera(mut commands: Commands) {
 ///
 /// 音乐实体附加 `BgmMusic` 标记组件，供 `pause_menu.rs` 中的
 /// `pause_bgm` / `resume_bgm` 系统查询 `AudioSink` 进行暂停/恢复控制。
-fn start_music(mut commands: Commands, server: Res<AssetServer>) {
+fn start_music(mut commands: Commands, server: Res<AssetServer>, config: Res<AppConfig>) {
     commands.spawn((
         BgmMusic,
         AudioPlayer::<AudioSource>(server.load("music/dayLevel.ogg")),
-        PlaybackSettings::LOOP,
+        PlaybackSettings::LOOP.with_volume(bevy::audio::Volume::Linear(config.bgm_volume)),
     ));
 }

@@ -23,8 +23,7 @@ pub struct CorePlugin;
 
 impl Plugin for CorePlugin {
     fn build(&self, app: &mut App) {
-        app.init_asset::<ui::menu::pause_menu::config::PauseMenuConfig>()
-            .init_state::<state::GameState>()
+        app.init_state::<state::GameState>()
             .configure_sets(
                 Update,
                 (schedule::GameSet::Spawn, schedule::GameSet::Movement, schedule::GameSet::Combat, schedule::GameSet::Cleanup)

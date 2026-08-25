@@ -1,4 +1,3 @@
-use bevy::asset::AssetEvent;
 use bevy::audio::{AudioSink, PlaybackSettings};
 use bevy::prelude::*;
 use bevy::audio::AudioSource;
@@ -203,40 +202,59 @@ pub(crate) fn despawn_pause_menu(
     }
 }
 
-/// 热重载暂停菜单：检测 `pause_menu.ron` 变更，销毁旧 UI 并用新配置重建。
+/// 热重载暂停菜单：检测 `pause_menu.ron` 文件变更，销毁旧 UI 并用新配置重建。
 pub(crate) fn hot_reload_pause_menu(
     mut commands: Commands,
     assets: Res<GameAssets>,
     app_config: Res<AppConfig>,
-    pause_configs: Res<Assets<PauseMenuConfig>>,
-    mut asset_events: MessageReader<AssetEvent<PauseMenuConfig>>,
+    mut config: ResMut<PauseMenuConfig>,
+    mut last_mtime: Local<Option<std::time::SystemTime>>,
     query: Query<Entity, With<PauseMenuRoot>>,
     children: Query<&Children>,
 ) {
-    let mut dirty = false;
-    let target_id = assets.pause_menu_config.id();
-    for event in asset_events.read() {
-        if let AssetEvent::Modified { id } = event {
-            if *id == target_id {
-                dirty = true;
-                break;
-            }
+    // 通过可执行文件位置推算 assets 路径（与 main.rs 的 assets_dir() 一致）
+    let Ok(exe) = std::env::current_exe() else { return };
+    let ron_path = exe
+        .parent()
+        .unwrap()
+        .join("../../assets/ui/pause_menu.ron");
+
+    let meta = std::fs::metadata(&ron_path).ok();
+    let mtime = meta.and_then(|m| m.modified().ok());
+
+    let changed = match (last_mtime.as_ref(), &mtime) {
+        (Some(prev), Some(curr)) => *prev != *curr,
+        (None, Some(curr)) => {
+            // 首帧：初始化 mtime，不触发重建（setup_pause_menu 已处理）
+            *last_mtime = Some(*curr);
+            false
         }
+        _ => false,
+    };
+
+    if let Some(t) = mtime {
+        *last_mtime = Some(t);
     }
-    if !dirty {
+
+    if !changed {
         return;
     }
+
     bevy::log::info!("检测到 pause_menu.ron 变更，重建暂停菜单");
+
+    // 重新读取 .ron 并更新 Resource
+    if let Ok(new_config) = PauseMenuConfig::load_from_file(ron_path.to_str().unwrap()) {
+        *config = new_config;
+    }
 
     // 销毁旧 UI
     for entity in query.iter() {
         despawn_recursive(&mut commands, entity, &children);
     }
 
-    // 读取新配置并重建
-    let config = pause_configs
-        .get(&assets.pause_menu_config)
-        .cloned()
-        .unwrap_or_default();
+    bevy::log::info!(
+        "热重载完成 — options_button left={}",
+        config.options_button.left
+    );
     super::build_pause_menu_ui(&mut commands, &assets, &app_config, &config);
 }

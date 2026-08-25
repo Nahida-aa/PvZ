@@ -6,3 +6,6 @@ dev:
 
 run-release:
     cargo run --release
+
+check:
+    cargo check

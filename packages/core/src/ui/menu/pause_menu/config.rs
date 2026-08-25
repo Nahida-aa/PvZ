@@ -6,7 +6,8 @@
 use bevy::prelude::*;
 use serde::Deserialize;
 
-#[derive(Asset, Reflect, Deserialize, Clone, Debug)]
+#[derive(Resource, Deserialize, Clone, Debug)]
+#[serde(default)]
 pub struct PauseMenuConfig {
     pub overlay: OverlayConfig,
     pub panel: PanelConfig,
@@ -23,19 +24,21 @@ pub struct PauseMenuConfig {
     pub slider: SliderConfig,
 }
 
-#[derive(Reflect, Deserialize, Clone, Debug)]
+#[derive(Deserialize, Clone, Debug, Default)]
+#[serde(default)]
 pub struct OverlayConfig {
     pub color: [f32; 4],
     pub z_index: i32,
 }
 
-#[derive(Reflect, Deserialize, Clone, Debug)]
+#[derive(Deserialize, Clone, Debug, Default)]
+#[serde(default)]
 pub struct PanelConfig {
     pub width: f32,
     pub height: f32,
 }
 
-#[derive(Reflect, Deserialize, Clone, Debug)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct SliderElement {
     pub left: f32,
     pub top: f32,
@@ -43,7 +46,7 @@ pub struct SliderElement {
     pub height: f32,
 }
 
-#[derive(Reflect, Deserialize, Clone, Debug)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct LabelElement {
     pub left: f32,
     pub top: f32,
@@ -51,7 +54,7 @@ pub struct LabelElement {
     pub color: [f32; 3],
 }
 
-#[derive(Reflect, Deserialize, Clone, Debug)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ButtonElement {
     pub left: f32,
     pub top: f32,
@@ -59,7 +62,7 @@ pub struct ButtonElement {
     pub height: f32,
 }
 
-#[derive(Reflect, Deserialize, Clone, Debug)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ContinueButtonElement {
     pub left: f32,
     pub top: f32,
@@ -69,7 +72,7 @@ pub struct ContinueButtonElement {
     pub text_color: [f32; 3],
 }
 
-#[derive(Reflect, Deserialize, Clone, Debug)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct SmallButtonConfig {
     pub font_size: f32,
     pub text_color: [f32; 3],
@@ -79,7 +82,7 @@ pub struct SmallButtonConfig {
     pub bg_9slice_max: [f32; 2],
 }
 
-#[derive(Reflect, Deserialize, Clone, Debug)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct SliderConfig {
     pub label_font_size: f32,
     pub label_color: [f32; 3],
@@ -92,6 +95,14 @@ pub struct SliderConfig {
     pub label_top_offset: f32,
     /// Track 垂直偏移（相对滑动条根节点 top）。
     pub track_top_offset: f32,
+}
+
+impl PauseMenuConfig {
+    pub fn load_from_file(path: &str) -> Result<Self, String> {
+        let text =
+            std::fs::read_to_string(path).map_err(|e| format!("读取 {path} 失败: {e}"))?;
+        ron::from_str(&text).map_err(|e| format!("解析 {path} 失败: {e}"))
+    }
 }
 
 impl Default for PauseMenuConfig {
