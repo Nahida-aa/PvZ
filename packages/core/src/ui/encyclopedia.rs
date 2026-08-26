@@ -60,6 +60,9 @@ pub struct EncyclopediaDetailImage;
 #[derive(Component)]
 pub struct EncyclopediaDetailCost;
 
+#[derive(Component)]
+pub struct EncyclopediaCloseImage;
+
 pub fn build_encyclopedia(commands: &mut Commands, assets: &GameAssets) {
     let panel_w = 800.0;
     let panel_h = 520.0;
@@ -195,29 +198,27 @@ pub fn build_encyclopedia(commands: &mut Commands, assets: &GameAssets) {
                 BackgroundColor(Color::srgba(0.08, 0.12, 0.08, 0.9)),
             ))
             .with_children(|right| {
-                // Close button (top-right)
+                // Close button (top-right) — use Almanac_CloseButton.png
                 right.spawn((
                     EncyclopediaClose,
                     Button,
                     Node {
-                        width: Val::Px(80.0),
-                        height: Val::Px(28.0),
-                        justify_content: JustifyContent::Center,
-                        align_items: AlignItems::Center,
+                        width: Val::Px(89.0),
+                        height: Val::Px(26.0),
                         align_self: AlignSelf::FlexEnd,
                         margin: UiRect::bottom(Val::Px(8.0)),
                         ..default()
                     },
-                    BackgroundColor(Color::srgba(0.6, 0.2, 0.2, 0.8)),
-                ))
-                .with_children(|p| {
+                    ImageNode::new(assets.almanac_close_button.clone()),
+                )).with_children(|p| {
                     p.spawn((
-                        Text::new("关闭"),
-                        TextFont {
-                            font_size: FontSize::Px(14.0),
+                        EncyclopediaCloseImage,
+                        Node {
+                            width: Val::Px(89.0),
+                            height: Val::Px(26.0),
                             ..default()
                         },
-                        TextColor(Color::WHITE),
+                        ImageNode::new(assets.almanac_close_button.clone()),
                     ));
                 });
 
@@ -319,6 +320,27 @@ pub fn handle_encyclopedia_plant_click(
             }
 
             info!("图鉴选中: {}", card.name);
+        }
+    }
+}
+
+pub fn handle_encyclopedia_close_hover(
+    interaction: Query<(&Interaction, &Children), (Changed<Interaction>, With<EncyclopediaClose>)>,
+    mut img_query: Query<&mut ImageNode, With<EncyclopediaCloseImage>>,
+    assets: Res<GameAssets>,
+) {
+    for (interaction, children) in interaction.iter() {
+        for child in children.iter() {
+            if let Ok(mut img) = img_query.get_mut(child) {
+                match *interaction {
+                    Interaction::Hovered => {
+                        img.image = assets.almanac_close_button_highlight.clone();
+                    }
+                    _ => {
+                        img.image = assets.almanac_close_button.clone();
+                    }
+                }
+            }
         }
     }
 }

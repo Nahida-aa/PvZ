@@ -73,6 +73,7 @@ impl Plugin for CorePlugin {
                 Update,
                 (
                     ui::encyclopedia::handle_encyclopedia_close,
+                    ui::encyclopedia::handle_encyclopedia_close_hover,
                     ui::encyclopedia::handle_encyclopedia_plant_click,
                 )
                     .run_if(in_state(GameState::Encyclopedia)),

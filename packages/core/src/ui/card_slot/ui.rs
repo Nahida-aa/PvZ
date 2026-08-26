@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use bevy::text::FontSize;
 use crate::assets::GameAssets;
 use crate::level::LevelDefinition;
 use crate::settings::CardConfig;
@@ -97,21 +96,10 @@ pub fn build_card_selection_ui(
                     top: Val::Px(start_btn_y),
                     width: Val::Px(start_btn_w),
                     height: Val::Px(start_btn_h),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
                     ..default()
                 },
                 ImageNode::new(assets.seed_chooser_button_glow.clone()),
-            )).with_children(|p| {
-                p.spawn((
-                    Text::new("开始游戏"),
-                    TextFont {
-                        font_size: FontSize::Px(18.0),
-                        ..default()
-                    },
-                    TextColor(Color::WHITE),
-                ));
-            });
+            ));
 
             // === 查看图鉴按钮 (左下) ===
             let btn2_w = 111.0;
@@ -127,21 +115,10 @@ pub fn build_card_selection_ui(
                     top: Val::Px(ency_y),
                     width: Val::Px(btn2_w),
                     height: Val::Px(btn2_h),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
                     ..default()
                 },
                 ImageNode::new(assets.seed_chooser_button2.clone()),
-            )).with_children(|p| {
-                p.spawn((
-                    Text::new("查看图鉴"),
-                    TextFont {
-                        font_size: FontSize::Px(14.0),
-                        ..default()
-                    },
-                    TextColor(Color::WHITE),
-                ));
-            });
+            ));
 
             // === 重选上次卡片按钮 (右下) ===
             let recard_x = panel_w - btn2_w - 10.0;
@@ -155,20 +132,9 @@ pub fn build_card_selection_ui(
                     top: Val::Px(recard_y),
                     width: Val::Px(btn2_w),
                     height: Val::Px(btn2_h),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
                     ..default()
                 },
                 ImageNode::new(assets.seed_chooser_button2.clone()),
-            )).with_children(|p| {
-                p.spawn((
-                    Text::new("重选上次卡片"),
-                    TextFont {
-                        font_size: FontSize::Px(14.0),
-                        ..default()
-                    },
-                    TextColor(Color::WHITE),
-                ));
-            });
+            ));
         });
 }
