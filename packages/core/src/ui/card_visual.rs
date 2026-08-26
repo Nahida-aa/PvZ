@@ -48,8 +48,6 @@ pub fn card_image_handle(plant: &str, assets: &GameAssets) -> Handle<Image> {
         "TorchWood" => assets.card_torchwood.clone(),
         "TallNut" => assets.card_tallnut.clone(),
         "Seashroom" => assets.card_seashroom.clone(),
-        "Cactus" => assets.card_cactus.clone(),
-        "Blover" => assets.card_blover.clone(),
         "StarFruit" => assets.card_starfruit.clone(),
         "PumpkinHead" => assets.card_pumpkinhead.clone(),
         "Garlic" => assets.card_garlic.clone(),
