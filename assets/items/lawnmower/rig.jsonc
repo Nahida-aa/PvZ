@@ -1,21 +1,27 @@
 {
-  "scale": 0.8,
+  // Godot: 所有部件是 Body 的直接子节点 (并列关系)
+  // Body: pos=(-39,-55), scale=0.8
+  // 每个 Sprite2D: scale=0.8, centered=false
+  // 有效缩放 = 0.8 × 0.8 = 0.64
+  // 坐标: 精灵中心在 Body 局部坐标 (x右, y下)
+  // center = .tscn_position + (tex_w * 0.4, tex_h * 0.4)
+  "scale": 1.0,
   "parts": [
-    {"image": "Lawnmower_backwheelpiece1.png", "x": 25.8, "y": 26.1, "z": 1.0},
-    {"image": "Lawnmower_backwheel1.png", "x": 25.5, "y": 29.0, "z": 2.0},
-    {"image": "Lawnmower_backwheelshine1.png", "x": 25.0, "y": 28.4, "z": 3.0},
-    {"image": "Lawnmower_backwheelpiece2.png", "x": 59.0, "y": 26.2, "z": 1.0},
-    {"image": "Lawnmower_backwheel2.png", "x": 58.6, "y": 29.2, "z": 2.0},
-    {"image": "Lawnmower_backwheelshine2.png", "x": 58.5, "y": 28.6, "z": 3.0},
-    {"image": "LawnMower_body.png", "x": -2.2, "y": 2.6, "z": 5.0},
-    {"image": "Lawnmower_frontwheelpiece1.png", "x": 19.7, "y": 45.6, "z": 6.0},
-    {"image": "Lawnmower_frontwheel1.png", "x": 19.4, "y": 49.0, "z": 7.0},
-    {"image": "Lawnmower_wheelshine1.png", "x": 18.2, "y": 48.8, "z": 8.0},
-    {"image": "Lawnmower_frontwheelpiece2.png", "x": 54.5, "y": 47.0, "z": 6.0},
-    {"image": "Lawnmower_frontwheel2.png", "x": 54.1, "y": 49.6, "z": 7.0},
-    {"image": "Lawnmower_wheelshine2.png", "x": 53.1, "y": 49.4, "z": 8.0},
-    {"image": "LawnMower_pull.png", "x": 7.6, "y": 40.5, "z": 8.0},
-    {"image": "LawnMower_engine.png", "x": 38.0, "y": 26.2, "z": 9.0},
-    {"image": "LawnMower_exhaust.png", "x": 38.7, "y": 46.7, "z": 10.0}
+    {"image": "Lawnmower_backwheelpiece1.png", "x": 36.6, "y": 36.5, "z": 1.0, "scale": 0.8},
+    {"image": "Lawnmower_backwheel1.png", "x": 35.9, "y": 39.4, "z": 2.0, "scale": 0.8},
+    {"image": "Lawnmower_backwheelshine1.png", "x": 35.4, "y": 38.8, "z": 3.0, "scale": 0.8},
+    {"image": "Lawnmower_backwheelpiece2.png", "x": 69.8, "y": 36.6, "z": 1.0, "scale": 0.8},
+    {"image": "Lawnmower_backwheel2.png", "x": 69.0, "y": 39.6, "z": 2.0, "scale": 0.8},
+    {"image": "Lawnmower_backwheelshine2.png", "x": 68.9, "y": 39.0, "z": 3.0, "scale": 0.8},
+    {"image": "LawnMower_body.png", "x": 37.8, "y": 35.0, "z": 5.0, "scale": 0.8},
+    {"image": "Lawnmower_frontwheelpiece1.png", "x": 30.5, "y": 56.0, "z": 6.0, "scale": 0.8},
+    {"image": "Lawnmower_frontwheel1.png", "x": 29.4, "y": 59.4, "z": 7.0, "scale": 0.8},
+    {"image": "Lawnmower_wheelshine1.png", "x": 28.6, "y": 59.2, "z": 8.0, "scale": 0.8},
+    {"image": "Lawnmower_frontwheelpiece2.png", "x": 65.3, "y": 57.4, "z": 6.0, "scale": 0.8},
+    {"image": "Lawnmower_frontwheel2.png", "x": 64.5, "y": 60.0, "z": 7.0, "scale": 0.8},
+    {"image": "Lawnmower_wheelshine2.png", "x": 63.5, "y": 59.8, "z": 8.0, "scale": 0.8},
+    {"image": "LawnMower_pull.png", "x": 14.4, "y": 46.9, "z": 8.0, "scale": 0.8},
+    {"image": "LawnMower_engine.png", "x": 53.6, "y": 40.6, "z": 9.0, "scale": 0.8},
+    {"image": "LawnMower_exhaust.png", "x": 42.3, "y": 51.9, "z": 10.0, "scale": 0.8}
   ]
 }

@@ -113,7 +113,8 @@ fn spawn_mowers(
                     if let Some(handle) = mower_image_handle(&part.image, &assets) {
                         parent.spawn((
                             Sprite::from_image(handle),
-                            Transform::from_translation(Vec3::new(part.x, part.y, part.z)),
+                            Transform::from_translation(Vec3::new(part.x, part.y, part.z))
+                                .with_scale(Vec3::splat(0.8)),
                         ));
                     }
                 }
