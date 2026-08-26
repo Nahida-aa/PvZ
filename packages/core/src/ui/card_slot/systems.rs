@@ -78,26 +78,24 @@ pub fn handle_start_game(
 /// 显示/隐藏选卡界面
 pub fn update_card_selection_visibility(
     state: Res<State<GameState>>,
-    mut card_slot: Query<&mut Node, With<CardSlotRoot>>,
-    mut candidate_panel: Query<&mut Node, With<CardCandidatePanel>>,
+    mut card_slot: Query<(&mut Node, Option<&CardSlotRoot>, Option<&CardCandidatePanel>)>,
 ) {
     let is_choosing = *state.get() == GameState::ChoosingCards;
 
-    // 出战卡槽
-    if let Ok(mut node) = card_slot.single_mut() {
-        node.top = if is_choosing {
-            Val::Px(0.0)
-        } else {
-            Val::Px(-100.0)
-        };
-    }
-
-    // 待选卡面板
-    if let Ok(mut node) = candidate_panel.single_mut() {
-        node.bottom = if is_choosing {
-            Val::Px(0.0)
-        } else {
-            Val::Px(-600.0)
-        };
+    for (mut node, is_slot, is_panel) in card_slot.iter_mut() {
+        if is_slot.is_some() {
+            node.top = if is_choosing {
+                Val::Px(0.0)
+            } else {
+                Val::Px(-100.0)
+            };
+        }
+        if is_panel.is_some() {
+            node.bottom = if is_choosing {
+                Val::Px(0.0)
+            } else {
+                Val::Px(-600.0)
+            };
+        }
     }
 }
