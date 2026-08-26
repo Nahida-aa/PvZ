@@ -82,12 +82,12 @@ pub fn update_card_selection_visibility(
 ) {
     let is_choosing = *state.get() == GameState::ChoosingCards;
 
-    // SeedChooser_Background.png = 513px 高
     if let Ok(mut node) = candidate_panel.single_mut() {
-        node.bottom = if is_choosing {
-            Val::Px(0.0)
+        // 展开时 top=PANEL_TOP(87)，收起时 top=PANEL_TOP+513
+        node.top = if is_choosing {
+            Val::Px(87.0)
         } else {
-            Val::Px(-513.0)
+            Val::Px(87.0 + 513.0)
         };
     }
 }

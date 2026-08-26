@@ -6,6 +6,11 @@ use super::components::*;
 const CARD_W: f32 = 50.0;
 const CARD_H: f32 = 70.0;
 
+/// 对齐 menubar 的 bar_left
+const PANEL_LEFT: f32 = 150.0;
+/// menubar 高度 = SeedBank.png 高 87px
+const PANEL_TOP: f32 = 87.0;
+
 pub fn build_card_selection_ui(
     commands: &mut Commands,
     assets: &GameAssets,
@@ -17,8 +22,8 @@ pub fn build_card_selection_ui(
             CardCandidatePanel,
             Node {
                 position_type: PositionType::Absolute,
-                left: Val::Px(0.0),
-                bottom: Val::Px(-513.0), // 初始隐藏在屏幕外
+                left: Val::Px(PANEL_LEFT),
+                top: Val::Px(PANEL_TOP + 513.0), // 初始隐藏在 menubar 下方
                 width: Val::Px(465.0),
                 height: Val::Px(513.0),
                 ..default()
