@@ -45,8 +45,8 @@ struct PartDef {
     x: f32,
     y: f32,
     z: f32,
-    #[serde(default = "default_scale")]
-    scale: f32,
+    #[serde(default)]
+    scale: Option<f32>,
 }
 
 fn main() {
@@ -95,7 +95,7 @@ fn compose(cli: &Cli) -> Result<PathBuf, Box<dyn std::error::Error>> {
                     x: 0.0,
                     y: 0.0,
                     z: i as f32,
-                    scale: 1.0,
+                    scale: Some(1.0),
                 })
                 .collect(),
         }
@@ -113,7 +113,7 @@ fn compose(cli: &Cli) -> Result<PathBuf, Box<dyn std::error::Error>> {
             .map_err(|e| format!("读取 {} 失败: {e}", path.display()))?;
         let (w, h, px) =
             load_rgba(&data).ok_or_else(|| format!("无法解码: {}", path.display()))?;
-        let scale = if part.scale != 0.0 { part.scale } else { parts.scale };
+        let scale = part.scale.unwrap_or(parts.scale);
         images.push((part.image.clone(), px, w, h, part.x, part.y, part.z, scale));
     }
 
