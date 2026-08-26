@@ -26,7 +26,6 @@ pub struct GameAssets {
     pub seed_packet_silhouette: Handle<Image>,
     pub background: Handle<Image>,
     pub seed_bank: Handle<Image>,
-    pub pause_menu_bg: Handle<Image>,
     pub pause_return_button: Handle<Image>,
     pub small_button_bg: Handle<Image>,
     pub slider_slot: Handle<Image>,
@@ -82,7 +81,6 @@ impl Plugin for GameAssetsPlugin {
             seed_packet_silhouette: server.load("image/ui/ui_card/SeedPacketSilhouette.png"),
             background: server.load("graphics/Items/Background/Background_0.jpg"),
             seed_bank: server.load("image/ui/ui_card/SeedBank.png"),
-            pause_menu_bg: server.load("graphics/Screen/option_dialog.png"),
             pause_return_button: server.load("graphics/Screen/btn_dialog_back_2.png"),
             small_button_bg: server
                 .load("image/ui/ui_main_game_menu/UI_BG/button_BG.png"),

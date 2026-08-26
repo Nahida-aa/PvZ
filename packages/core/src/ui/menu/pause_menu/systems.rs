@@ -218,7 +218,7 @@ pub(crate) fn hot_reload_pause_menu(
     let ron_path = exe
         .parent()
         .unwrap()
-        .join("../../assets/ui/pause_menu.ron");
+        .join("../../assets/ui/pause_menu.json");
 
     let meta = std::fs::metadata(&ron_path).ok();
     let mtime = meta.and_then(|m| m.modified().ok());
@@ -241,7 +241,7 @@ pub(crate) fn hot_reload_pause_menu(
         return;
     }
 
-    bevy::log::info!("检测到 pause_menu.ron 变更，重建暂停菜单");
+    bevy::log::info!("检测到 pause_menu.json 变更，重建暂停菜单");
 
     // 重新读取 .ron 并更新 Resource
     if let Ok(new_config) = PauseMenuConfig::load_from_file(ron_path.to_str().unwrap()) {

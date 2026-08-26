@@ -28,10 +28,12 @@ use bevy::ui::ZIndex;
 use bevy::ui::widget::TextShadow;
 
 use crate::assets::GameAssets;
+use crate::debug::DebugBorder;
 use crate::settings::AppConfig;
 use crate::state::GameState;
 
 use self::config::PauseMenuConfig;
+use self::config::png_dimensions;
 
 /// 暂停菜单插件。
 pub struct PauseMenuPlugin;
@@ -91,6 +93,19 @@ pub(crate) fn build_pause_menu_ui(
     let pc = &config.panel;
     let bg_handle: Handle<Image> = server.load(&pc.background_image);
 
+    // 从 PNG 文件读取图片真实尺寸，作为 fallback
+    let (img_w, img_h) = if let Ok(exe) = std::env::current_exe() {
+        let img_path = exe.parent().unwrap()
+            .join("../../assets").join(&pc.background_image);
+        png_dimensions(img_path.to_str().unwrap())
+            .unwrap_or((412, 483))
+    } else {
+        (412, 483)
+    };
+    // panel.width/height 覆盖 PNG 尺寸，None 时使用 PNG 原始尺寸
+    let panel_w = pc.width.unwrap_or(img_w as f32);
+    let panel_h = pc.height.unwrap_or(img_h as f32);
+
     commands
         .spawn((
             Node {
@@ -112,11 +127,12 @@ pub(crate) fn build_pause_menu_ui(
                 .spawn((
                     Node {
                         position_type: PositionType::Relative,
-                        width: Val::Px(pc.width),
-                        height: Val::Px(pc.height),
+                        width: Val::Px(panel_w),
+                        height: Val::Px(panel_h),
                         ..default()
                     },
                     ImageNode::new(bg_handle),
+                    DebugBorder,
                 ))
                 .with_children(|panel| {
                     // 音乐滑动条

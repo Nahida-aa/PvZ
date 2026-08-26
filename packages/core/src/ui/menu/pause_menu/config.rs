@@ -34,8 +34,10 @@ pub struct OverlayConfig {
 #[derive(Deserialize, Clone, Debug, Default)]
 #[serde(default)]
 pub struct PanelConfig {
-    pub width: f32,
-    pub height: f32,
+    /// 背景图片显示宽度（像素）。None = 使用 PNG 原始宽度。
+    pub width: Option<f32>,
+    /// 背景图片显示高度（像素）。None = 使用 PNG 原始高度。
+    pub height: Option<f32>,
     /// 背景图片路径（相对于 assets 目录）。
     pub background_image: String,
 }
@@ -121,11 +123,26 @@ impl Default for SliderConfig {
     }
 }
 
+/// 读取 PNG 文件头部，返回 (width, height)。
+///
+/// PNG 格式：8 字节签名 + 4 字节 IHDR 长度 + 4 字节 "IHDR" + 4 字节 width + 4 字节 height。
+pub fn png_dimensions(path: &str) -> Result<(u32, u32), String> {
+    let data =
+        std::fs::read(path).map_err(|e| format!("读取 {path} 失败: {e}"))?;
+    if data.len() < 24 || &data[..8] != b"\x89PNG\r\n\x1a\n" {
+        return Err(format!("{path} 不是有效的 PNG 文件"));
+    }
+    let width = u32::from_be_bytes(data[16..20].try_into().unwrap());
+    let height = u32::from_be_bytes(data[20..24].try_into().unwrap());
+    Ok((width, height))
+}
+
 impl PauseMenuConfig {
     pub fn load_from_file(path: &str) -> Result<Self, String> {
         let text =
             std::fs::read_to_string(path).map_err(|e| format!("读取 {path} 失败: {e}"))?;
-        ron::from_str(&text).map_err(|e| format!("解析 {path} 失败: {e}"))
+        let reader = json_comments::StripComments::new(text.as_bytes());
+        serde_json::from_reader(reader).map_err(|e| format!("解析 {path} 失败: {e}"))
     }
 }
 
@@ -137,8 +154,8 @@ impl Default for PauseMenuConfig {
                 z_index: 1000,
             },
             panel: PanelConfig {
-                width: 412.0,
-                height: 483.0,
+                width: None,
+                height: None,
                 background_image: "graphics/Screen/option_dialog.png".into(),
             },
             music_slider: SliderElement {
