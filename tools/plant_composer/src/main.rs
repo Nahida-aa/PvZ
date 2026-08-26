@@ -1,12 +1,13 @@
 use clap::Parser;
 use png::Transformations;
+use serde::Deserialize;
 use std::path::{Path, PathBuf};
 
 #[derive(Parser)]
 #[command(name = "plant_composer")]
-#[command(about = "将植物身体部件 PNG 合成为完整植物图")]
+#[command(about = "将植物/物品身体部件 PNG 合成为完整图像")]
 struct Cli {
-    /// 身体部件 PNG 所在目录
+    /// 身体部件目录 (包含 PNG 和 reanim.jsonc)
     #[arg(short, long)]
     input: PathBuf,
 
@@ -27,6 +28,19 @@ struct Cli {
     bg: String,
 }
 
+#[derive(Deserialize)]
+struct ReanimConfig {
+    parts: Vec<PartDef>,
+}
+
+#[derive(Deserialize)]
+struct PartDef {
+    image: String,
+    x: f32,
+    y: f32,
+    z: f32,
+}
+
 fn main() {
     let cli = Cli::parse();
     match compose(&cli) {
@@ -36,33 +50,87 @@ fn main() {
 }
 
 fn compose(cli: &Cli) -> Result<PathBuf, Box<dyn std::error::Error>> {
-    let entries = collect_pngs(&cli.input)?;
-    if entries.is_empty() {
-        return Err("目录下没有 PNG 文件".into());
-    }
-
     let bg = parse_rgba(&cli.bg)?;
 
-    // 加载所有 PNG
-    let mut images: Vec<(String, Vec<u8>, u32, u32)> = Vec::new();
-    for entry in &entries {
-        let data = std::fs::read(entry)?;
-        let (w, h, px) = load_rgba(&data)
-            .ok_or_else(|| format!("无法解码: {}", entry.display()))?;
-        let name = entry.file_stem().unwrap().to_string_lossy().to_string();
-        images.push((name, px, w, h));
+    // 部件目录结构: <input>/reanim.jsonc + <input>/reanim/<image>
+    let reanim_dir = cli.input.join("reanim");
+
+    // 尝试加载 reanim.jsonc
+    let jsonc_path = cli.input.join("reanim.jsonc");
+    let parts = if jsonc_path.exists() {
+        let text = std::fs::read_to_string(&jsonc_path)?;
+        let val = jsonc_parser::parse_to_serde_value(&text, &Default::default())?
+            .ok_or("无法解析 reanim.jsonc")?;
+        serde_json::from_value(val)?
+    } else {
+        // 无配置时，按文件名排序水平排列
+        let dir = if reanim_dir.exists() {
+            &reanim_dir
+        } else {
+            &cli.input
+        };
+        let entries = collect_pngs(dir)?;
+        if entries.is_empty() {
+            return Err("目录下没有 PNG 文件".into());
+        }
+        ReanimConfig {
+            parts: entries
+                .iter()
+                .enumerate()
+                .map(|(i, _)| PartDef {
+                    image: entries[i]
+                        .file_name()
+                        .unwrap()
+                        .to_string_lossy()
+                        .to_string(),
+                    x: 0.0,
+                    y: 0.0,
+                    z: i as f32,
+                })
+                .collect(),
+        }
+    };
+
+    // 加载所有引用的 PNG
+    let mut images: Vec<(String, Vec<u8>, u32, u32, f32, f32, f32)> = Vec::new();
+    for part in &parts.parts {
+        let path = if reanim_dir.join(&part.image).exists() {
+            reanim_dir.join(&part.image)
+        } else {
+            cli.input.join(&part.image)
+        };
+        let data = std::fs::read(&path)
+            .map_err(|e| format!("读取 {} 失败: {e}", path.display()))?;
+        let (w, h, px) =
+            load_rgba(&data).ok_or_else(|| format!("无法解码: {}", path.display()))?;
+        images.push((part.image.clone(), px, w, h, part.x, part.y, part.z));
     }
 
-    // 计算画布尺寸 (包围所有图片)
+    // 按 z-order 排序
+    images.sort_by(|a, b| a.6.partial_cmp(&b.6).unwrap());
+
+    // 计算画布尺寸
     let (canvas_w, canvas_h) = if let (Some(w), Some(h)) = (cli.width, cli.height) {
         (w, h)
     } else {
-        // 找出最宽和最高的图片，用于估算画布
-        // 简单策略：所有图片按列排列，居中对齐
-        let total_w: u32 = images.iter().map(|(_, _, w, _)| *w).sum();
-        let max_h: u32 = images.iter().map(|(_, _, _, h)| *h).max().unwrap_or(100);
-        // 用总宽度作为画布宽度，最大高度+一些边距
-        (total_w, max_h + 40)
+        // 计算包围盒
+        let mut min_x = f32::MAX;
+        let mut min_y = f32::MAX;
+        let mut max_x = f32::MIN;
+        let mut max_y = f32::MIN;
+        for (_, _, w, h, x, y, _) in &images {
+            let w = *w as f32;
+            let h = *h as f32;
+            let x = *x;
+            let y = *y;
+            min_x = min_x.min(x);
+            min_y = min_y.min(y);
+            max_x = max_x.max(x + w);
+            max_y = max_y.max(y + h);
+        }
+        let w = (max_x - min_x).ceil() as u32;
+        let h = (max_y - min_y).ceil() as u32;
+        (w.max(1), h.max(1))
     };
 
     let mut canvas = vec![0u8; (canvas_w * canvas_h * 4) as usize];
@@ -72,16 +140,22 @@ fn compose(cli: &Cli) -> Result<PathBuf, Box<dyn std::error::Error>> {
         pixel.copy_from_slice(&bg);
     }
 
-    // 将每张图片居中放置
-    // 按文件名排序以确保一致的叠加顺序
-    images.sort_by(|a, b| a.0.cmp(&b.0));
+    // 计算偏移使所有图片都在画布内
+    let mut min_x = f32::MAX;
+    let mut min_y = f32::MAX;
+    for (_, _, _, _, x, y, _) in &images {
+        min_x = min_x.min(*x);
+        min_y = min_y.min(*y);
+    }
+    let offset_x = -min_x;
+    let offset_y = -min_y;
 
-    // 计算每张图片的放置位置 (水平排列，垂直居中)
-    let mut x_offset = 0u32;
-    for (_, px, w, h) in &images {
-        let y_offset = (canvas_h - h) / 2;
-        blit(&mut canvas, canvas_w, canvas_h, px, *w, *h, x_offset, y_offset);
-        x_offset += w;
+    // 合成
+    for (_, px, w, h, x, y, _) in &images {
+        let dx = (x + offset_x) as u32;
+        // y 向上转为向下: canvas_y = canvas_h - img_h - dy
+        let dy = (canvas_h as f32 - *h as f32 - (y + offset_y)) as u32;
+        blit(&mut canvas, canvas_w, canvas_h, px, *w, *h, dx, dy);
     }
 
     // 写入 PNG

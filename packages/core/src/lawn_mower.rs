@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use serde::Deserialize;
 
 use crate::assets::GameAssets;
 use crate::settings::AppConfig;
@@ -12,6 +13,19 @@ use crate::zombie::Zombie;
 pub struct LawnMower {
     pub row: u32,
     pub running: bool,
+}
+
+#[derive(Deserialize)]
+struct ReanimConfig {
+    parts: Vec<PartDef>,
+}
+
+#[derive(Deserialize)]
+struct PartDef {
+    image: String,
+    x: f32,
+    y: f32,
+    z: f32,
 }
 
 pub struct LawnMowerPlugin;
@@ -28,36 +42,47 @@ impl Plugin for LawnMowerPlugin {
     }
 }
 
+fn mower_image_handle(image: &str, assets: &GameAssets) -> Option<Handle<Image>> {
+    match image {
+        "LawnMower_body.png" => Some(assets.mower_body.clone()),
+        "LawnMower_wheelpiece.png" => Some(assets.mower_wheelpiece.clone()),
+        "LawnMower_wheel1.png" => Some(assets.mower_wheel1.clone()),
+        "LawnMower_wheel2.png" => Some(assets.mower_wheel2.clone()),
+        "LawnMower_wheelshine.png" => Some(assets.mower_wheelshine.clone()),
+        "LawnMower_pull.png" => Some(assets.mower_pull.clone()),
+        "LawnMower_engine.png" => Some(assets.mower_engine.clone()),
+        "LawnMower_exhaust.png" => Some(assets.mower_exhaust.clone()),
+        _ => None,
+    }
+}
+
+fn load_reanim_config() -> ReanimConfig {
+    // 运行时路径: exe -> ../../assets/items/lawnmower/reanim.jsonc
+    let exe_path = std::env::current_exe().expect("无法获取可执行文件路径");
+    let jsonc_path = exe_path
+        .parent()
+        .expect("无法获取父目录")
+        .join("../../assets/items/lawnmower/reanim.jsonc");
+
+    let text = std::fs::read_to_string(&jsonc_path)
+        .unwrap_or_else(|e| panic!("读取 {} 失败: {e}", jsonc_path.display()));
+    let val: serde_json::Value = jsonc_parser::parse_to_serde_value(&text, &Default::default())
+        .expect("解析 reanim.jsonc 失败")
+        .expect("reanim.jsonc 为空");
+    serde_json::from_value(val).expect("reanim.jsonc 格式错误")
+}
+
 fn spawn_mowers(
     mut commands: Commands,
     assets: Res<GameAssets>,
     app: Res<AppConfig>,
     level: Res<LevelDefinition>,
 ) {
-    // 部件布局对应 Godot lawn_mower.tscn。
-    // Godot 变换链: 根 -> Body(position (-39,-55), scale 0.8) -> 部件(position 相对 Body, scale 0.8)
-    // 部件在 Godot 中 centered=false, 故 position 为左上角; 转 Bevy 中心锚点需补 size*0.8/2。
-    // 中心相对根(Godot y-down) = (-39 + 0.8*px + 0.8*sx/2, -55 + 0.8*py + 0.8*sy/2)
-    // Bevy y 向上, 故 y 取负。每个子 Sprite 再乘自身 scale 0.8 -> 总缩放 0.64。
-    // z 按 Godot 声明顺序: 后轮(底) < 车身 < 前轮/引擎/排气(顶), 保证车身被其它部件遮挡。
-    let parts: &[(Handle<Image>, f32, f32, f32)] = &[
-        (assets.mower_body.clone(), -13.0, 27.16, 5.0),
-        (assets.mower_wheelpiece.clone(), -7.56, 23.72, 1.0),
-        (assets.mower_wheel2.clone(), -8.2, 21.4, 2.0),
-        (assets.mower_wheelshine.clone(), -8.6, 21.88, 3.0),
-        (assets.mower_wheelpiece.clone(), 19.0, 23.64, 1.0),
-        (assets.mower_wheel2.clone(), 18.28, 21.24, 2.0),
-        (assets.mower_wheelshine.clone(), 18.2, 21.72, 3.0),
-        (assets.mower_pull.clone(), -36.12, 16.2, 8.0),
-        (assets.mower_engine.clone(), 7.0, 19.64, 9.0),
-        (assets.mower_wheelpiece.clone(), -12.44, 8.12, 6.0),
-        (assets.mower_wheel1.clone(), -13.48, 5.4, 7.0),
-        (assets.mower_wheelshine.clone(), -14.04, 5.56, 8.0),
-        (assets.mower_wheelpiece.clone(), 15.4, 7.0, 6.0),
-        (assets.mower_wheel2.clone(), 14.68, 4.92, 7.0),
-        (assets.mower_wheelshine.clone(), 13.88, 5.08, 8.0),
-        (assets.mower_exhaust.clone(), -4.44, 12.44, 10.0),
-    ];
+    let config = load_reanim_config();
+
+    // 按 z-order 排序
+    let mut sorted_parts = config.parts;
+    sorted_parts.sort_by(|a, b| a.z.partial_cmp(&b.z).unwrap());
 
     // 把割草机的屏幕 X (以视口左上角为原点, 向右为正)
     // 转换成世界坐标 X (以画面中心为原点, 向右为正): 减去半屏宽 win_w/2。
@@ -77,12 +102,14 @@ fn spawn_mowers(
                 GameplayEntity,
             ))
             .with_children(|parent| {
-                for (tex, ox, oy, z) in parts.iter() {
-                    parent.spawn((
-                        Sprite::from_image(tex.clone()),
-                        Transform::from_translation(Vec3::new(*ox, *oy, *z))
-                            .with_scale(Vec3::splat(0.8)),
-                    ));
+                for part in &sorted_parts {
+                    if let Some(handle) = mower_image_handle(&part.image, &assets) {
+                        parent.spawn((
+                            Sprite::from_image(handle),
+                            Transform::from_translation(Vec3::new(part.x, part.y, part.z))
+                                .with_scale(Vec3::splat(0.8)),
+                        ));
+                    }
                 }
             });
     }
