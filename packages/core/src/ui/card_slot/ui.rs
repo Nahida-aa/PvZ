@@ -1,64 +1,41 @@
 use bevy::prelude::*;
-use bevy::ui::JustifyContent;
 use bevy::text::FontSize;
 use crate::assets::GameAssets;
 use crate::level::LevelDefinition;
 use super::components::*;
 
-/// 卡片尺寸
-const CARD_WIDTH: f32 = 50.0;
-const CARD_HEIGHT: f32 = 70.0;
+const CARD_W: f32 = 50.0;
+const CARD_H: f32 = 70.0;
 
-/// 出战卡槽尺寸
-const CARD_SLOT_HEIGHT: f32 = 100.0;
-
-/// 构建选卡界面 UI
 pub fn build_card_selection_ui(
     commands: &mut Commands,
     assets: &GameAssets,
     level: &LevelDefinition,
 ) {
-    // 出战卡槽（顶部）
+    // ── 出战卡槽（SeedBank.png 背景，446×87）──
     commands
         .spawn((
             CardSlotRoot,
             Node {
                 position_type: PositionType::Absolute,
                 left: Val::Px(0.0),
-                top: Val::Px(-CARD_SLOT_HEIGHT), // 初始隐藏在屏幕外
-                width: Val::Percent(100.0),
-                height: Val::Px(CARD_SLOT_HEIGHT),
-                justify_content: JustifyContent::Center,
+                top: Val::Px(-87.0), // 初始隐藏
+                width: Val::Px(446.0),
+                height: Val::Px(87.0),
                 ..default()
             },
-            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
+            ImageNode::new(assets.seed_bank.clone()),
         ))
         .with_children(|parent| {
-            // 阳光标签
-            parent.spawn((
-                SunLabel,
-                Text::new("50"),
-                TextFont {
-                    font_size: FontSize::Px(20.0),
-                    ..default()
-                },
-                TextColor(Color::WHITE),
-                Node {
-                    position_type: PositionType::Absolute,
-                    left: Val::Px(10.0),
-                    top: Val::Px(10.0),
-                    ..default()
-                },
-            ));
-
-            // 卡片占位符
             for i in 0..level.max_choosed_card_num {
                 parent.spawn((
                     CardPlaceholder(i as usize),
                     Node {
-                        width: Val::Px(CARD_WIDTH),
-                        height: Val::Px(CARD_HEIGHT),
-                        margin: UiRect::all(Val::Px(2.0)),
+                        position_type: PositionType::Absolute,
+                        left: Val::Px(75.0 + i as f32 * (CARD_W + 1.0)),
+                        top: Val::Px(8.0),
+                        width: Val::Px(CARD_W),
+                        height: Val::Px(CARD_H),
                         ..default()
                     },
                     ImageNode::new(assets.seed_packet_silhouette.clone()),
@@ -66,29 +43,30 @@ pub fn build_card_selection_ui(
             }
         });
 
-    // 待选卡面板（底部）
+    // ── 待选卡面板（SeedChooser_Background.png 背景，465×513）──
     commands
         .spawn((
             CardCandidatePanel,
             Node {
                 position_type: PositionType::Absolute,
-                left: Val::Percent(50.0),
-                bottom: Val::Px(-600.0), // 初始隐藏在屏幕外
+                left: Val::Px(0.0),
+                bottom: Val::Px(-513.0), // 初始隐藏在屏幕外
                 width: Val::Px(465.0),
-                height: Val::Px(500.0),
-                justify_content: JustifyContent::FlexStart,
-                align_items: AlignItems::FlexStart,
-                flex_wrap: FlexWrap::Wrap,
+                height: Val::Px(513.0),
                 ..default()
             },
-            BackgroundColor(Color::srgba(0.2, 0.2, 0.2, 0.9)),
+            ImageNode::new(assets.seed_chooser_background.clone()),
         ))
         .with_children(|parent| {
-            // 生成所有可用卡片
+            // 卡片网格（8列，间距5px）
             for (i, card_kind) in level.card_kinds.iter().enumerate() {
-                let row = i / 8;
                 let col = i % 8;
-
+                let row = i / 8;
+                let handle = match card_kind.as_str() {
+                    "Peashooter" => assets.card_peashooter.clone(),
+                    "Sunflower" => assets.card_sunflower.clone(),
+                    _ => assets.card_peashooter.clone(),
+                };
                 parent.spawn((
                     CandidateCard,
                     CardEntity {
@@ -97,30 +75,30 @@ pub fn build_card_selection_ui(
                     },
                     Node {
                         position_type: PositionType::Absolute,
-                        left: Val::Px(13.0 + col as f32 * (CARD_WIDTH + 5.0)),
-                        top: Val::Px(32.0 + row as f32 * (CARD_HEIGHT + 2.0)),
-                        width: Val::Px(CARD_WIDTH),
-                        height: Val::Px(CARD_HEIGHT),
+                        left: Val::Px(13.0 + col as f32 * (CARD_W + 5.0)),
+                        top: Val::Px(32.0 + row as f32 * (CARD_H + 2.0)),
+                        width: Val::Px(CARD_W),
+                        height: Val::Px(CARD_H),
                         ..default()
                     },
-                    ImageNode::new(assets.card_peashooter.clone()), // TODO: 根据 card_kind 加载对应卡片图片
+                    ImageNode::new(handle),
                 ));
             }
 
-            // 开始游戏按钮
+            // 开始游戏按钮（居中偏下）
             parent.spawn((
                 StartGameButton,
                 Node {
                     position_type: PositionType::Absolute,
-                    left: Val::Percent(50.0),
-                    bottom: Val::Px(20.0),
-                    width: Val::Px(150.0),
-                    height: Val::Px(40.0),
+                    left: Val::Px(150.0),
+                    bottom: Val::Px(50.0),
+                    width: Val::Px(165.0),
+                    height: Val::Px(42.0),
                     justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
                     ..default()
                 },
-                BackgroundColor(Color::srgb(0.2, 0.6, 0.2)),
+                ImageNode::new(assets.start_button_glow.clone()),
                 Text::new("开始游戏"),
                 TextFont {
                     font_size: FontSize::Px(18.0),

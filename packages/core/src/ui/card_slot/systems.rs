@@ -84,17 +84,19 @@ pub fn update_card_selection_visibility(
 
     for (mut node, is_slot, is_panel) in card_slot.iter_mut() {
         if is_slot.is_some() {
+            // SeedBank.png = 87px 高
             node.top = if is_choosing {
                 Val::Px(0.0)
             } else {
-                Val::Px(-100.0)
+                Val::Px(-87.0)
             };
         }
         if is_panel.is_some() {
+            // SeedChooser_Background.png = 513px 高
             node.bottom = if is_choosing {
                 Val::Px(0.0)
             } else {
-                Val::Px(-600.0)
+                Val::Px(-513.0)
             };
         }
     }
