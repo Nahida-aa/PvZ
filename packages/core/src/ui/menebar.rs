@@ -58,11 +58,12 @@ impl Plugin for GameMenuBarPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<SunBank>()
             .init_resource::<PlantCards>()
+            .add_systems(OnEnter(GameState::ChoosingCards), setup_menubar)
             .add_systems(OnEnter(GameState::Playing), setup_menubar)
             .add_systems(
                 Update,
                 (update_sun_counter, handle_card_click, sync_selected_overlay, cooldown_tick)
-                    .run_if(in_state(GameState::Playing)),
+                    .run_if(in_state(GameState::Playing).or(in_state(GameState::ChoosingCards))),
             );
     }
 }

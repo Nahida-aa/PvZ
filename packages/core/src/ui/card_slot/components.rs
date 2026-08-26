@@ -1,9 +1,5 @@
 use bevy::prelude::*;
 
-/// 出战卡槽根节点
-#[derive(Component)]
-pub struct CardSlotRoot;
-
 /// 待选卡面板根节点
 #[derive(Component)]
 pub struct CardCandidatePanel;

@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use bevy::text::FontSize;
 use crate::assets::GameAssets;
 use crate::level::LevelDefinition;
 use super::components::*;
@@ -12,37 +11,6 @@ pub fn build_card_selection_ui(
     assets: &GameAssets,
     level: &LevelDefinition,
 ) {
-    // ── 出战卡槽（SeedBank.png 背景，446×87）──
-    commands
-        .spawn((
-            CardSlotRoot,
-            Node {
-                position_type: PositionType::Absolute,
-                left: Val::Px(0.0),
-                top: Val::Px(-87.0), // 初始隐藏
-                width: Val::Px(446.0),
-                height: Val::Px(87.0),
-                ..default()
-            },
-            ImageNode::new(assets.seed_bank.clone()),
-        ))
-        .with_children(|parent| {
-            for i in 0..level.max_choosed_card_num {
-                parent.spawn((
-                    CardPlaceholder(i as usize),
-                    Node {
-                        position_type: PositionType::Absolute,
-                        left: Val::Px(75.0 + i as f32 * (CARD_W + 1.0)),
-                        top: Val::Px(8.0),
-                        width: Val::Px(CARD_W),
-                        height: Val::Px(CARD_H),
-                        ..default()
-                    },
-                    ImageNode::new(assets.seed_packet_silhouette.clone()),
-                ));
-            }
-        });
-
     // ── 待选卡面板（SeedChooser_Background.png 背景，465×513）──
     commands
         .spawn((
@@ -84,27 +52,5 @@ pub fn build_card_selection_ui(
                     ImageNode::new(handle),
                 ));
             }
-
-            // 开始游戏按钮（居中偏下）
-            parent.spawn((
-                StartGameButton,
-                Node {
-                    position_type: PositionType::Absolute,
-                    left: Val::Px(150.0),
-                    bottom: Val::Px(50.0),
-                    width: Val::Px(165.0),
-                    height: Val::Px(42.0),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
-                    ..default()
-                },
-                ImageNode::new(assets.start_button_glow.clone()),
-                Text::new("开始游戏"),
-                TextFont {
-                    font_size: FontSize::Px(18.0),
-                    ..default()
-                },
-                TextColor(Color::WHITE),
-            ));
         });
 }

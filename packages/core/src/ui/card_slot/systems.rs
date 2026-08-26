@@ -78,26 +78,16 @@ pub fn handle_start_game(
 /// 显示/隐藏选卡界面
 pub fn update_card_selection_visibility(
     state: Res<State<GameState>>,
-    mut card_slot: Query<(&mut Node, Option<&CardSlotRoot>, Option<&CardCandidatePanel>)>,
+    mut candidate_panel: Query<&mut Node, With<CardCandidatePanel>>,
 ) {
     let is_choosing = *state.get() == GameState::ChoosingCards;
 
-    for (mut node, is_slot, is_panel) in card_slot.iter_mut() {
-        if is_slot.is_some() {
-            // SeedBank.png = 87px 高
-            node.top = if is_choosing {
-                Val::Px(0.0)
-            } else {
-                Val::Px(-87.0)
-            };
-        }
-        if is_panel.is_some() {
-            // SeedChooser_Background.png = 513px 高
-            node.bottom = if is_choosing {
-                Val::Px(0.0)
-            } else {
-                Val::Px(-513.0)
-            };
-        }
+    // SeedChooser_Background.png = 513px 高
+    if let Ok(mut node) = candidate_panel.single_mut() {
+        node.bottom = if is_choosing {
+            Val::Px(0.0)
+        } else {
+            Val::Px(-513.0)
+        };
     }
 }
