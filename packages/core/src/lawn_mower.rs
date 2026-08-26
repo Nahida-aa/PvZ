@@ -45,13 +45,20 @@ impl Plugin for LawnMowerPlugin {
 fn mower_image_handle(image: &str, assets: &GameAssets) -> Option<Handle<Image>> {
     match image {
         "LawnMower_body.png" => Some(assets.mower_body.clone()),
-        "LawnMower_wheelpiece.png" => Some(assets.mower_wheelpiece.clone()),
-        "LawnMower_wheel1.png" => Some(assets.mower_wheel1.clone()),
-        "LawnMower_wheel2.png" => Some(assets.mower_wheel2.clone()),
-        "LawnMower_wheelshine.png" => Some(assets.mower_wheelshine.clone()),
         "LawnMower_pull.png" => Some(assets.mower_pull.clone()),
         "LawnMower_engine.png" => Some(assets.mower_engine.clone()),
         "LawnMower_exhaust.png" => Some(assets.mower_exhaust.clone()),
+        "Lawnmower_backwheelpiece1.png" | "Lawnmower_backwheelpiece2.png"
+        | "Lawnmower_frontwheelpiece1.png" | "Lawnmower_frontwheelpiece2.png" => {
+            Some(assets.mower_wheelpiece.clone())
+        }
+        "Lawnmower_backwheel1.png" | "Lawnmower_backwheel2.png"
+        | "Lawnmower_frontwheel2.png" => Some(assets.mower_wheel2.clone()),
+        "Lawnmower_frontwheel1.png" => Some(assets.mower_wheel1.clone()),
+        "Lawnmower_backwheelshine1.png" | "Lawnmower_backwheelshine2.png"
+        | "Lawnmower_wheelshine1.png" | "Lawnmower_wheelshine2.png" => {
+            Some(assets.mower_wheelshine.clone())
+        }
         _ => None,
     }
 }
@@ -106,8 +113,7 @@ fn spawn_mowers(
                     if let Some(handle) = mower_image_handle(&part.image, &assets) {
                         parent.spawn((
                             Sprite::from_image(handle),
-                            Transform::from_translation(Vec3::new(part.x, part.y, part.z))
-                                .with_scale(Vec3::splat(0.8)),
+                            Transform::from_translation(Vec3::new(part.x, part.y, part.z)),
                         ));
                     }
                 }

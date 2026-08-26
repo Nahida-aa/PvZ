@@ -17,6 +17,9 @@ struct Cli {
     height: Option<u32>,
     #[arg(long, default_value = "0,0,0,0")]
     bg: String,
+    /// 指定 rig.jsonc 路径 (默认: input/rig.jsonc)
+    #[arg(short = 'r', long)]
+    rig: Option<PathBuf>,
 }
 
 #[derive(Deserialize)]
@@ -86,7 +89,7 @@ struct PartImage {
     px: Vec<u8>,
     w: u32,
     h: u32,
-    /// 精灵中心在 Godot 世界坐标 (x右, y下)
+    /// 精灵中心在 Godot 子节点局部坐标 (x右, y下)
     cx: f32,
     cy: f32,
     z: f32,
@@ -108,7 +111,7 @@ fn compose(cli: &Cli) -> Result<PathBuf, Box<dyn std::error::Error>> {
     let bg = parse_rgba(&cli.bg)?;
     let parts_dir = cli.input.join("parts");
 
-    let jsonc_path = cli.input.join("rig.jsonc");
+    let jsonc_path = cli.rig.clone().unwrap_or_else(|| cli.input.join("rig.jsonc"));
     let rig = if jsonc_path.exists() {
         let text = std::fs::read_to_string(&jsonc_path)?;
         let val = jsonc_parser::parse_to_serde_value(&text, &Default::default())?
@@ -244,7 +247,7 @@ fn compose(cli: &Cli) -> Result<PathBuf, Box<dyn std::error::Error>> {
 
 /// 创建从纹理到画布的仿射变换
 ///
-/// rig.jsonc 中 x,y 是精灵中心在 Godot 世界坐标 (x右, y下)
+/// rig.jsonc 中 x,y 是精灵中心在 Godot 子节点局部坐标 (x右, y下)
 /// 纹理像素 (u,v): u向右, v向下, 原点在左上角
 /// 画布坐标: x向右, y向下 (与 Godot 一致)
 ///

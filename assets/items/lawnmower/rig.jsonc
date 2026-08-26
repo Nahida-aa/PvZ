@@ -1,21 +1,21 @@
 {
-  "scale": 1.0,
+  "scale": 0.8,
   "parts": [
-    {"image": "LawnMower_wheelpiece.png", "x": -9.72, "y": -25.8, "z": 1.0},
-    {"image": "LawnMower_wheel2.png", "x": -10.28, "y": -23.48, "z": 2.0},
-    {"image": "LawnMower_wheelshine.png", "x": -10.68, "y": -23.96, "z": 3.0},
-    {"image": "LawnMower_wheelpiece.png", "x": 16.84, "y": -25.72, "z": 1.0},
-    {"image": "LawnMower_wheel2.png", "x": 16.2, "y": -23.32, "z": 2.0},
-    {"image": "LawnMower_wheelshine.png", "x": 16.12, "y": -23.8, "z": 3.0},
-    {"image": "LawnMower_body.png", "x": -8.76, "y": -27.0, "z": 5.0},
-    {"image": "LawnMower_wheelpiece.png", "x": -14.6, "y": -10.2, "z": 6.0},
-    {"image": "LawnMower_wheel1.png", "x": -15.48, "y": -7.48, "z": 7.0},
-    {"image": "LawnMower_wheelshine.png", "x": -16.12, "y": -7.64, "z": 8.0},
-    {"image": "LawnMower_wheelpiece.png", "x": 13.24, "y": -9.08, "z": 6.0},
-    {"image": "LawnMower_wheel2.png", "x": 12.6, "y": -7.0, "z": 7.0},
-    {"image": "LawnMower_wheelshine.png", "x": 11.8, "y": -7.16, "z": 8.0},
-    {"image": "LawnMower_pull.png", "x": -27.48, "y": -17.48, "z": 8.0},
-    {"image": "LawnMower_engine.png", "x": 3.88, "y": -22.52, "z": 9.0},
-    {"image": "LawnMower_exhaust.png", "x": -5.16, "y": -13.48, "z": 10.0}
+    {"image": "Lawnmower_backwheelpiece1.png", "x": 25.8, "y": 26.1, "z": 1.0},
+    {"image": "Lawnmower_backwheel1.png", "x": 25.5, "y": 29.0, "z": 2.0},
+    {"image": "Lawnmower_backwheelshine1.png", "x": 25.0, "y": 28.4, "z": 3.0},
+    {"image": "Lawnmower_backwheelpiece2.png", "x": 59.0, "y": 26.2, "z": 1.0},
+    {"image": "Lawnmower_backwheel2.png", "x": 58.6, "y": 29.2, "z": 2.0},
+    {"image": "Lawnmower_backwheelshine2.png", "x": 58.5, "y": 28.6, "z": 3.0},
+    {"image": "LawnMower_body.png", "x": -2.2, "y": 2.6, "z": 5.0},
+    {"image": "Lawnmower_frontwheelpiece1.png", "x": 19.7, "y": 45.6, "z": 6.0},
+    {"image": "Lawnmower_frontwheel1.png", "x": 19.4, "y": 49.0, "z": 7.0},
+    {"image": "Lawnmower_wheelshine1.png", "x": 18.2, "y": 48.8, "z": 8.0},
+    {"image": "Lawnmower_frontwheelpiece2.png", "x": 54.5, "y": 47.0, "z": 6.0},
+    {"image": "Lawnmower_frontwheel2.png", "x": 54.1, "y": 49.6, "z": 7.0},
+    {"image": "Lawnmower_wheelshine2.png", "x": 53.1, "y": 49.4, "z": 8.0},
+    {"image": "LawnMower_pull.png", "x": 7.6, "y": 40.5, "z": 8.0},
+    {"image": "LawnMower_engine.png", "x": 38.0, "y": 26.2, "z": 9.0},
+    {"image": "LawnMower_exhaust.png", "x": 38.7, "y": 46.7, "z": 10.0}
   ]
 }
