@@ -1,18 +1,17 @@
 use bevy::prelude::*;
 use crate::assets::GameAssets;
 use crate::level::LevelDefinition;
+use crate::ui::card_visual;
 use super::components::*;
 
 const CARD_W: f32 = 50.0;
 const CARD_H: f32 = 70.0;
 const COLS: usize = 8;
+const ROWS: usize = 6;
 
-/// 对齐 menubar 的 bar_left
 const PANEL_LEFT: f32 = 150.0;
-/// menubar 高度 = SeedBank.png 高 87px
 const PANEL_TOP: f32 = 87.0;
 
-/// 所有可用植物卡片（按卡片文件名顺序）
 const ALL_PLANTS: &[&str] = &[
     "Peashooter", "Sunflower", "CherryBomb", "WallNut",
     "PotatoMine", "SnowPea", "Chomper", "RepeaterPea",
@@ -29,8 +28,23 @@ pub fn build_card_selection_ui(
     assets: &GameAssets,
     level: &LevelDefinition,
 ) {
-    let total_slots = ALL_PLANTS.len();
-    let rows = (total_slots + COLS - 1) / COLS;
+    let params = card_visual::CardVisualParams {
+        width: CARD_W,
+        height: CARD_H,
+        font: assets.font.clone(),
+    };
+
+    // 先收集要生成的卡片信息，避免在 with_children 里借用 commands
+    let mut cards_info: Vec<(usize, &str, f32, f32)> = Vec::new();
+    for i in 0..(ROWS * COLS) {
+        let col = i % COLS;
+        let row = i / COLS;
+        let x = 13.0 + col as f32 * (CARD_W + 5.0);
+        let y = 32.0 + row as f32 * (CARD_H + 2.0);
+        if i < ALL_PLANTS.len() {
+            cards_info.push((i, ALL_PLANTS[i], x, y));
+        }
+    }
 
     commands
         .spawn((
@@ -38,7 +52,7 @@ pub fn build_card_selection_ui(
             Node {
                 position_type: PositionType::Absolute,
                 left: Val::Px(PANEL_LEFT),
-                top: Val::Px(PANEL_TOP + 513.0), // 初始隐藏
+                top: Val::Px(PANEL_TOP + 513.0),
                 width: Val::Px(465.0),
                 height: Val::Px(513.0),
                 ..default()
@@ -46,54 +60,35 @@ pub fn build_card_selection_ui(
             ImageNode::new(assets.seed_chooser_background.clone()),
         ))
         .with_children(|parent| {
-            for i in 0..(rows * COLS) {
-                let col = i % COLS;
-                let row = i / COLS;
-                let x = 13.0 + col as f32 * (CARD_W + 5.0);
-                let y = 32.0 + row as f32 * (CARD_H + 2.0);
-
-                if i < total_slots {
-                    // 有卡片的位置
-                    let plant = ALL_PLANTS[i];
-                    let handle = card_handle(plant, assets);
-                    parent.spawn((
+            // 生成所有卡片
+            for &(i, plant, x, y) in &cards_info {
+                card_visual::spawn_card(parent, plant, assets, &params, x, y)
+                    .insert((
                         CandidateCard,
                         CardEntity {
                             plant_kind: plant.to_string(),
                             index: i,
                         },
-                        Node {
-                            position_type: PositionType::Absolute,
-                            left: Val::Px(x),
-                            top: Val::Px(y),
-                            width: Val::Px(CARD_W),
-                            height: Val::Px(CARD_H),
-                            ..default()
-                        },
-                        ImageNode::new(handle),
                     ));
-                } else {
-                    // 空位补轮廓
-                    parent.spawn((
-                        Node {
-                            position_type: PositionType::Absolute,
-                            left: Val::Px(x),
-                            top: Val::Px(y),
-                            width: Val::Px(CARD_W),
-                            height: Val::Px(CARD_H),
-                            ..default()
-                        },
-                        ImageNode::new(assets.seed_packet_silhouette.clone()),
-                    ));
-                }
+            }
+
+            // 空位补轮廓
+            for i in cards_info.len()..(ROWS * COLS) {
+                let col = i % COLS;
+                let row = i / COLS;
+                let x = 13.0 + col as f32 * (CARD_W + 5.0);
+                let y = 32.0 + row as f32 * (CARD_H + 2.0);
+                parent.spawn((
+                    Node {
+                        position_type: PositionType::Absolute,
+                        left: Val::Px(x),
+                        top: Val::Px(y),
+                        width: Val::Px(CARD_W),
+                        height: Val::Px(CARD_H),
+                        ..default()
+                    },
+                    ImageNode::new(assets.seed_packet_silhouette.clone()),
+                ));
             }
         });
-}
-
-fn card_handle(plant: &str, assets: &GameAssets) -> Handle<Image> {
-    match plant {
-        "Peashooter" => assets.card_peashooter.clone(),
-        "Sunflower" => assets.card_sunflower.clone(),
-        _ => assets.card_peashooter.clone(), // TODO: 加载其他植物卡片图片
-    }
 }
