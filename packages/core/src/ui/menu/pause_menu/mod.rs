@@ -142,6 +142,7 @@ pub(crate) fn build_pause_menu_ui(
                         "音乐", SliderType::Music,
                         0.0, 1.0, 0.01, app_config.bgm_volume,
                         &font, &assets.slider_slot, &assets.slider_knob, &config,
+                        ms.label_area_width,
                     );
 
                     // 音效滑动条
@@ -151,6 +152,7 @@ pub(crate) fn build_pause_menu_ui(
                         "音效", SliderType::Sound,
                         0.0, 1.0, 0.01, app_config.sfx_volume,
                         &font, &assets.slider_slot, &assets.slider_knob, &config,
+                        ss.label_area_width,
                     );
 
                     // 倍速滑动条
@@ -160,6 +162,7 @@ pub(crate) fn build_pause_menu_ui(
                         "倍速", SliderType::Speed,
                         0.5, 3.0, 0.5, app_config.time_scale,
                         &font, &assets.slider_slot, &assets.slider_knob, &config,
+                        sp.label_area_width,
                     );
 
                     // 倍速文字标签

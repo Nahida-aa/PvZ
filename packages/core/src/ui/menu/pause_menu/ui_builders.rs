@@ -102,9 +102,11 @@ pub(crate) fn spawn_slider(
     slot_image: &Handle<Image>,
     knob_image: &Handle<Image>,
     config: &PauseMenuConfig,
+    label_area_width: Option<f32>,
 ) -> Entity {
     let sc = &config.slider;
-    let track_width = width - sc.label_area_width;
+    let label_area_width = label_area_width.unwrap_or(sc.label_area_width);
+    let track_width = width - label_area_width;
     let track_height = sc.track_height;
     let knob_width = sc.knob_width;
     let knob_height = sc.knob_height;

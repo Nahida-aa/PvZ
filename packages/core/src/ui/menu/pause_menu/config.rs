@@ -48,6 +48,8 @@ pub struct SliderElement {
     pub top: f32,
     pub width: f32,
     pub height: f32,
+    /// Label 区域宽度（滑动条左侧留白）。None = 使用全局 slider.label_area_width。
+    pub label_area_width: Option<f32>,
 }
 
 #[derive(Deserialize, Clone, Debug)]
@@ -163,18 +165,21 @@ impl Default for PauseMenuConfig {
                 top: 112.5,
                 width: 218.0,
                 height: 30.0,
+                label_area_width: None,
             },
             sound_slider: SliderElement {
                 left: 97.0,
                 top: 152.5,
                 width: 218.0,
                 height: 30.0,
+                label_area_width: None,
             },
             speed_slider: SliderElement {
                 left: 97.0,
                 top: 192.5,
                 width: 218.0,
                 height: 30.0,
+                label_area_width: None,
             },
             speed_label: LabelElement {
                 left: 175.0,
