@@ -44,6 +44,9 @@ pub struct CardCooldownOverlay;
 #[derive(Component)]
 pub struct CardSelectedOverlay;
 
+#[derive(Component)]
+pub struct SeedBankRoot;
+
 impl Default for PlantCard {
     fn default() -> Self {
         Self {
@@ -90,6 +93,7 @@ fn setup_seed_bank(
     let bg_width = 78.0 + level.max_choosed_card_num as f32 * 50.0 + 12.0;
     commands
         .spawn((
+            SeedBankRoot,
             // 顶部菜单栏背景：SeedBank.png (原始 446×87)
             // 对齐 Godot CardSlotBattle 的 StyleBoxTexture 九宫格切分：
             // texture_margin = (78, 10, 12, 10)

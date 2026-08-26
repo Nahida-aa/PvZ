@@ -62,13 +62,20 @@ impl Plugin for CorePlugin {
             )
             .add_systems(
                 Update,
-                ui::card_slot::systems::update_card_selection_visibility,
+                (
+                    ui::card_slot::systems::update_card_selection_visibility,
+                    ui::card_slot::systems::update_seed_bank_visibility,
+                ),
             )
             // 图鉴系统
             .add_systems(OnEnter(GameState::Encyclopedia), ui::card_slot::systems::setup_encyclopedia)
             .add_systems(
                 Update,
-                ui::encyclopedia::handle_encyclopedia_close.run_if(in_state(GameState::Encyclopedia)),
+                (
+                    ui::encyclopedia::handle_encyclopedia_close,
+                    ui::encyclopedia::handle_encyclopedia_plant_click,
+                )
+                    .run_if(in_state(GameState::Encyclopedia)),
             )
             .add_systems(OnExit(GameState::Encyclopedia), ui::card_slot::systems::cleanup_encyclopedia)
         ;

@@ -43,6 +43,23 @@ pub struct EncyclopediaRoot;
 #[derive(Component)]
 pub struct EncyclopediaClose;
 
+#[derive(Component)]
+pub struct EncyclopediaPlantCard {
+    pub name: String,
+}
+
+#[derive(Component)]
+pub struct EncyclopediaDetailName;
+
+#[derive(Component)]
+pub struct EncyclopediaDetailDesc;
+
+#[derive(Component)]
+pub struct EncyclopediaDetailImage;
+
+#[derive(Component)]
+pub struct EncyclopediaDetailCost;
+
 pub fn build_encyclopedia(commands: &mut Commands, assets: &GameAssets) {
     let panel_w = 800.0;
     let panel_h = 520.0;
@@ -58,125 +75,204 @@ pub fn build_encyclopedia(commands: &mut Commands, assets: &GameAssets) {
                 top: Val::Px(oy),
                 width: Val::Px(panel_w),
                 height: Val::Px(panel_h),
-                flex_direction: FlexDirection::Column,
+                flex_direction: FlexDirection::Row,
                 ..default()
             },
             ImageNode::new(assets.almanac_plant_back.clone()),
         ))
         .with_children(|root| {
-            // Title bar
+            // ===== Left panel: plant grid (500px) =====
             root.spawn((
                 Node {
-                    width: Val::Percent(100.0),
-                    height: Val::Px(40.0),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
+                    width: Val::Px(500.0),
+                    height: Val::Percent(100.0),
+                    flex_direction: FlexDirection::Column,
                     ..default()
                 },
             ))
-            .with_children(|bar| {
-                bar.spawn((
-                    Text::new("图鉴 -- 植物"),
+            .with_children(|left| {
+                // Title
+                left.spawn((
+                    Node {
+                        width: Val::Percent(100.0),
+                        height: Val::Px(40.0),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                ))
+                .with_children(|bar| {
+                    bar.spawn((
+                        Text::new("植物图鉴"),
+                        TextFont {
+                            font_size: FontSize::Px(22.0),
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                    ));
+                });
+
+                // Scrollable grid
+                left.spawn((
+                    Node {
+                        width: Val::Percent(100.0),
+                        flex_grow: 1.0,
+                        padding: UiRect::all(Val::Px(8.0)),
+                        overflow: Overflow::scroll_y(),
+                        ..default()
+                    },
+                ))
+                .with_children(|scroll_area| {
+                    scroll_area
+                        .spawn((Node {
+                            width: Val::Percent(100.0),
+                            flex_direction: FlexDirection::Column,
+                            row_gap: Val::Px(4.0),
+                            ..default()
+                        },))
+                        .with_children(|list| {
+                            for chunk in ENCYCLOPEDIA_PLANTS.chunks(5) {
+                                list.spawn((Node {
+                                    width: Val::Percent(100.0),
+                                    flex_direction: FlexDirection::Row,
+                                    column_gap: Val::Px(4.0),
+                                    row_gap: Val::Px(4.0),
+                                    flex_wrap: FlexWrap::Wrap,
+                                    ..default()
+                                },))
+                                .with_children(|row| {
+                                    for &(name, _desc) in chunk {
+                                        let card_img = card_visual::card_image_handle(name, assets);
+                                        let cost = card_visual::plant_sun_cost(name);
+                                        row.spawn((
+                                            EncyclopediaPlantCard { name: name.to_string() },
+                                            Button,
+                                            Node {
+                                                width: Val::Px(85.0),
+                                                height: Val::Px(100.0),
+                                                flex_direction: FlexDirection::Column,
+                                                align_items: AlignItems::Center,
+                                                padding: UiRect::all(Val::Px(4.0)),
+                                                ..default()
+                                            },
+                                            BackgroundColor(Color::srgba(0.12, 0.2, 0.12, 0.8)),
+                                        ))
+                                        .with_children(|card| {
+                                            card.spawn((
+                                                Node {
+                                                    width: Val::Px(50.0),
+                                                    height: Val::Px(70.0),
+                                                    ..default()
+                                                },
+                                                ImageNode::new(card_img),
+                                            ));
+                                            card.spawn((
+                                                Text::new(format!("{cost}")),
+                                                TextFont {
+                                                    font_size: FontSize::Px(10.0),
+                                                    ..default()
+                                                },
+                                                TextColor(Color::srgb(1.0, 1.0, 0.5)),
+                                            ));
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                });
+            });
+
+            // ===== Right panel: detail area (300px) =====
+            root.spawn((
+                Node {
+                    width: Val::Px(300.0),
+                    height: Val::Percent(100.0),
+                    flex_direction: FlexDirection::Column,
+                    align_items: AlignItems::Center,
+                    padding: UiRect::all(Val::Px(12.0)),
+                    ..default()
+                },
+                BackgroundColor(Color::srgba(0.08, 0.12, 0.08, 0.9)),
+            ))
+            .with_children(|right| {
+                // Close button (top-right)
+                right.spawn((
+                    EncyclopediaClose,
+                    Button,
+                    Node {
+                        width: Val::Px(80.0),
+                        height: Val::Px(28.0),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        align_self: AlignSelf::FlexEnd,
+                        margin: UiRect::bottom(Val::Px(8.0)),
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgba(0.6, 0.2, 0.2, 0.8)),
+                ))
+                .with_children(|p| {
+                    p.spawn((
+                        Text::new("关闭"),
+                        TextFont {
+                            font_size: FontSize::Px(14.0),
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                    ));
+                });
+
+                // Plant name
+                right.spawn((
+                    EncyclopediaDetailName,
+                    Text::new("点击左侧植物查看"),
                     TextFont {
-                        font_size: FontSize::Px(22.0),
+                        font_size: FontSize::Px(20.0),
                         ..default()
                     },
                     TextColor(Color::WHITE),
+                    Node {
+                        margin: UiRect::bottom(Val::Px(8.0)),
+                        ..default()
+                    },
                 ));
-            });
 
-            // Close button (top-right)
-            root.spawn((
-                EncyclopediaClose,
-                Button,
-                Node {
-                    position_type: PositionType::Absolute,
-                    right: Val::Px(10.0),
-                    top: Val::Px(5.0),
-                    width: Val::Px(80.0),
-                    height: Val::Px(30.0),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
-                    ..default()
-                },
-                BackgroundColor(Color::srgba(0.6, 0.2, 0.2, 0.8)),
-            ))
-            .with_children(|p| {
-                p.spawn((
-                    Text::new("关闭"),
+                // Plant image (large)
+                right.spawn((
+                    EncyclopediaDetailImage,
+                    Node {
+                        width: Val::Px(150.0),
+                        height: Val::Px(150.0),
+                        margin: UiRect::bottom(Val::Px(12.0)),
+                        ..default()
+                    },
+                    ImageNode::new(assets.almanac_plant_card.clone()),
+                ));
+
+                // Description
+                right.spawn((
+                    EncyclopediaDetailDesc,
+                    Text::new(""),
+                    TextFont {
+                        font_size: FontSize::Px(14.0),
+                        ..default()
+                    },
+                    TextColor(Color::srgb(0.85, 0.85, 0.75)),
+                ));
+
+                // Cost
+                right.spawn((
+                    EncyclopediaDetailCost,
+                    Text::new(""),
                     TextFont {
                         font_size: FontSize::Px(16.0),
                         ..default()
                     },
-                    TextColor(Color::WHITE),
+                    TextColor(Color::srgb(1.0, 1.0, 0.3)),
+                    Node {
+                        margin: UiRect::top(Val::Px(12.0)),
+                        ..default()
+                    },
                 ));
-            });
-
-            // Plant grid
-            root.spawn((
-                Node {
-                    width: Val::Percent(100.0),
-                    flex_grow: 1.0,
-                    padding: UiRect::all(Val::Px(10.0)),
-                    overflow: Overflow::scroll_y(),
-                    ..default()
-                },
-            ))
-            .with_children(|scroll_area| {
-                scroll_area
-                    .spawn((
-                        Node {
-                            width: Val::Percent(100.0),
-                            flex_direction: FlexDirection::Column,
-                            row_gap: Val::Px(6.0),
-                            ..default()
-                        },
-                    ))
-                    .with_children(|list| {
-                        for chunk in ENCYCLOPEDIA_PLANTS.chunks(4) {
-                            list.spawn((Node {
-                                width: Val::Percent(100.0),
-                                height: Val::Px(100.0),
-                                flex_direction: FlexDirection::Row,
-                                column_gap: Val::Px(8.0),
-                                ..default()
-                            },))
-                            .with_children(|row| {
-                                for &(name, desc) in chunk {
-                                    row.spawn((
-                                        Node {
-                                            width: Val::Px(180.0),
-                                            height: Val::Px(100.0),
-                                            flex_direction: FlexDirection::Column,
-                                            align_items: AlignItems::Center,
-                                            padding: UiRect::all(Val::Px(6.0)),
-                                            ..default()
-                                        },
-                                        BackgroundColor(Color::srgba(0.15, 0.25, 0.15, 0.8)),
-                                    ))
-                                    .with_children(|card| {
-                                        let card_img = card_visual::card_image_handle(name, assets);
-                                        card.spawn((
-                                            Node {
-                                                width: Val::Px(50.0),
-                                                height: Val::Px(70.0),
-                                                ..default()
-                                            },
-                                            ImageNode::new(card_img),
-                                        ));
-                                        card.spawn((
-                                            Text::new(desc),
-                                            TextFont {
-                                                font_size: FontSize::Px(10.0),
-                                                ..default()
-                                            },
-                                            TextColor(Color::srgb(0.9, 0.9, 0.8)),
-                                        ));
-                                    });
-                                }
-                            });
-                        }
-                    });
             });
         });
 }
@@ -188,6 +284,41 @@ pub fn handle_encyclopedia_close(
     for interaction in interaction.iter() {
         if *interaction == Interaction::Pressed {
             next_state.set(GameState::ChoosingCards);
+        }
+    }
+}
+
+pub fn handle_encyclopedia_plant_click(
+    interaction_query: Query<(&Interaction, &EncyclopediaPlantCard), Changed<Interaction>>,
+    mut name_query: Query<&mut Text, With<EncyclopediaDetailName>>,
+    mut desc_query: Query<&mut Text, With<EncyclopediaDetailDesc>>,
+    mut cost_query: Query<&mut Text, With<EncyclopediaDetailCost>>,
+    mut img_query: Query<&mut ImageNode, With<EncyclopediaDetailImage>>,
+    assets: Res<GameAssets>,
+) {
+    for (interaction, card) in interaction_query.iter() {
+        if *interaction == Interaction::Pressed {
+            let (_, desc) = ENCYCLOPEDIA_PLANTS
+                .iter()
+                .find(|(n, _)| *n == card.name)
+                .unwrap_or(&("", ""));
+            let cost = card_visual::plant_sun_cost(&card.name);
+            let card_img = card_visual::card_image_handle(&card.name, &assets);
+
+            for mut text in name_query.iter_mut() {
+                **text = card.name.clone();
+            }
+            for mut text in desc_query.iter_mut() {
+                **text = desc.to_string();
+            }
+            for mut text in cost_query.iter_mut() {
+                **text = format!("阳光消耗: {cost}");
+            }
+            for mut img in img_query.iter_mut() {
+                img.image = card_img.clone();
+            }
+
+            info!("图鉴选中: {}", card.name);
         }
     }
 }

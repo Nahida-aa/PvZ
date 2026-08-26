@@ -4,6 +4,7 @@ use crate::level::LevelDefinition;
 use crate::settings::CardConfig;
 use crate::state::GameState;
 use crate::ui::encyclopedia;
+use crate::ui::seed_bank::SeedBankRoot;
 use super::components::*;
 use super::ui::build_card_selection_ui;
 use crate::ui::menu::despawn_recursive;
@@ -92,6 +93,21 @@ pub fn update_card_selection_visibility(
         } else {
             Val::Px(87.0 + 513.0) // SeedChooser_Background.png 高度
         };
+    }
+}
+
+/// 图鉴模式下隐藏 seed_bank
+pub fn update_seed_bank_visibility(
+    state: Res<State<GameState>>,
+    mut query: Query<&mut Visibility, With<SeedBankRoot>>,
+) {
+    let is_encyclopedia = *state.get() == GameState::Encyclopedia;
+    for mut vis in query.iter_mut() {
+        if is_encyclopedia {
+            *vis = Visibility::Hidden;
+        } else {
+            *vis = Visibility::Inherited;
+        }
     }
 }
 
