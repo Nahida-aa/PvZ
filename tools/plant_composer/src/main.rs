@@ -113,20 +113,18 @@ fn compose(cli: &Cli) -> Result<PathBuf, Box<dyn std::error::Error>> {
     let (canvas_w, canvas_h) = if let (Some(w), Some(h)) = (cli.width, cli.height) {
         (w, h)
     } else {
-        // 计算包围盒
+        // 计算包围盒 (x,y 为中心点)
         let mut min_x = f32::MAX;
         let mut min_y = f32::MAX;
         let mut max_x = f32::MIN;
         let mut max_y = f32::MIN;
         for (_, _, w, h, x, y, _) in &images {
-            let w = *w as f32;
-            let h = *h as f32;
-            let x = *x;
-            let y = *y;
-            min_x = min_x.min(x);
-            min_y = min_y.min(y);
-            max_x = max_x.max(x + w);
-            max_y = max_y.max(y + h);
+            let hw = *w as f32 / 2.0;
+            let hh = *h as f32 / 2.0;
+            min_x = min_x.min(x - hw);
+            min_y = min_y.min(y - hh);
+            max_x = max_x.max(x + hw);
+            max_y = max_y.max(y + hh);
         }
         let w = (max_x - min_x).ceil() as u32;
         let h = (max_y - min_y).ceil() as u32;
@@ -140,21 +138,23 @@ fn compose(cli: &Cli) -> Result<PathBuf, Box<dyn std::error::Error>> {
         pixel.copy_from_slice(&bg);
     }
 
-    // 计算偏移使所有图片都在画布内
+    // 计算偏移使所有图片都在画布内 (x,y 为中心点)
     let mut min_x = f32::MAX;
     let mut min_y = f32::MAX;
-    for (_, _, _, _, x, y, _) in &images {
-        min_x = min_x.min(*x);
-        min_y = min_y.min(*y);
+    for (_, _, w, h, x, y, _) in &images {
+        let hw = *w as f32 / 2.0;
+        let hh = *h as f32 / 2.0;
+        min_x = min_x.min(x - hw);
+        min_y = min_y.min(y - hh);
     }
     let offset_x = -min_x;
     let offset_y = -min_y;
 
-    // 合成
+    // 合成 (x,y 为中心点, y 向上)
     for (_, px, w, h, x, y, _) in &images {
-        let dx = (x + offset_x) as u32;
-        // y 向上转为向下: canvas_y = canvas_h - img_h - dy
-        let dy = (canvas_h as f32 - *h as f32 - (y + offset_y)) as u32;
+        // 中心点 -> 左上角 (canvas 坐标: y 向下)
+        let dx = (x + offset_x - *w as f32 / 2.0) as u32;
+        let dy = (canvas_h as f32 - (y + offset_y) - *h as f32 / 2.0) as u32;
         blit(&mut canvas, canvas_w, canvas_h, px, *w, *h, dx, dy);
     }
 
