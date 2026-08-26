@@ -63,17 +63,6 @@ pub struct MenubarConfig {
     /// 阳光飘入目标点：相对菜单栏背景的 left, top。
     pub sun_target_left: f32,
     pub sun_target_top: f32,
-    /// 卡槽位置和大小。
-    pub card_slot_top: f32,
-    pub card_slot_width: f32,
-    pub card_slot_height: f32,
-    /// 卡牌费用文字位置：相对卡槽的 bottom, left。
-    pub card_cost_bottom: f32,
-    pub card_cost_left: f32,
-    /// 卡牌费用文字区域宽度（数字在此宽度内水平居中）。
-    pub card_cost_width: f32,
-    /// 卡牌费用文字顶部内边距。
-    pub card_cost_padding_top: f32,
 }
 
 impl Default for MenubarConfig {
@@ -88,14 +77,61 @@ impl Default for MenubarConfig {
             sun_counter_padding_top: 0.0,
             sun_target_left: 39.0,
             sun_target_top: 26.0,
+        }
+    }
+}
+
+/// 卡片布局配置，从 `ui/card.jsonc` 读取。
+#[derive(Resource, Deserialize, Clone, Copy, Debug)]
+pub struct CardConfig {
+    /// 卡槽相对菜单栏顶部偏移。
+    pub card_slot_top: f32,
+    /// 卡槽宽度。
+    pub card_slot_width: f32,
+    /// 卡槽高度。
+    pub card_slot_height: f32,
+    /// 阳光消耗文字位置。
+    pub card_cost_bottom: f32,
+    pub card_cost_left: f32,
+    pub card_cost_width: f32,
+    pub card_cost_padding_top: f32,
+    /// 待选面板布局。
+    pub candidate_cols: usize,
+    pub candidate_rows: usize,
+    pub candidate_card_gap_x: f32,
+    pub candidate_card_gap_y: f32,
+    pub candidate_offset_x: f32,
+    pub candidate_offset_y: f32,
+}
+
+impl Default for CardConfig {
+    fn default() -> Self {
+        Self {
             card_slot_top: 8.0,
             card_slot_width: 50.0,
             card_slot_height: 70.0,
-            card_cost_bottom: 2.0,
+            card_cost_bottom: 0.0,
             card_cost_left: 0.0,
-            card_cost_width: 30.0,
+            card_cost_width: 35.0,
             card_cost_padding_top: 0.0,
+            candidate_cols: 8,
+            candidate_rows: 6,
+            candidate_card_gap_x: 5.0,
+            candidate_card_gap_y: 2.0,
+            candidate_offset_x: 13.0,
+            candidate_offset_y: 32.0,
         }
+    }
+}
+
+impl CardConfig {
+    pub fn load_from_file(path: &str) -> Result<Self, String> {
+        let text =
+            std::fs::read_to_string(path).map_err(|e| format!("读取 {path} 失败: {e}"))?;
+        let value = jsonc_parser::parse_to_serde_value(&text, &Default::default())
+            .map_err(|e| format!("解析 {path} 失败: {e}"))?
+            .ok_or_else(|| format!("{path} 内容为空"))?;
+        serde_json::from_value(value).map_err(|e| format!("反序列化 {path} 失败: {e}"))
     }
 }
 

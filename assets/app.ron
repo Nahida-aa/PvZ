@@ -15,12 +15,5 @@
         sun_counter_padding_top: 1.0,
         sun_target_left: 39.0,
         sun_target_top: 26.0,
-        card_slot_top: 8.0,
-        card_slot_width: 50.0,
-        card_slot_height: 70.0,
-        card_cost_bottom: 0.0,
-        card_cost_left: 0.0,
-        card_cost_width: 35.0,
-        card_cost_padding_top: 0.0,
     ),
 )

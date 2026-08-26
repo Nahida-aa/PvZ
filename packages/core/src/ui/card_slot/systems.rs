@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use crate::assets::GameAssets;
 use crate::level::LevelDefinition;
+use crate::settings::CardConfig;
 use crate::state::GameState;
 use super::components::*;
 use super::ui::build_card_selection_ui;
@@ -26,9 +27,10 @@ pub fn setup_card_selection(
     mut commands: Commands,
     assets: Res<GameAssets>,
     level: Res<LevelDefinition>,
+    card_config: Res<CardConfig>,
 ) {
     info!("进入选卡界面");
-    build_card_selection_ui(&mut commands, &assets, &level);
+    build_card_selection_ui(&mut commands, &assets, &level, &card_config);
     commands.insert_resource(CardSelectionState {
         selected_cards: Vec::new(),
         max_cards: level.max_choosed_card_num as usize,
@@ -78,16 +80,18 @@ pub fn handle_start_game(
 /// 显示/隐藏选卡界面
 pub fn update_card_selection_visibility(
     state: Res<State<GameState>>,
+    card_config: Res<CardConfig>,
     mut candidate_panel: Query<&mut Node, With<CardCandidatePanel>>,
 ) {
     let is_choosing = *state.get() == GameState::ChoosingCards;
+    let cc = &card_config;
+    let panel_h = cc.candidate_offset_y + cc.candidate_rows as f32 * (cc.card_slot_height + cc.candidate_card_gap_y) + 20.0;
 
     if let Ok(mut node) = candidate_panel.single_mut() {
-        // 展开时 top=PANEL_TOP(87)，收起时 top=PANEL_TOP+513
         node.top = if is_choosing {
             Val::Px(87.0)
         } else {
-            Val::Px(87.0 + 513.0)
+            Val::Px(87.0 + panel_h)
         };
     }
 }

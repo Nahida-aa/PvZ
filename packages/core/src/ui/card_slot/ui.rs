@@ -1,16 +1,9 @@
 use bevy::prelude::*;
 use crate::assets::GameAssets;
 use crate::level::LevelDefinition;
+use crate::settings::CardConfig;
 use crate::ui::card_visual;
 use super::components::*;
-
-const CARD_W: f32 = 50.0;
-const CARD_H: f32 = 70.0;
-const COLS: usize = 8;
-const ROWS: usize = 6;
-
-const PANEL_LEFT: f32 = 150.0;
-const PANEL_TOP: f32 = 87.0;
 
 const ALL_PLANTS: &[&str] = &[
     "Peashooter", "Sunflower", "CherryBomb", "WallNut",
@@ -26,41 +19,48 @@ const ALL_PLANTS: &[&str] = &[
 pub fn build_card_selection_ui(
     commands: &mut Commands,
     assets: &GameAssets,
-    level: &LevelDefinition,
+    _level: &LevelDefinition,
+    cc: &CardConfig,
 ) {
+    let card_w = cc.card_slot_width;
+    let card_h = cc.card_slot_height;
+    let cols = cc.candidate_cols;
+    let rows = cc.candidate_rows;
+    let total = cols * rows;
+
     let params = card_visual::CardVisualParams {
-        width: CARD_W,
-        height: CARD_H,
+        width: card_w,
+        height: card_h,
         font: assets.font.clone(),
     };
 
-    // 先收集要生成的卡片信息，避免在 with_children 里借用 commands
     let mut cards_info: Vec<(usize, &str, f32, f32)> = Vec::new();
-    for i in 0..(ROWS * COLS) {
-        let col = i % COLS;
-        let row = i / COLS;
-        let x = 13.0 + col as f32 * (CARD_W + 5.0);
-        let y = 32.0 + row as f32 * (CARD_H + 2.0);
+    for i in 0..total {
+        let col = i % cols;
+        let row = i / cols;
+        let x = cc.candidate_offset_x + col as f32 * (card_w + cc.candidate_card_gap_x);
+        let y = cc.candidate_offset_y + row as f32 * (card_h + cc.candidate_card_gap_y);
         if i < ALL_PLANTS.len() {
             cards_info.push((i, ALL_PLANTS[i], x, y));
         }
     }
+
+    let panel_h = cc.candidate_offset_y + rows as f32 * (card_h + cc.candidate_card_gap_y) + 20.0;
 
     commands
         .spawn((
             CardCandidatePanel,
             Node {
                 position_type: PositionType::Absolute,
-                left: Val::Px(PANEL_LEFT),
-                top: Val::Px(PANEL_TOP + 513.0),
+                left: Val::Px(150.0),
+                top: Val::Px(87.0 + panel_h),
                 width: Val::Px(465.0),
-                height: Val::Px(513.0),
+                height: Val::Px(panel_h),
                 ..default()
             },
             ImageNode::new(assets.seed_chooser_background.clone()),
         ))
         .with_children(|parent| {
-            // 生成所有卡片
             for &(i, plant, x, y) in &cards_info {
                 card_visual::spawn_card(parent, plant, assets, &params, x, y)
                     .insert((
@@ -72,19 +72,18 @@ pub fn build_card_selection_ui(
                     ));
             }
 
-            // 空位补轮廓
-            for i in cards_info.len()..(ROWS * COLS) {
-                let col = i % COLS;
-                let row = i / COLS;
-                let x = 13.0 + col as f32 * (CARD_W + 5.0);
-                let y = 32.0 + row as f32 * (CARD_H + 2.0);
+            for i in cards_info.len()..total {
+                let col = i % cols;
+                let row = i / cols;
+                let x = cc.candidate_offset_x + col as f32 * (card_w + cc.candidate_card_gap_x);
+                let y = cc.candidate_offset_y + row as f32 * (card_h + cc.candidate_card_gap_y);
                 parent.spawn((
                     Node {
                         position_type: PositionType::Absolute,
                         left: Val::Px(x),
                         top: Val::Px(y),
-                        width: Val::Px(CARD_W),
-                        height: Val::Px(CARD_H),
+                        width: Val::Px(card_w),
+                        height: Val::Px(card_h),
                         ..default()
                     },
                     ImageNode::new(assets.seed_packet_silhouette.clone()),

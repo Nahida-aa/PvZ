@@ -1,0 +1,19 @@
+{
+  // 卡片配置
+  // 尺寸匹配 SeedPacket_Larger.png (100×140) 和 SeedPacketSilhouette.png (50×70)
+  "card_slot_top": 8.0,
+  "card_slot_width": 50.0,
+  "card_slot_height": 70.0,
+  // 阳光消耗文字位置
+  "card_cost_bottom": 0.0,
+  "card_cost_left": 0.0,
+  "card_cost_width": 35.0,
+  "card_cost_padding_top": 0.0,
+  // 待选面板布局
+  "candidate_cols": 8,
+  "candidate_rows": 6,
+  "candidate_card_gap_x": 5.0,
+  "candidate_card_gap_y": 2.0,
+  "candidate_offset_x": 13.0,
+  "candidate_offset_y": 32.0,
+}

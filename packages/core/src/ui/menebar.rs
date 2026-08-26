@@ -5,6 +5,7 @@ use bevy::ui::ZIndex;
 
 use crate::assets::GameAssets;
 use crate::settings::AppConfig;
+use crate::settings::CardConfig;
 use crate::level::LevelDefinition;
 use crate::debug::DebugBorder;
 use crate::plant::PlantKind;
@@ -80,11 +81,13 @@ fn setup_menubar(
     assets: Res<GameAssets>,
     level: Res<LevelDefinition>,
     config: Res<AppConfig>,
+    card_config: Res<CardConfig>,
     mut cards: ResMut<PlantCards>,
 ) {
     let font = assets.font.clone();
     let sun_font = assets.sun_font.clone();
     let mb = &config.menubar;
+    let cc = &card_config;
     // 背景宽度 = 阳光区(78) + 卡槽数 × 50 + 右边距(12)
     let bg_width = 78.0 + level.max_choosed_card_num as f32 * 50.0 + 12.0;
     commands
@@ -179,9 +182,9 @@ fn setup_menubar(
                     Node {
                         position_type: PositionType::Absolute,
                         left: Val::Px(x),
-                        top: Val::Px(mb.card_slot_top),
-                        width: Val::Px(mb.card_slot_width),
-                        height: Val::Px(mb.card_slot_height),
+                        top: Val::Px(cc.card_slot_top),
+                        width: Val::Px(cc.card_slot_width),
+                        height: Val::Px(cc.card_slot_height),
                         justify_content: JustifyContent::End,
                         align_items: AlignItems::Center,
                         ..default()
@@ -206,8 +209,8 @@ fn setup_menubar(
                     parent.spawn((
                         ImageNode::new(assets.seed_packet_silhouette.clone()),
                         Node {
-                            width: Val::Px(mb.card_slot_width),
-                            height: Val::Px(mb.card_slot_height),
+                            width: Val::Px(cc.card_slot_width),
+                            height: Val::Px(cc.card_slot_height),
                             position_type: PositionType::Absolute,
                             left: Val::Px(0.0),
                             top: Val::Px(0.0),
@@ -222,8 +225,8 @@ fn setup_menubar(
                         parent.spawn((
                             ImageNode::new(image),
                             Node {
-                                width: Val::Px(mb.card_slot_width),
-                                height: Val::Px(mb.card_slot_height),
+                                width: Val::Px(cc.card_slot_width),
+                                height: Val::Px(cc.card_slot_height),
                                 ..default()
                             },
                         ));
@@ -233,8 +236,8 @@ fn setup_menubar(
                                 position_type: PositionType::Absolute,
                                 left: Val::Px(0.0),
                                 top: Val::Px(0.0),
-                                width: Val::Px(mb.card_slot_width),
-                                height: Val::Px(mb.card_slot_height),
+                                width: Val::Px(cc.card_slot_width),
+                                height: Val::Px(cc.card_slot_height),
                                 ..default()
                             },
                             BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.6)),
@@ -245,8 +248,8 @@ fn setup_menubar(
                                 position_type: PositionType::Absolute,
                                 left: Val::Px(0.0),
                                 top: Val::Px(0.0),
-                                width: Val::Px(mb.card_slot_width),
-                                height: Val::Px(mb.card_slot_height),
+                                width: Val::Px(cc.card_slot_width),
+                                height: Val::Px(cc.card_slot_height),
                                 ..default()
                             },
                             BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)),
@@ -263,10 +266,10 @@ fn setup_menubar(
                             DebugBorder,
                             Node {
                                 position_type: PositionType::Absolute,
-                                bottom: Val::Px(mb.card_cost_bottom),
-                                left: Val::Px(mb.card_cost_left),
-                                width: Val::Px(mb.card_cost_width),
-                                padding: UiRect::top(Val::Px(mb.card_cost_padding_top)),
+                                bottom: Val::Px(cc.card_cost_bottom),
+                                left: Val::Px(cc.card_cost_left),
+                                width: Val::Px(cc.card_cost_width),
+                                padding: UiRect::top(Val::Px(cc.card_cost_padding_top)),
                                 border: UiRect::all(Val::Px(1.0)),
                                 ..default()
                             },
@@ -328,7 +331,7 @@ fn sync_selected_overlay(
 
 fn cooldown_tick(
     time: Res<Time>,
-    config: Res<AppConfig>,
+    card_config: Res<CardConfig>,
     mut cards: ResMut<PlantCards>,
     card_query: Query<(&PlantCard, &Children)>,
     mut overlay_query: Query<&mut BackgroundColor, With<CardCooldownOverlay>>,
@@ -343,7 +346,7 @@ fn cooldown_tick(
         } else {
             (remaining / card.cooldown_duration).clamp(0.0, 1.0)
         };
-        let overlay_height = progress * config.menubar.card_slot_height;
+        let overlay_height = progress * card_config.card_slot_height;
         for child in children.iter() {
             if let Ok(mut bg) = overlay_query.get_mut(child) {
                 bg.0.set_alpha(0.6);
