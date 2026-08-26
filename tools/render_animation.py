@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Pre-render animation frames from idle.jsonc using plant_composer."""
 import json
+import math
 import subprocess
 import sys
 from pathlib import Path
@@ -34,8 +35,45 @@ def interpolate_keyframes(keyframes, time):
     return keyframes[-1][1]
 
 
+def make_affine(rot, skew, sx, sy):
+    """Compute the 2x2 affine matrix coefficients: a,b,c,d = R * Sk * S."""
+    cos_r = math.cos(rot)
+    sin_r = math.sin(rot)
+    tan_k = math.tan(skew)
+    a = cos_r * sx
+    b = (cos_r * tan_k - sin_r) * sy
+    c = sin_r * sx
+    d = (sin_r * tan_k + cos_r) * sy
+    return a, b, c, d
+
+
+def compute_sprite_bbox(top_left_x, top_left_y, tex_w, tex_h, rot, skew, sx, sy):
+    """Compute bounding box of a sprite given top-left position and transform."""
+    a, b, c, d = make_affine(rot, skew, sx, sy)
+    corners = [
+        (top_left_x, top_left_y),
+        (top_left_x + a * tex_w, top_left_y + c * tex_w),
+        (top_left_x + b * tex_h, top_left_y + d * tex_h),
+        (top_left_x + a * tex_w + b * tex_h, top_left_y + c * tex_w + d * tex_h),
+    ]
+    xs = [p[0] for p in corners]
+    ys = [p[1] for p in corners]
+    return min(xs), min(ys), max(xs), max(ys)
+
+
+def top_left_to_center(top_left_x, top_left_y, tex_w, tex_h, rot, skew, sx, sy):
+    """Convert Godot centered=false top-left position to composer center position."""
+    a, b, c, d = make_affine(rot, skew, sx, sy)
+    hw, hh = tex_w / 2, tex_h / 2
+    return top_left_x + a * hw + b * hh, top_left_y + c * hw + d * hh
+
+
 def generate_frame_rig(jsonc_data, frame_time, parts_dir):
-    """Generate a rig.jsonc for a specific frame time."""
+    """Generate a rig.jsonc for a specific frame time.
+
+    idle.jsonc stores Godot centered=false positions (top-left corners).
+    The composer expects center positions, so we convert here.
+    """
     nodes = jsonc_data["nodes"]
 
     parts = []
@@ -53,16 +91,27 @@ def generate_frame_rig(jsonc_data, frame_time, parts_dir):
         if not texture:
             continue
 
-        # Get transform properties
+        # Get transform properties (Godot centered=false: top-left positions)
         pos = interpolate_keyframes(props.get("position", []), frame_time) or [0, 0]
         rot = interpolate_keyframes(props.get("rotation", []), frame_time) or 0
         scale = interpolate_keyframes(props.get("scale", []), frame_time) or [1, 1]
         skew = interpolate_keyframes(props.get("skew", []), frame_time) or 0
 
+        # Load texture to get size for center conversion
+        from PIL import Image
+        tex_path = parts_dir / texture
+        if not tex_path.exists():
+            continue
+        img = Image.open(tex_path)
+        tw, th = img.size
+
+        # Convert top-left to center for the composer
+        cx, cy = top_left_to_center(pos[0], pos[1], tw, th, rot, skew, scale[0], scale[1])
+
         part = {
             "image": texture,
-            "x": pos[0],
-            "y": pos[1],
+            "x": cx,
+            "y": cy,
             "z": float(z_order),
             "scale_x": scale[0],
             "scale_y": scale[1],
@@ -76,13 +125,18 @@ def generate_frame_rig(jsonc_data, frame_time, parts_dir):
 
 
 def compute_canvas_size(data, parts_dir):
-    """Compute the bounding box across all frames for a fixed canvas size."""
+    """Compute the bounding box across all frames for a fixed canvas size.
+
+    Uses Godot centered=false top-left positions with full affine bounding boxes.
+    """
     fps = data["fps"]
     duration = data["duration"]
     num_frames = int(duration * fps)
 
     min_x, min_y = float("inf"), float("inf")
     max_x, max_y = float("-inf"), float("-inf")
+
+    from PIL import Image
 
     for fi in range(num_frames):
         t = fi / fps
@@ -95,23 +149,23 @@ def compute_canvas_size(data, parts_dir):
                 continue
 
             pos = interpolate_keyframes(props.get("position", []), t) or [0, 0]
+            rot = interpolate_keyframes(props.get("rotation", []), t) or 0
             scale = interpolate_keyframes(props.get("scale", []), t) or [1, 1]
+            skew = interpolate_keyframes(props.get("skew", []), t) or 0
 
             tex_path = parts_dir / texture
             if not tex_path.exists():
                 continue
-            from PIL import Image
             img = Image.open(tex_path)
-            w, h = img.size
-            sw, sh = w * scale[0], h * scale[1]
-            x0 = pos[0] - sw / 2
-            y0 = pos[1] - sh / 2
-            x1 = pos[0] + sw / 2
-            y1 = pos[1] + sh / 2
-            min_x = min(min_x, x0)
-            min_y = min(min_y, y0)
-            max_x = max(max_x, x1)
-            max_y = max(max_y, y1)
+            tw, th = img.size
+
+            bx0, by0, bx1, by1 = compute_sprite_bbox(
+                pos[0], pos[1], tw, th, rot, skew, scale[0], scale[1]
+            )
+            min_x = min(min_x, bx0)
+            min_y = min(min_y, by0)
+            max_x = max(max_x, bx1)
+            max_y = max(max_y, by1)
 
     return (min_x, min_y, max_x, max_y)
 

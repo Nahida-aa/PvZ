@@ -30,3 +30,19 @@ pub struct StartGameButton;
 /// 阳光标签
 #[derive(Component)]
 pub struct SunLabel;
+
+/// 查看图鉴按钮
+#[derive(Component)]
+pub struct EncyclopediaButton;
+
+/// 重选上次卡片按钮
+#[derive(Component)]
+pub struct ReCardButton;
+
+/// 图鉴面板根节点
+#[derive(Component)]
+pub struct EncyclopediaPanel;
+
+/// 图鉴关闭按钮
+#[derive(Component)]
+pub struct EncyclopediaCloseButton;

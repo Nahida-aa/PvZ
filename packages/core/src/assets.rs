@@ -75,6 +75,17 @@ pub struct GameAssets {
     pub mower_exhaust: Handle<Image>,    //排气管**（引擎旁的小排气口）
     pub gravebutton_sound: Handle<AudioSource>,
     pub pause_sound: Handle<AudioSource>,
+    pub seed_chooser_button: Handle<Image>,
+    pub seed_chooser_button_glow: Handle<Image>,
+    pub seed_chooser_button2: Handle<Image>,
+    pub seed_chooser_button2_glow: Handle<Image>,
+    pub almanac_index_back: Handle<Image>,
+    pub almanac_plant_back: Handle<Image>,
+    pub almanac_close_button: Handle<Image>,
+    pub almanac_close_button_highlight: Handle<Image>,
+    pub almanac_index_button: Handle<Image>,
+    pub almanac_index_button_highlight: Handle<Image>,
+    pub almanac_plant_card: Handle<Image>,
 }
 
 pub struct GameAssetsPlugin;
@@ -162,6 +173,17 @@ impl Plugin for GameAssetsPlugin {
             mower_exhaust: server.load("items/lawnmower/reanim/LawnMower_exhaust.png"),
             gravebutton_sound: server.load("sound/gravebutton.ogg"),
             pause_sound: server.load("sound/pause.ogg"),
+            seed_chooser_button: server.load("image/ui/ui_card/all_card/SeedChooser_Button.png"),
+            seed_chooser_button_glow: server.load("image/ui/ui_card/all_card/SeedChooser_Button_Glow.png"),
+            seed_chooser_button2: server.load("image/ui/ui_card/SeedChooser_Button2.png"),
+            seed_chooser_button2_glow: server.load("image/ui/ui_card/SeedChooser_Button2_Glow.png"),
+            almanac_index_back: server.load("image/Almanac/Almanac_IndexBack.jpg"),
+            almanac_plant_back: server.load("image/Almanac/Almanac_PlantBack_New.png"),
+            almanac_close_button: server.load("image/Almanac/Almanac_CloseButton.png"),
+            almanac_close_button_highlight: server.load("image/Almanac/Almanac_CloseButtonHighlight.png"),
+            almanac_index_button: server.load("image/Almanac/Almanac_IndexButton.png"),
+            almanac_index_button_highlight: server.load("image/Almanac/Almanac_IndexButtonHighlight.png"),
+            almanac_plant_card: server.load("image/Almanac/Almanac_PlantCard.png"),
         };
         app.insert_resource(assets);
     }

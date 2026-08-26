@@ -9,6 +9,7 @@ pub enum GameState {
     Paused,
     Victory,
     Defeat,
+    Encyclopedia,
 }
 
 #[derive(Component)]

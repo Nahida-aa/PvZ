@@ -3,8 +3,10 @@ use crate::assets::GameAssets;
 use crate::level::LevelDefinition;
 use crate::settings::CardConfig;
 use crate::state::GameState;
+use crate::ui::encyclopedia;
 use super::components::*;
 use super::ui::build_card_selection_ui;
+use crate::ui::menu::despawn_recursive;
 
 /// 卡片选择状态
 #[derive(Resource)]
@@ -90,5 +92,38 @@ pub fn update_card_selection_visibility(
         } else {
             Val::Px(87.0 + 513.0) // SeedChooser_Background.png 高度
         };
+    }
+}
+
+/// 处理查看图鉴按钮
+pub fn handle_encyclopedia_button(
+    interaction: Query<&Interaction, (Changed<Interaction>, With<EncyclopediaButton>)>,
+    mut next_state: ResMut<NextState<GameState>>,
+) {
+    for interaction in interaction.iter() {
+        if *interaction == Interaction::Pressed {
+            info!("打开图鉴");
+            next_state.set(GameState::Encyclopedia);
+        }
+    }
+}
+
+/// 进入图鉴状态时构建图鉴 UI
+pub fn setup_encyclopedia(
+    mut commands: Commands,
+    assets: Res<GameAssets>,
+) {
+    info!("进入图鉴");
+    encyclopedia::build_encyclopedia(&mut commands, &assets);
+}
+
+/// 离开图鉴状态时销毁图鉴 UI
+pub fn cleanup_encyclopedia(
+    mut commands: Commands,
+    query: Query<Entity, With<encyclopedia::EncyclopediaRoot>>,
+    children_query: Query<&Children>,
+) {
+    for entity in query.iter() {
+        despawn_recursive(&mut commands, entity, &children_query);
     }
 }

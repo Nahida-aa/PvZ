@@ -56,6 +56,7 @@ impl Plugin for CorePlugin {
                 (
                     ui::card_slot::systems::handle_card_click,
                     ui::card_slot::systems::handle_start_game,
+                    ui::card_slot::systems::handle_encyclopedia_button,
                 )
                     .run_if(in_state(GameState::ChoosingCards)),
             )
@@ -63,6 +64,13 @@ impl Plugin for CorePlugin {
                 Update,
                 ui::card_slot::systems::update_card_selection_visibility,
             )
+            // 图鉴系统
+            .add_systems(OnEnter(GameState::Encyclopedia), ui::card_slot::systems::setup_encyclopedia)
+            .add_systems(
+                Update,
+                ui::encyclopedia::handle_encyclopedia_close.run_if(in_state(GameState::Encyclopedia)),
+            )
+            .add_systems(OnExit(GameState::Encyclopedia), ui::card_slot::systems::cleanup_encyclopedia)
         ;
     }
 }
