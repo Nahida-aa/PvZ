@@ -49,6 +49,20 @@ impl Plugin for CorePlugin {
                     .in_set(schedule::GameSet::Movement)
                     .run_if(in_state(GameState::Playing)),
             )
+            // 选卡界面系统
+            .add_systems(OnEnter(GameState::ChoosingCards), ui::card_slot::systems::setup_card_selection)
+            .add_systems(
+                Update,
+                (
+                    ui::card_slot::systems::handle_card_click,
+                    ui::card_slot::systems::handle_start_game,
+                )
+                    .run_if(in_state(GameState::ChoosingCards)),
+            )
+            .add_systems(
+                Update,
+                ui::card_slot::systems::update_card_selection_visibility,
+            )
         ;
     }
 }

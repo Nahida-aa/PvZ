@@ -3231,10 +3231,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "json_comments"
-version = "0.2.2"
+name = "jsonc-parser"
+version = "0.26.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9dbbfed4e59ba9750e15ba154fdfd9329cee16ff3df539c2666b70f58cc32105"
+checksum = "1d6d80e6d70e7911a29f3cf3f44f452df85d06f73572b494ca99a2cad3fcf8f4"
+dependencies = [
+ "serde_json",
+]
 
 [[package]]
 name = "khronos-egl"
@@ -4247,7 +4250,7 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy_ui_widgets",
- "json_comments",
+ "jsonc-parser",
  "rand 0.8.7",
  "ron",
  "serde",
