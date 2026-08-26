@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 #[command(name = "plant_composer")]
 #[command(about = "将植物/物品身体部件 PNG 合成为完整图像")]
 struct Cli {
-    /// 身体部件目录 (包含 PNG 和 skeleton.jsonc)
+    /// 身体部件目录 (包含 PNG 和 rig.jsonc)
     #[arg(short, long)]
     input: PathBuf,
 
@@ -29,7 +29,7 @@ struct Cli {
 }
 
 #[derive(Deserialize)]
-struct ReanimConfig {
+struct RigConfig {
     parts: Vec<PartDef>,
     #[serde(default = "default_scale")]
     scale: f32,
@@ -60,20 +60,20 @@ fn main() {
 fn compose(cli: &Cli) -> Result<PathBuf, Box<dyn std::error::Error>> {
     let bg = parse_rgba(&cli.bg)?;
 
-    // 部件目录结构: <input>/skeleton.jsonc + <input>/reanim/<image>
-    let reanim_dir = cli.input.join("reanim");
+    // 部件目录结构: <input>/rig.jsonc + <input>/parts/<image>
+    let parts_dir = cli.input.join("parts");
 
-    // 尝试加载 skeleton.jsonc
-    let jsonc_path = cli.input.join("skeleton.jsonc");
+    // 尝试加载 rig.jsonc
+    let jsonc_path = cli.input.join("rig.jsonc");
     let parts = if jsonc_path.exists() {
         let text = std::fs::read_to_string(&jsonc_path)?;
         let val = jsonc_parser::parse_to_serde_value(&text, &Default::default())?
-            .ok_or("无法解析 skeleton.jsonc")?;
+            .ok_or("无法解析 rig.jsonc")?;
         serde_json::from_value(val)?
     } else {
         // 无配置时，按文件名排序水平排列
-        let dir = if reanim_dir.exists() {
-            &reanim_dir
+        let dir = if parts_dir.exists() {
+            &parts_dir
         } else {
             &cli.input
         };
@@ -81,7 +81,7 @@ fn compose(cli: &Cli) -> Result<PathBuf, Box<dyn std::error::Error>> {
         if entries.is_empty() {
             return Err("目录下没有 PNG 文件".into());
         }
-        ReanimConfig {
+        RigConfig {
             scale: 1.0,
             parts: entries
                 .iter()
@@ -104,8 +104,8 @@ fn compose(cli: &Cli) -> Result<PathBuf, Box<dyn std::error::Error>> {
     // 加载所有引用的 PNG
     let mut images: Vec<(String, Vec<u8>, u32, u32, f32, f32, f32, f32)> = Vec::new(); // name, px, raw_w, raw_h, x, y, z, scale
     for part in &parts.parts {
-        let path = if reanim_dir.join(&part.image).exists() {
-            reanim_dir.join(&part.image)
+        let path = if parts_dir.join(&part.image).exists() {
+            parts_dir.join(&part.image)
         } else {
             cli.input.join(&part.image)
         };

@@ -16,7 +16,7 @@ pub struct LawnMower {
 }
 
 #[derive(Deserialize)]
-struct ReanimConfig {
+struct RigConfig {
     parts: Vec<PartDef>,
 }
 
@@ -56,20 +56,20 @@ fn mower_image_handle(image: &str, assets: &GameAssets) -> Option<Handle<Image>>
     }
 }
 
-fn load_reanim_config() -> ReanimConfig {
-    // 运行时路径: exe -> ../../assets/items/lawnmower/skeleton.jsonc
+fn load_rig_config() -> RigConfig {
+    // 运行时路径: exe -> ../../assets/items/lawnmower/rig.jsonc
     let exe_path = std::env::current_exe().expect("无法获取可执行文件路径");
     let jsonc_path = exe_path
         .parent()
         .expect("无法获取父目录")
-        .join("../../assets/items/lawnmower/skeleton.jsonc");
+        .join("../../assets/items/lawnmower/rig.jsonc");
 
     let text = std::fs::read_to_string(&jsonc_path)
         .unwrap_or_else(|e| panic!("读取 {} 失败: {e}", jsonc_path.display()));
     let val: serde_json::Value = jsonc_parser::parse_to_serde_value(&text, &Default::default())
-        .expect("解析 skeleton.jsonc 失败")
-        .expect("skeleton.jsonc 为空");
-    serde_json::from_value(val).expect("skeleton.jsonc 格式错误")
+        .expect("解析 rig.jsonc 失败")
+        .expect("rig.jsonc 为空");
+    serde_json::from_value(val).expect("rig.jsonc 格式错误")
 }
 
 fn spawn_mowers(
@@ -78,7 +78,7 @@ fn spawn_mowers(
     app: Res<AppConfig>,
     level: Res<LevelDefinition>,
 ) {
-    let config = load_reanim_config();
+    let config = load_rig_config();
 
     // 按 z-order 排序
     let mut sorted_parts = config.parts;
