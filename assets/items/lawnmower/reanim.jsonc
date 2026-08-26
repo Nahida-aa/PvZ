@@ -3,6 +3,7 @@
   // Godot: Body(position=(-39,-55), scale=0.8), 部件 position 相对 Body, centered=false
   // Bevy: 中心锚点, y 向上; position 已转换为 Bevy 坐标
   "anchor": "center",
+  "scale": 0.8,
   "parts": [
     // 后轮组1 (左后轮)
     { "image": "LawnMower_wheelpiece.png", "x": -7.56, "y": 23.72, "z": 1.0 },
@@ -12,8 +13,8 @@
     { "image": "LawnMower_wheelpiece.png", "x": 19.0, "y": 23.64, "z": 1.0 },
     { "image": "LawnMower_wheel2.png", "x": 18.28, "y": 21.24, "z": 2.0 },
     { "image": "LawnMower_wheelshine.png", "x": 18.2, "y": 21.72, "z": 3.0 },
-    // 车身 (原图偏大, 缩放 0.8)
-    { "image": "LawnMower_body.png", "x": -13.0, "y": 27.16, "z": 5.0, "scale": 0.8 },
+    // 车身
+    { "image": "LawnMower_body.png", "x": -13.0, "y": 27.16, "z": 5.0 },
     // 前轮组1 (左前轮)
     { "image": "LawnMower_wheelpiece.png", "x": -12.44, "y": 8.12, "z": 6.0 },
     { "image": "LawnMower_wheel1.png", "x": -13.48, "y": 5.4, "z": 7.0 },
