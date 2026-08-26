@@ -87,21 +87,28 @@ pub(crate) fn update_knob_positions(
 ) {
     for (slider_entity, value, range, slider_node) in sliders.iter() {
         let ratio = range.thumb_position(value.0);
+        let track_width: f32 = match slider_node.width {
+            Val::Px(v) => v,
+            _ => 218.0,
+        };
         let track_height: f32 = match slider_node.height {
             Val::Px(v) => v,
             _ => 10.0,
         };
 
-        if let Ok(children) = children_query.get(slider_entity) {
-            for child in children.iter() {
-                if let Ok((mut knob_node, _)) = knob_query.get_mut(child) {
-                    let knob_height: f32 = match knob_node.height {
-                        Val::Px(v) => v,
-                        _ => 29.0,
-                    };
-                    knob_node.left = Val::Percent(ratio * 100.0);
-                    knob_node.top = Val::Px((track_height - knob_height) * 0.5);
-                }
+        let Ok(children) = children_query.get(slider_entity) else { continue };
+        for child in children.iter() {
+            if let Ok((mut knob_node, _)) = knob_query.get_mut(child) {
+                let knob_width: f32 = match knob_node.width {
+                    Val::Px(v) => v,
+                    _ => 22.0,
+                };
+                let knob_height: f32 = match knob_node.height {
+                    Val::Px(v) => v,
+                    _ => 29.0,
+                };
+                knob_node.left = Val::Px(ratio * (track_width - knob_width));
+                knob_node.top = Val::Px((track_height - knob_height) * 0.5);
             }
         }
     }
