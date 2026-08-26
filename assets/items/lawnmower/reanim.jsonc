@@ -2,7 +2,9 @@
   // 割草机零件布局，来源: Godot lawn_mower.tscn
   // Godot: Body(position=(-39,-55), scale=0.8), 部件 position 相对 Body, centered=false
   // Bevy: 中心锚点, y 向上; position 已转换为 Bevy 坐标
+  // scale: 每个部件在 Bevy 中 scale=0.8, 父节点也有 0.8 -> 总缩放 0.64
   "anchor": "center",
+  "scale": 0.8,
   "parts": [
     // 后轮组1 (左后轮)
     { "image": "LawnMower_wheelpiece.png", "x": -7.56, "y": 23.72, "z": 1.0 },

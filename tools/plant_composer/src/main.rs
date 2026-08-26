@@ -31,6 +31,12 @@ struct Cli {
 #[derive(Deserialize)]
 struct ReanimConfig {
     parts: Vec<PartDef>,
+    #[serde(default = "default_scale")]
+    scale: f32,
+}
+
+fn default_scale() -> f32 {
+    1.0
 }
 
 #[derive(Deserialize)]
@@ -39,6 +45,8 @@ struct PartDef {
     x: f32,
     y: f32,
     z: f32,
+    #[serde(default = "default_scale")]
+    scale: f32,
 }
 
 fn main() {
@@ -74,6 +82,7 @@ fn compose(cli: &Cli) -> Result<PathBuf, Box<dyn std::error::Error>> {
             return Err("目录下没有 PNG 文件".into());
         }
         ReanimConfig {
+            scale: 1.0,
             parts: entries
                 .iter()
                 .enumerate()
@@ -86,13 +95,14 @@ fn compose(cli: &Cli) -> Result<PathBuf, Box<dyn std::error::Error>> {
                     x: 0.0,
                     y: 0.0,
                     z: i as f32,
+                    scale: 1.0,
                 })
                 .collect(),
         }
     };
 
     // 加载所有引用的 PNG
-    let mut images: Vec<(String, Vec<u8>, u32, u32, f32, f32, f32)> = Vec::new();
+    let mut images: Vec<(String, Vec<u8>, u32, u32, f32, f32, f32, f32)> = Vec::new(); // name, px, raw_w, raw_h, x, y, z, scale
     for part in &parts.parts {
         let path = if reanim_dir.join(&part.image).exists() {
             reanim_dir.join(&part.image)
@@ -103,7 +113,8 @@ fn compose(cli: &Cli) -> Result<PathBuf, Box<dyn std::error::Error>> {
             .map_err(|e| format!("读取 {} 失败: {e}", path.display()))?;
         let (w, h, px) =
             load_rgba(&data).ok_or_else(|| format!("无法解码: {}", path.display()))?;
-        images.push((part.image.clone(), px, w, h, part.x, part.y, part.z));
+        let scale = if part.scale != 0.0 { part.scale } else { parts.scale };
+        images.push((part.image.clone(), px, w, h, part.x, part.y, part.z, scale));
     }
 
     // 按 z-order 排序
@@ -113,18 +124,18 @@ fn compose(cli: &Cli) -> Result<PathBuf, Box<dyn std::error::Error>> {
     let (canvas_w, canvas_h) = if let (Some(w), Some(h)) = (cli.width, cli.height) {
         (w, h)
     } else {
-        // 计算包围盒 (x,y 为中心点)
+        // 计算包围盒 (x,y 为中心点, 缩放后的尺寸)
         let mut min_x = f32::MAX;
         let mut min_y = f32::MAX;
         let mut max_x = f32::MIN;
         let mut max_y = f32::MIN;
-        for (_, _, w, h, x, y, _) in &images {
-            let hw = *w as f32 / 2.0;
-            let hh = *h as f32 / 2.0;
-            min_x = min_x.min(x - hw);
-            min_y = min_y.min(y - hh);
-            max_x = max_x.max(x + hw);
-            max_y = max_y.max(y + hh);
+        for (_, _, w, h, x, y, _, scale) in &images {
+            let sw = *w as f32 * scale;
+            let sh = *h as f32 * scale;
+            min_x = min_x.min(x - sw / 2.0);
+            min_y = min_y.min(y - sh / 2.0);
+            max_x = max_x.max(x + sw / 2.0);
+            max_y = max_y.max(y + sh / 2.0);
         }
         let w = (max_x - min_x).ceil() as u32;
         let h = (max_y - min_y).ceil() as u32;
@@ -141,21 +152,23 @@ fn compose(cli: &Cli) -> Result<PathBuf, Box<dyn std::error::Error>> {
     // 计算偏移使所有图片都在画布内 (x,y 为中心点)
     let mut min_x = f32::MAX;
     let mut min_y = f32::MAX;
-    for (_, _, w, h, x, y, _) in &images {
-        let hw = *w as f32 / 2.0;
-        let hh = *h as f32 / 2.0;
-        min_x = min_x.min(x - hw);
-        min_y = min_y.min(y - hh);
+    for (_, _, w, h, x, y, _, scale) in &images {
+        let sw = *w as f32 * scale;
+        let sh = *h as f32 * scale;
+        min_x = min_x.min(x - sw / 2.0);
+        min_y = min_y.min(y - sh / 2.0);
     }
     let offset_x = -min_x;
     let offset_y = -min_y;
 
     // 合成 (x,y 为中心点, y 向上)
-    for (_, px, w, h, x, y, _) in &images {
+    for (_, px, w, h, x, y, _, scale) in &images {
+        let sw = *w as f32 * scale;
+        let sh = *h as f32 * scale;
         // 中心点 -> 左上角 (canvas 坐标: y 向下)
-        let dx = (x + offset_x - *w as f32 / 2.0) as u32;
-        let dy = (canvas_h as f32 - (y + offset_y) - *h as f32 / 2.0) as u32;
-        blit(&mut canvas, canvas_w, canvas_h, px, *w, *h, dx, dy);
+        let dx = (x + offset_x - sw / 2.0) as u32;
+        let dy = (canvas_h as f32 - (y + offset_y) - sh / 2.0) as u32;
+        blit_scaled(&mut canvas, canvas_w, canvas_h, px, *w, *h, dx, dy, *scale);
     }
 
     // 写入 PNG
@@ -164,8 +177,8 @@ fn compose(cli: &Cli) -> Result<PathBuf, Box<dyn std::error::Error>> {
     Ok(cli.output.clone())
 }
 
-/// 将源图像合成到目标画布的指定位置
-fn blit(
+/// 将源图像合成到目标画布的指定位置 (带缩放)
+fn blit_scaled(
     canvas: &mut [u8],
     cw: u32,
     ch: u32,
@@ -174,18 +187,29 @@ fn blit(
     sh: u32,
     dx: u32,
     dy: u32,
+    scale: f32,
 ) {
-    for y in 0..sh {
-        let cy = dy + y;
+    let out_w = (sw as f32 * scale).ceil() as u32;
+    let out_h = (sh as f32 * scale).ceil() as u32;
+    for oy in 0..out_h {
+        let cy = dy + oy;
         if cy >= ch {
             continue;
         }
-        for x in 0..sw {
-            let cx = dx + x;
+        let sy = (oy as f32 / scale) as u32;
+        if sy >= sh {
+            continue;
+        }
+        for ox in 0..out_w {
+            let cx = dx + ox;
             if cx >= cw {
                 continue;
             }
-            let si = ((y * sw + x) * 4) as usize;
+            let sx = (ox as f32 / scale) as u32;
+            if sx >= sw {
+                continue;
+            }
+            let si = ((sy * sw + sx) * 4) as usize;
             let ci = ((cy * cw + cx) * 4) as usize;
             // Alpha 混合
             let sa = src[si + 3] as f32 / 255.0;

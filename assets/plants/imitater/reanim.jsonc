@@ -2,8 +2,8 @@
   // 模仿者零件布局，来源: Godot plant_999_imitater.tscn
   // BodyCorrect(position=(-40,-69)), 部件 centered=false
   // 转换: Godot世界中心 = (-40+px+sw*sx/2, -69+py+sh*sy/2), Bevy y 取反
-  // scale: 部件各自 ~0.8, BodyCorrect 无缩放
   "anchor": "center",
+  "scale": 0.8,
   "parts": [
     // spin (默认可见) img=66x97 scale=(0.801,0.799)
     { "image": "Imitater_spin1.png", "x": 0.63, "y": 34.05, "z": 10.0 },
