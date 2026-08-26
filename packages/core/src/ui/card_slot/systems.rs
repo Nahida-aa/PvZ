@@ -80,18 +80,15 @@ pub fn handle_start_game(
 /// 显示/隐藏选卡界面
 pub fn update_card_selection_visibility(
     state: Res<State<GameState>>,
-    card_config: Res<CardConfig>,
     mut candidate_panel: Query<&mut Node, With<CardCandidatePanel>>,
 ) {
     let is_choosing = *state.get() == GameState::ChoosingCards;
-    let cc = &card_config;
-    let panel_h = cc.candidate_offset_y + cc.candidate_rows as f32 * (cc.card_slot_height + cc.candidate_card_gap_y) + 20.0;
 
     if let Ok(mut node) = candidate_panel.single_mut() {
         node.top = if is_choosing {
             Val::Px(87.0)
         } else {
-            Val::Px(87.0 + panel_h)
+            Val::Px(87.0 + 513.0) // SeedChooser_Background.png 高度
         };
     }
 }

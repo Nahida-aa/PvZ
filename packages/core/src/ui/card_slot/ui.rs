@@ -45,7 +45,7 @@ pub fn build_card_selection_ui(
         }
     }
 
-    let panel_h = cc.candidate_offset_y + rows as f32 * (card_h + cc.candidate_card_gap_y) + 20.0;
+    let panel_h = 513.0; // SeedChooser_Background.png 实际高度
 
     commands
         .spawn((
