@@ -86,7 +86,7 @@ struct PartImage {
     px: Vec<u8>,
     w: u32,
     h: u32,
-    /// 精灵中心在 Godot 世界坐标 (x右, y上)
+    /// 精灵中心在 Godot 世界坐标 (x右, y下)
     cx: f32,
     cy: f32,
     z: f32,
@@ -244,17 +244,12 @@ fn compose(cli: &Cli) -> Result<PathBuf, Box<dyn std::error::Error>> {
 
 /// 创建从纹理到画布的仿射变换
 ///
-/// rig.jsonc 中 x,y 是精灵中心在 Godot 世界坐标 (x右, y上)
+/// rig.jsonc 中 x,y 是精灵中心在 Godot 世界坐标 (x右, y下)
 /// 纹理像素 (u,v): u向右, v向下, 原点在左上角
-/// 画布坐标: x向右, y向下
+/// 画布坐标: x向右, y向下 (与 Godot 一致)
 ///
-/// 变换流程:
-/// 1. 纹理原点偏移到中心: (u - w/2, v - h/2)
-/// 2. 缩放: × scale
-/// 3. 倾斜: × skew
-/// 4. 旋转: × rotation
-/// 5. 平移到 Godot 世界坐标: + (cx, cy)
-/// 6. y 取反 + 偏移到画布: (-y + offset_y, x + offset_x)
+/// Godot Sprite2D (centered=false) 变换链: Scale → Skew → Rotate → Translate
+/// 矩阵: [[a,b],[c,d]] = R * Sk * S
 fn make_affine(img: &PartImage, offset_x: f32, offset_y: f32) -> Affine {
     let cos_r = img.rotation.cos();
     let sin_r = img.rotation.sin();
@@ -273,7 +268,7 @@ fn make_affine(img: &PartImage, offset_x: f32, offset_y: f32) -> Affine {
         c,
         d,
         tx: img.cx - a * hw - b * hh + offset_x,
-        ty: -(img.cy - c * hw - d * hh) + offset_y,
+        ty: img.cy - c * hw - d * hh + offset_y,
     }
 }
 
