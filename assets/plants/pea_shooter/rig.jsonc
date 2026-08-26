@@ -1,18 +1,18 @@
 {
-  // pea_shooter rig layout (from Idle t=0 animation values)
-  // 坐标: 世界坐标 (x右, y下), 精灵中心
+  // pea_shooter rig layout (center positions from Idle t=0)
+  // 坐标: 世界坐标中心 (x右, y下)
   "scale": 1.0,
   "parts": [
-    {"image": "PeaShooter_Head.png","x": -23.8,"y": -49.2,"z": 1.0,"scale_x": 0.555,"scale_y": 0.5},
-    {"image": "anim_sprout.png","x": -35.3,"y": -39.3,"z": 2.0,"scale_x": 0.799,"scale_y": 0.799,"rotation": -0.258309,"skew": 0.0},
-    {"image": "PeaShooter_backleaf.png","x": -15.3,"y": -14.0,"z": 3.0,"scale_x": 0.555,"scale_y": 0.555},
-    {"image": "PeaShooter_backleaf_lefttip.png","x": -18.0,"y": -13.1,"z": 4.0,"scale_x": 0.555,"scale_y": 0.555},
-    {"image": "PeaShooter_backleaf_righttip.png","x": 4.0,"y": -14.1,"z": 5.0,"scale_x": 0.555,"scale_y": 0.555},
-    {"image": "PeaShooter_frontleaf.png","x": -20.2,"y": -12.6,"z": 6.0,"scale_x": 0.555,"scale_y": 0.555},
-    {"image": "PeaShooter_frontleaf_righttip.png","x": 13.3,"y": -11.0,"z": 7.0,"scale_x": 0.555,"scale_y": 0.555},
-    {"image": "PeaShooter_frontleaf_lefttip.png","x": -23.6,"y": -5.4,"z": 8.0,"scale_x": 0.555,"scale_y": 0.555},
-    {"image": "PeaShooter_mouth.png","x": 9.4,"y": -49.2,"z": 9.0,"scale_x": 0.555,"scale_y": 0.5},
-    {"image": "PeaShooter_stalk_bottom.png","x": -6.9,"y": -14.4,"z": 10.0,"scale_x": 0.555,"scale_y": 0.555},
-    {"image": "PeaShooter_stalk_top.png","x": -12.0,"y": -21.7,"z": 11.0,"scale_x": 0.555,"scale_y": 0.555}
+    {"image": "PeaShooter_Head.png","x": -4.38,"y": -32.95,"z": 1.0,"scale_x": 0.555,"scale_y": 0.5},
+    {"image": "anim_sprout.png","x": -26.92,"y": -35.73,"z": 2.0,"scale_x": 0.799,"scale_y": 0.799,"rotation": -0.258309,"skew": 0.0},
+    {"image": "PeaShooter_backleaf.png","x": -3.09,"y": -7.89,"z": 3.0,"scale_x": 0.555,"scale_y": 0.555},
+    {"image": "PeaShooter_backleaf_lefttip.png","x": -13.84,"y": -9.77,"z": 4.0,"scale_x": 0.555,"scale_y": 0.555},
+    {"image": "PeaShooter_backleaf_righttip.png","x": 7.33,"y": -11.32,"z": 5.0,"scale_x": 0.555,"scale_y": 0.555},
+    {"image": "PeaShooter_frontleaf.png","x": -1.61,"y": -1.5,"z": 6.0,"scale_x": 0.555,"scale_y": 0.555},
+    {"image": "PeaShooter_frontleaf_righttip.png","x": 17.46,"y": -2.4,"z": 7.0,"scale_x": 0.555,"scale_y": 0.555},
+    {"image": "PeaShooter_frontleaf_lefttip.png","x": -17.5,"y": 2.65,"z": 8.0,"scale_x": 0.555,"scale_y": 0.555},
+    {"image": "PeaShooter_mouth.png","x": 19.11,"y": -36.95,"z": 9.0,"scale_x": 0.555,"scale_y": 0.5},
+    {"image": "PeaShooter_stalk_bottom.png","x": -2.74,"y": -9.13,"z": 10.0,"scale_x": 0.555,"scale_y": 0.555},
+    {"image": "PeaShooter_stalk_top.png","x": -4.78,"y": -16.98,"z": 11.0,"scale_x": 0.555,"scale_y": 0.555}
   ]
 }
