@@ -291,9 +291,11 @@ pub fn handle_encyclopedia_close(
 
 pub fn handle_encyclopedia_plant_click(
     interaction_query: Query<(&Interaction, &EncyclopediaPlantCard), Changed<Interaction>>,
-    mut name_query: Query<&mut Text, With<EncyclopediaDetailName>>,
-    mut desc_query: Query<&mut Text, With<EncyclopediaDetailDesc>>,
-    mut cost_query: Query<&mut Text, With<EncyclopediaDetailCost>>,
+    mut detail_query: ParamSet<(
+        Query<&mut Text, With<EncyclopediaDetailName>>,
+        Query<&mut Text, With<EncyclopediaDetailDesc>>,
+        Query<&mut Text, With<EncyclopediaDetailCost>>,
+    )>,
     mut img_query: Query<&mut ImageNode, With<EncyclopediaDetailImage>>,
     assets: Res<GameAssets>,
 ) {
@@ -306,13 +308,13 @@ pub fn handle_encyclopedia_plant_click(
             let cost = card_visual::plant_sun_cost(&card.name);
             let card_img = card_visual::card_image_handle(&card.name, &assets);
 
-            for mut text in name_query.iter_mut() {
+            for mut text in detail_query.p0().iter_mut() {
                 **text = card.name.clone();
             }
-            for mut text in desc_query.iter_mut() {
+            for mut text in detail_query.p1().iter_mut() {
                 **text = desc.to_string();
             }
-            for mut text in cost_query.iter_mut() {
+            for mut text in detail_query.p2().iter_mut() {
                 **text = format!("阳光消耗: {cost}");
             }
             for mut img in img_query.iter_mut() {
