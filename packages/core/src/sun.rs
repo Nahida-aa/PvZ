@@ -3,7 +3,7 @@ use bevy::window::PrimaryWindow;
 use rand::Rng;
 
 use crate::assets::GameAssets;
-use crate::ui::menebar::SunBank;
+use crate::ui::seed_bank::SunBank;
 use crate::settings::AppConfig;
 use crate::level::LevelDefinition;
 use crate::lawn::{GridPos, screen_to_world};

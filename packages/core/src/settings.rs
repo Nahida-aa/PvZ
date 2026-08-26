@@ -26,7 +26,7 @@ pub struct AppConfig {
     pub time_scale: f32,
     /// 顶部菜单栏布局参数。
     #[serde(default)]
-    pub menubar: MenubarConfig,
+    pub seed_bank: SeedBankConfig,
 }
 
 fn default_master_volume() -> f32 { 1.0 }
@@ -47,7 +47,7 @@ pub struct BgConfig {
 
 /// 顶部菜单栏布局参数。
 #[derive(Deserialize, Clone, Copy, Debug)]
-pub struct MenubarConfig {
+pub struct SeedBankConfig {
     /// 菜单栏背景左偏移。
     pub bar_left: f32,
     /// 菜单栏背景顶偏移。
@@ -65,7 +65,7 @@ pub struct MenubarConfig {
     pub sun_target_top: f32,
 }
 
-impl Default for MenubarConfig {
+impl Default for SeedBankConfig {
     fn default() -> Self {
         Self {
             bar_left: 150.0,
@@ -167,7 +167,7 @@ impl Default for AppConfig {
             bgm_volume: 0.5,
             sfx_volume: 0.5,
             time_scale: 1.0,
-            menubar: MenubarConfig::default(),
+            seed_bank: SeedBankConfig::default(),
         }
     }
 }

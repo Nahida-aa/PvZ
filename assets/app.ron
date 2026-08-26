@@ -5,7 +5,7 @@
     bgm_volume: 0.1,
     sfx_volume: 0.5,
     time_scale: 1.0,
-    menubar: (
+    seed_bank: (
         bar_left: 150.0,
         bar_top: 0.0,
         sun_counter_left: 10.0,

@@ -9,7 +9,7 @@ use crate::input::SelectedPlant;
 use crate::lawn::LawnOccupancy;
 use crate::level::LevelRuntime;
 use crate::state::{GameState, GameplayEntity};
-use crate::ui::menebar::SunBank;
+use crate::ui::seed_bank::SunBank;
 use crate::ui::plant_cards::PlantCards;
 use super::config::PauseMenuConfig;
 

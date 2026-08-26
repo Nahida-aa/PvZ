@@ -9,7 +9,7 @@ use crate::level::LevelDefinition;
 use crate::lawn::GridPos;
 use crate::plant::{PlantKind, SpawnPlant};
 use crate::state::GameState;
-use crate::ui::menebar::SunBank;
+use crate::ui::seed_bank::SunBank;
 
 use crate::ui::plant_cards::PlantCards;
 #[derive(Resource, Default)]

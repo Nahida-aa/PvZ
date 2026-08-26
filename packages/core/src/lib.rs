@@ -38,7 +38,7 @@ impl Plugin for CorePlugin {
             .add_plugins(projectile::ProjectilePlugin)
             .add_plugins(input::InputPlugin)
             .add_plugins(level::LevelPlugin)
-            .add_plugins(ui::menebar::GameMenuBarPlugin)
+            .add_plugins(ui::seed_bank::SeedBankPlugin)
             .add_plugins(sun::SunPlugin)
             .add_plugins(lawn_mower::LawnMowerPlugin)
             .add_plugins(ui::menu::pause_menu::PauseMenuPlugin)

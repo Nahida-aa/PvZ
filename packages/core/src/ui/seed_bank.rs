@@ -53,14 +53,14 @@ impl Default for PlantCard {
     }
 }
 
-pub struct GameMenuBarPlugin;
+pub struct SeedBankPlugin;
 
-impl Plugin for GameMenuBarPlugin {
+impl Plugin for SeedBankPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<SunBank>()
             .init_resource::<PlantCards>()
-            .add_systems(OnEnter(GameState::ChoosingCards), setup_menubar)
-            .add_systems(OnEnter(GameState::Playing), setup_menubar)
+            .add_systems(OnEnter(GameState::ChoosingCards), setup_seed_bank)
+            .add_systems(OnEnter(GameState::Playing), setup_seed_bank)
             .add_systems(
                 Update,
                 (update_sun_counter, handle_card_click, sync_selected_overlay, cooldown_tick)
@@ -76,7 +76,7 @@ fn card_image(kind: PlantKind, assets: &GameAssets) -> Handle<Image> {
     }
 }
 
-fn setup_menubar(
+fn setup_seed_bank(
     mut commands: Commands,
     assets: Res<GameAssets>,
     level: Res<LevelDefinition>,
@@ -86,7 +86,7 @@ fn setup_menubar(
 ) {
     let font = assets.font.clone();
     let sun_font = assets.sun_font.clone();
-    let mb = &config.menubar;
+    let mb = &config.seed_bank;
     let cc = &card_config;
     // 背景宽度 = 阳光区(78) + 卡槽数 × 50 + 右边距(12)
     let bg_width = 78.0 + level.max_choosed_card_num as f32 * 50.0 + 12.0;
