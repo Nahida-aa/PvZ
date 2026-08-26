@@ -8,6 +8,7 @@ use crate::settings::AppConfig;
 use crate::settings::CardConfig;
 use crate::level::LevelDefinition;
 use crate::debug::DebugBorder;
+use crate::ui::card_visual;
 use crate::plant::PlantKind;
 use crate::state::GameState;
 use crate::ui::plant_cards::PlantCards;
@@ -70,10 +71,7 @@ impl Plugin for SeedBankPlugin {
 }
 
 fn card_image(kind: PlantKind, assets: &GameAssets) -> Handle<Image> {
-    match kind {
-        PlantKind::Peashooter => assets.card_peashooter.clone(),
-        PlantKind::Sunflower => assets.card_sunflower.clone(),
-    }
+    card_visual::card_image_handle(&format!("{:?}", kind), assets)
 }
 
 fn setup_seed_bank(
