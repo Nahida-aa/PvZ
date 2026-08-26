@@ -14,7 +14,7 @@ const DEFAULT_LEVEL: &str = "levels/test_day.ron";
 /// 应用配置文件名（相对于 assets 目录）。
 const APP_CONFIG: &str = "app.ron";
 /// 暂停菜单布局文件名（相对于 assets 目录）。
-const PAUSE_MENU_CONFIG: &str = "ui/pause_menu.json";
+const PAUSE_MENU_CONFIG: &str = "ui/pause_menu.jsonc";
 
 /// 获取 assets 目录的绝对路径。
 ///
