@@ -1,0 +1,38 @@
+{
+  // sun_flower reanim layout, from Godot .tscn
+  // BodyCorrect(position=(-43,-69)), centered=false
+  "anchor": "center",
+  "scale": 0.8,
+  "parts": [
+    {"image": "PeaShooter_backleaf.png", "x": -2.66, "y": 8.66, "z": 0.0},
+    {"image": "PeaShooter_backleaf_lefttip.png", "x": -13.59, "y": 10.36, "z": 1.0},
+    {"image": "PeaShooter_backleaf_righttip.png", "x": 8.48, "y": 11.45, "z": 2.0},
+    {"image": "PeaShooter_stalk_bottom.png", "x": -1.18, "y": 12.42, "z": 3.0},
+    {"image": "PeaShooter_stalk_top.png", "x": -2.51, "y": 24.24, "z": 4.0},
+    {"image": "PeaShooter_frontleaf.png", "x": -1.47, "y": 3.96, "z": 5.0},
+    {"image": "PeaShooter_frontleaf_righttip.png", "x": 17.64, "y": 4.86, "z": 6.0},
+    {"image": "PeaShooter_frontleaf_lefttip.png", "x": -16.52, "y": 0.33, "z": 7.0},
+    {"image": "SunFlower_leftpetal8.png", "x": -12.26, "y": 20.4, "z": 8.0},
+    {"image": "SunFlower_leftpetal7.png", "x": -19.25, "y": 24.23, "z": 9.0},
+    {"image": "SunFlower_leftpetal6.png", "x": -25.05, "y": 29.46, "z": 10.0},
+    {"image": "SunFlower_leftpetal5.png", "x": -28.26, "y": 35.92, "z": 11.0},
+    {"image": "SunFlower_leftpetal4.png", "x": -25.35, "y": 42.79, "z": 12.0},
+    {"image": "SunFlower_leftpetal3.png", "x": -21.23, "y": 49.26, "z": 13.0},
+    {"image": "SunFlower_leftpetal2.png", "x": -15.06, "y": 54.26, "z": 14.0},
+    {"image": "SunFlower_leftpetal1.png", "x": -9.7, "y": 57.26, "z": 15.0},
+    {"image": "SunFlower_bottompetals.png", "x": -1.44, "y": 18.9, "z": 16.0},
+    {"image": "SunFlower_rightpetal9.png", "x": 8.57, "y": 21.13, "z": 17.0},
+    {"image": "SunFlower_rightpetal8.png", "x": 13.27, "y": 23.6, "z": 18.0},
+    {"image": "SunFlower_rightpetal7.png", "x": 17.77, "y": 27.17, "z": 19.0},
+    {"image": "SunFlower_rightpetal6.png", "x": 22.04, "y": 32.5, "z": 20.0},
+    {"image": "SunFlower_rightpetal5.png", "x": 24.1, "y": 38.7, "z": 21.0},
+    {"image": "SunFlower_rightpetal4.png", "x": 23.24, "y": 45.5, "z": 22.0},
+    {"image": "SunFlower_rightpetal3.png", "x": 18.04, "y": 49.63, "z": 23.0},
+    {"image": "SunFlower_rightpetal2.png", "x": 12.83, "y": 54.16, "z": 24.0},
+    {"image": "SunFlower_rightpetal1.png", "x": 7.26, "y": 56.96, "z": 25.0},
+    {"image": "SunFlower_toppetals.png", "x": -0.98, "y": 58.42, "z": 26.0},
+    {"image": "SunFlower_head.png", "x": -1.84, "y": 39.0, "z": 27.0},
+    {"image": "SunFlower_blink2.png", "x": 0.32, "y": 41.92, "z": 28.0},
+    {"image": "SunFlower_blink1.png", "x": 0.32, "y": 41.92, "z": 28.0}
+  ]
+}

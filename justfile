@@ -15,3 +15,9 @@ compose-lawnmower:
 
 compose-imitater:
     cargo run -p plant_composer -- --input assets/plants/imitater --output tmp/imitater_composed.png
+
+compose-pea-shooter:
+    cargo run -p plant_composer -- --input assets/plants/pea_shooter --output tmp/pea_shooter_composed.png
+
+compose-sun-flower:
+    cargo run -p plant_composer -- --input assets/plants/sun_flower --output tmp/sun_flower_composed.png

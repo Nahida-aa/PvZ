@@ -1,0 +1,21 @@
+{
+  // pea_shooter reanim layout, from Godot .tscn
+  // BodyCorrect(position=(-43,-67)), centered=false
+  "anchor": "center",
+  "scale": 0.8,
+  "parts": [
+    {"image": "PeaShooter_backleaf.png", "x": -2.31, "y": 6.86, "z": 0.0},
+    {"image": "PeaShooter_backleaf_lefttip.png", "x": -13.79, "y": 7.97, "z": 1.0},
+    {"image": "PeaShooter_backleaf_righttip.png", "x": 8.94, "y": 9.69, "z": 2.0},
+    {"image": "PeaShooter_stalk_bottom.png", "x": 2.21, "y": 10.63, "z": 3.0},
+    {"image": "PeaShooter_stalk_top.png", "x": 4.76, "y": 22.51, "z": 4.0},
+    {"image": "PeaShooter_frontleaf.png", "x": -1.28, "y": 0.9, "z": 5.0},
+    {"image": "PeaShooter_frontleaf_righttip.png", "x": 18.95, "y": 1.65, "z": 6.0},
+    {"image": "PeaShooter_frontleaf_lefttip.png", "x": -17.78, "y": -3.09, "z": 7.0},
+    {"image": "anim_sprout.png", "x": -21.7, "y": 38.69, "z": 8.0},
+    {"image": "PeaShooter_Head.png", "x": 2.78, "y": 38.5, "z": 9.0},
+    {"image": "PeaShooter_mouth.png", "x": 26.39, "y": 42.99, "z": 10.0},
+    {"image": "PeaShooter_blink1.png", "x": 9.93, "y": 43.3, "z": 11.0},
+    {"image": "PeaShooter_blink2.png", "x": 9.93, "y": 43.3, "z": 11.0}
+  ]
+}

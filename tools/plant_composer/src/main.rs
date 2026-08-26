@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 #[command(name = "plant_composer")]
 #[command(about = "将植物/物品身体部件 PNG 合成为完整图像")]
 struct Cli {
-    /// 身体部件目录 (包含 PNG 和 reanim.jsonc)
+    /// 身体部件目录 (包含 PNG 和 skeleton.jsonc)
     #[arg(short, long)]
     input: PathBuf,
 
@@ -60,15 +60,15 @@ fn main() {
 fn compose(cli: &Cli) -> Result<PathBuf, Box<dyn std::error::Error>> {
     let bg = parse_rgba(&cli.bg)?;
 
-    // 部件目录结构: <input>/reanim.jsonc + <input>/reanim/<image>
+    // 部件目录结构: <input>/skeleton.jsonc + <input>/reanim/<image>
     let reanim_dir = cli.input.join("reanim");
 
-    // 尝试加载 reanim.jsonc
-    let jsonc_path = cli.input.join("reanim.jsonc");
+    // 尝试加载 skeleton.jsonc
+    let jsonc_path = cli.input.join("skeleton.jsonc");
     let parts = if jsonc_path.exists() {
         let text = std::fs::read_to_string(&jsonc_path)?;
         let val = jsonc_parser::parse_to_serde_value(&text, &Default::default())?
-            .ok_or("无法解析 reanim.jsonc")?;
+            .ok_or("无法解析 skeleton.jsonc")?;
         serde_json::from_value(val)?
     } else {
         // 无配置时，按文件名排序水平排列
