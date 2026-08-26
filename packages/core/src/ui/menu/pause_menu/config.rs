@@ -127,8 +127,7 @@ impl Default for SliderConfig {
 ///
 /// PNG 格式：8 字节签名 + 4 字节 IHDR 长度 + 4 字节 "IHDR" + 4 字节 width + 4 字节 height。
 pub fn png_dimensions(path: &str) -> Result<(u32, u32), String> {
-    let data =
-        std::fs::read(path).map_err(|e| format!("读取 {path} 失败: {e}"))?;
+    let data = std::fs::read(path).map_err(|e| format!("读取 {path} 失败: {e}"))?;
     if data.len() < 24 || &data[..8] != b"\x89PNG\r\n\x1a\n" {
         return Err(format!("{path} 不是有效的 PNG 文件"));
     }
@@ -139,10 +138,11 @@ pub fn png_dimensions(path: &str) -> Result<(u32, u32), String> {
 
 impl PauseMenuConfig {
     pub fn load_from_file(path: &str) -> Result<Self, String> {
-        let text =
-            std::fs::read_to_string(path).map_err(|e| format!("读取 {path} 失败: {e}"))?;
-        let reader = json_comments::StripComments::new(text.as_bytes());
-        serde_json::from_reader(reader).map_err(|e| format!("解析 {path} 失败: {e}"))
+        let text = std::fs::read_to_string(path).map_err(|e| format!("读取 {path} 失败: {e}"))?;
+        let value = jsonc_parser::parse_to_serde_value(&text, &Default::default())
+            .map_err(|e| format!("解析 {path} 失败: {e}"))?
+            .ok_or_else(|| format!("{path} 内容为空"))?;
+        serde_json::from_value(value).map_err(|e| format!("反序列化 {path} 失败: {e}"))
     }
 }
 
