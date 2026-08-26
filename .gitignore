@@ -7,3 +7,4 @@
 .idea
 
 .agents/*.local.md
+tmp/
