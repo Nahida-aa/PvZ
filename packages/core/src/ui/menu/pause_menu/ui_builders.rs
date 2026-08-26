@@ -160,7 +160,7 @@ pub(crate) fn spawn_slider(
             slider_type,
             Node {
                 position_type: PositionType::Absolute,
-                left: Val::Px(sc.label_area_width),
+                left: Val::Px(label_area_width),
                 top: Val::Px(sc.track_top_offset),
                 width: Val::Px(track_width),
                 height: Val::Px(track_height),
