@@ -1,21 +1,33 @@
 {
-  // pea_shooter reanim layout, from Godot .tscn
-  // BodyCorrect(position=(-43,-67)), centered=false
-  "anchor": "center",
-  "scale": 0.8,
+  // pea_shooter rig layout
+  // 来源: Godot plant_001_pea_shooter_single.tscn
+  // BodyCorrect(position=(-43,-67)), 所有部件 centered=false
+  // 坐标: 精灵中心在 Godot 世界坐标 (x右, y上)
+  // 只包含 t=0 时 visible=true 的部件, 不含 Anim_blink 和 Idle_shoot_blink
+  // 注意: 部件9-11 原本嵌套在 Anim_stem/stem_correct 下, 已展平
+  "scale": 1.0,
   "parts": [
-    {"image": "PeaShooter_backleaf.png", "x": -2.31, "y": 6.86, "z": 0.0},
-    {"image": "PeaShooter_backleaf_lefttip.png", "x": -13.79, "y": 7.97, "z": 1.0},
-    {"image": "PeaShooter_backleaf_righttip.png", "x": 8.94, "y": 9.69, "z": 2.0},
-    {"image": "PeaShooter_stalk_bottom.png", "x": 2.21, "y": 10.63, "z": 3.0},
-    {"image": "PeaShooter_stalk_top.png", "x": 4.76, "y": 22.51, "z": 4.0},
-    {"image": "PeaShooter_frontleaf.png", "x": -1.28, "y": 0.9, "z": 5.0},
-    {"image": "PeaShooter_frontleaf_righttip.png", "x": 18.95, "y": 1.65, "z": 6.0},
-    {"image": "PeaShooter_frontleaf_lefttip.png", "x": -17.78, "y": -3.09, "z": 7.0},
-    {"image": "anim_sprout.png", "x": -21.7, "y": 38.69, "z": 8.0},
-    {"image": "PeaShooter_Head.png", "x": 2.78, "y": 38.5, "z": 9.0},
-    {"image": "PeaShooter_mouth.png", "x": 26.39, "y": 42.99, "z": 10.0},
-    {"image": "PeaShooter_blink1.png", "x": 9.93, "y": 43.3, "z": 11.0},
-    {"image": "PeaShooter_blink2.png", "x": 9.93, "y": 43.3, "z": 11.0}
+    // index 0: Backleaf (直接在 BodyCorrect 下)
+    {"image": "PeaShooter_backleaf.png", "x": 40.68, "y": 60.14, "z": 0.0, "scale_x": 0.595, "scale_y": 0.464},
+    // index 1: Backleaf_left_tip
+    {"image": "PeaShooter_backleaf_lefttip.png", "x": 29.21, "y": 59.03, "z": 1.0, "scale_x": 0.631, "scale_y": 0.515, "rotation": -0.036},
+    // index 2: Backleaf_right_tip
+    {"image": "PeaShooter_backleaf_righttip.png", "x": 51.94, "y": 57.31, "z": 2.0, "scale_x": 0.651, "scale_y": 0.498, "rotation": 0.077},
+    // index 3: Stalk_bottom
+    {"image": "PeaShooter_stalk_bottom.png", "x": 45.21, "y": 56.37, "z": 3.0, "scale_x": 0.564, "scale_y": 0.639, "rotation": 0.516, "skew": -0.183},
+    // index 4: Stalk_top
+    {"image": "PeaShooter_stalk_top.png", "x": 47.75, "y": 44.49, "z": 4.0, "scale_x": 0.559, "scale_y": 0.803, "rotation": 0.365, "skew": -0.001},
+    // index 5: Frontleaf
+    {"image": "PeaShooter_frontleaf.png", "x": 41.71, "y": 66.09, "z": 5.0, "scale_x": 0.592, "scale_y": 0.498},
+    // index 6: Frontleaf_right_tip
+    {"image": "PeaShooter_frontleaf_righttip.png", "x": 61.95, "y": 65.36, "z": 6.0, "scale_x": 0.641, "scale_y": 0.539, "rotation": -0.048},
+    // index 7: Frontleaf_tip_left
+    {"image": "PeaShooter_frontleaf_lefttip.png", "x": 25.22, "y": 70.1, "z": 7.0, "scale_x": 0.595, "scale_y": 0.57, "rotation": -0.02, "skew": -0.005},
+    // index 8: Anim_sprout (嵌套: Anim_stem(44.75,44.70) + stem_correct(-37.6,-48.7) + (6.98,26.74))
+    {"image": "anim_sprout.png", "x": 21.29, "y": 28.31, "z": 8.0, "scale_x": 0.796, "scale_y": 0.796, "rotation": -0.268, "skew": 0.003},
+    // index 9: Anim_face (嵌套)
+    {"image": "PeaShooter_Head.png", "x": 45.78, "y": 28.51, "z": 9.0, "scale_x": 0.555, "scale_y": 0.535},
+    // index 10: Idle_mouth (嵌套)
+    {"image": "PeaShooter_mouth.png", "x": 69.39, "y": 24.01, "z": 10.0, "scale_x": 0.556, "scale_y": 0.535, "rotation": 0.087, "skew": -0.087}
   ]
 }
