@@ -1,0 +1,9 @@
+[package]
+name = "plant_composer"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+
+[dependencies]
+png = "0.17"
+clap = { version = "4", features = ["derive"] }
