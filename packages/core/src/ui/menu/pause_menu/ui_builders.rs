@@ -191,7 +191,7 @@ pub(crate) fn spawn_slider(
                 ImageNode::new(knob_image.clone()),
                 Node {
                     position_type: PositionType::Absolute,
-                    left: Val::Percent(ratio * 100.0),
+                    left: Val::Px(ratio * (track_width - knob_width)),
                     top: Val::Px((track_height - knob_height) * 0.5),
                     width: Val::Px(knob_width),
                     height: Val::Px(knob_height),
