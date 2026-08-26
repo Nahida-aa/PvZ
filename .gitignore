@@ -8,3 +8,4 @@
 
 .agents/*.local.md
 tmp/
+__pycache__/
