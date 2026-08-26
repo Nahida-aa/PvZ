@@ -6,7 +6,7 @@
   "card_slot_height": 70.0,
   // 阳光消耗文字位置
   "card_cost_bottom": 0.0,
-  "card_cost_left": 0.0,
+  "card_cost_left": 1.0,
   "card_cost_width": 35.0,
   "card_cost_padding_top": 0.0,
   // 待选面板布局

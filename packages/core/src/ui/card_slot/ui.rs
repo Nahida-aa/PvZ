@@ -22,30 +22,21 @@ pub fn build_card_selection_ui(
     _level: &LevelDefinition,
     cc: &CardConfig,
 ) {
-    let card_w = cc.card_slot_width;
-    let card_h = cc.card_slot_height;
     let cols = cc.candidate_cols;
     let rows = cc.candidate_rows;
     let total = cols * rows;
-
-    let params = card_visual::CardVisualParams {
-        width: card_w,
-        height: card_h,
-        font: assets.font.clone(),
-    };
+    let panel_h = 513.0;
 
     let mut cards_info: Vec<(usize, &str, f32, f32)> = Vec::new();
     for i in 0..total {
         let col = i % cols;
         let row = i / cols;
-        let x = cc.candidate_offset_x + col as f32 * (card_w + cc.candidate_card_gap_x);
-        let y = cc.candidate_offset_y + row as f32 * (card_h + cc.candidate_card_gap_y);
+        let x = cc.candidate_offset_x + col as f32 * (cc.card_slot_width + cc.candidate_card_gap_x);
+        let y = cc.candidate_offset_y + row as f32 * (cc.card_slot_height + cc.candidate_card_gap_y);
         if i < ALL_PLANTS.len() {
             cards_info.push((i, ALL_PLANTS[i], x, y));
         }
     }
-
-    let panel_h = 513.0; // SeedChooser_Background.png 实际高度
 
     commands
         .spawn((
@@ -62,7 +53,7 @@ pub fn build_card_selection_ui(
         ))
         .with_children(|parent| {
             for &(i, plant, x, y) in &cards_info {
-                card_visual::spawn_card(parent, plant, assets, &params, x, y)
+                card_visual::spawn_card(parent, plant, assets, cc, x, y)
                     .insert((
                         CandidateCard,
                         CardEntity {
@@ -75,15 +66,15 @@ pub fn build_card_selection_ui(
             for i in cards_info.len()..total {
                 let col = i % cols;
                 let row = i / cols;
-                let x = cc.candidate_offset_x + col as f32 * (card_w + cc.candidate_card_gap_x);
-                let y = cc.candidate_offset_y + row as f32 * (card_h + cc.candidate_card_gap_y);
+                let x = cc.candidate_offset_x + col as f32 * (cc.card_slot_width + cc.candidate_card_gap_x);
+                let y = cc.candidate_offset_y + row as f32 * (cc.card_slot_height + cc.candidate_card_gap_y);
                 parent.spawn((
                     Node {
                         position_type: PositionType::Absolute,
                         left: Val::Px(x),
                         top: Val::Px(y),
-                        width: Val::Px(card_w),
-                        height: Val::Px(card_h),
+                        width: Val::Px(cc.card_slot_width),
+                        height: Val::Px(cc.card_slot_height),
                         ..default()
                     },
                     ImageNode::new(assets.seed_packet_silhouette.clone()),
