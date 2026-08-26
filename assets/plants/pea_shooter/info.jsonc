@@ -1,0 +1,11 @@
+{
+  "name": "豌豆射手",
+  "description": "向僵尸发射豌豆",
+  "toughness": 300,
+  "damage": 20,
+  "sun_cost": 100,
+  "cooldown": 7.5,
+  "interval": 1.4,
+  "features": ["直射"],
+  "story": "豌豆射手是草坪上最可靠的防线。他每天练习射击，从不缺席。"
+}

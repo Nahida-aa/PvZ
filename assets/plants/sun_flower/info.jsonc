@@ -1,0 +1,12 @@
+{
+  "name": "向日葵",
+  "description": "产生阳光，为你的植物军团提供能量",
+  "toughness": 300,
+  "damage": 0,
+  "sun_production": 50,
+  "sun_cost": 50,
+  "cooldown": 7.5,
+  "interval": 24.0,
+  "features": ["生产阳光"],
+  "story": "向日葵总是面带微笑，因为她知道阳光总在风雨后。"
+}
