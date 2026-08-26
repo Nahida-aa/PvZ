@@ -42,10 +42,7 @@ fn main() {
         .unwrap_or_else(|e| panic!("加载 {} 失败: {e}", level_path.display()));
     let pause_menu_config =
         PauseMenuConfig::load_from_file(pause_menu_config_path.to_str().unwrap())
-            .unwrap_or_else(|e| {
-                eprintln!("加载 {} 失败: {e}，使用默认值", pause_menu_config_path.display());
-                PauseMenuConfig::default()
-            });
+            .unwrap_or_else(|e| panic!("加载 {} 失败: {e}", pause_menu_config_path.display()));
 
     let window_size = (app_config.win_w() as u32, app_config.win_h() as u32);
 

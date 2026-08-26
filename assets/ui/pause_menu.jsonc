@@ -1,7 +1,7 @@
 {
   // 暂停菜单布局配置
   // panel.width/height: 覆盖 PNG 原始尺寸，不写则自动使用图片尺寸
-  "overlay": { "color": [0.0, 0.0, 0.0, 0.45], "z_index": 1000 },
+  "overlay": { "color": [0.0, 0.0, 0.0, 0.0], "z_index": 1000 },
   "panel": { "background_image": "image/ui/ui_main_game_menu/options_menuback.png" },
 
   "almanac_button": { "left": 111.0, "top": 236.5, "width": 88.0, "height": 35.0 },
@@ -9,7 +9,7 @@
   "restart_button": { "left": 111.0, "top": 280.5, "width": 195.0, "height": 37.0 },
   "main_menu_button": { "left": 111.0, "top": 326.5, "width": 195.0, "height": 37.0 },
   "continue_button": {
-    "left": 26.0,
+    "left": 30.0,
     "top": 383.0,
     "width": 360.0,
     "height": 100.0,
@@ -25,10 +25,28 @@
     "bg_9slice_max": [16.0, 20.0],
   },
 
-  "music_slider": { "left": 105.0, "top": 112.5, "width": 218.0, "height": 30.0, "label_area_width": 40.0 },
-  "sound_slider": { "left": 105.0, "top": 152.5, "width": 218.0, "height": 30.0, "label_area_width": 40.0 },
-  "speed_slider": { "left": 105.0, "top": 192.5, "width": 218.0, "height": 30.0, "label_area_width": 80.0 },
-  "speed_label": { "left": 175.0, "top": 200.5, "font_size": 14.0, "color": [0.38, 0.384, 0.502] },
+  "music_slider": {
+    "left": 103.0,
+    "top": 112.5,
+    "width": 210.0,
+    "height": 30.0,
+    "label_area_width": 40.0,
+  },
+  "sound_slider": {
+    "left": 103.0,
+    "top": 152.5,
+    "width": 210.0,
+    "height": 30.0,
+    "label_area_width": 40.0,
+  },
+  "speed_slider": {
+    "left": 103.0,
+    "top": 192.5,
+    "width": 210.0,
+    "height": 30.0,
+    "label_area_width": 95.0,
+  },
+  "speed_label": { "left": 140.0, "top": 200.5, "font_size": 18.0, "color": [0.38, 0.384, 0.502] },
 
   "slider": {
     "label_font_size": 18.0,
@@ -40,6 +58,6 @@
     "knob_height": 29.0,
     "label_area_width": 50.0,
     "label_top_offset": 8.0,
-    "track_top_offset": 14.0,
+    "track_top_offset": 15.0,
   },
 }
