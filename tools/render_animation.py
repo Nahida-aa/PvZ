@@ -3,7 +3,6 @@
 import json
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 
@@ -76,6 +75,47 @@ def generate_frame_rig(jsonc_data, frame_time, parts_dir):
     return {"scale": 1.0, "parts": parts}
 
 
+def compute_canvas_size(data, parts_dir):
+    """Compute the bounding box across all frames for a fixed canvas size."""
+    fps = data["fps"]
+    duration = data["duration"]
+    num_frames = int(duration * fps)
+
+    min_x, min_y = float("inf"), float("inf")
+    max_x, max_y = float("-inf"), float("-inf")
+
+    for fi in range(num_frames):
+        t = fi / fps
+        nodes = data["nodes"]
+        for node_name, props in nodes.items():
+            if not props.get("visible", True):
+                continue
+            texture = props.get("texture")
+            if not texture:
+                continue
+
+            pos = interpolate_keyframes(props.get("position", []), t) or [0, 0]
+            scale = interpolate_keyframes(props.get("scale", []), t) or [1, 1]
+
+            tex_path = parts_dir / texture
+            if not tex_path.exists():
+                continue
+            from PIL import Image
+            img = Image.open(tex_path)
+            w, h = img.size
+            sw, sh = w * scale[0], h * scale[1]
+            x0 = pos[0] - sw / 2
+            y0 = pos[1] - sh / 2
+            x1 = pos[0] + sw / 2
+            y1 = pos[1] + sh / 2
+            min_x = min(min_x, x0)
+            min_y = min(min_y, y0)
+            max_x = max(max_x, x1)
+            max_y = max(max_y, y1)
+
+    return (min_x, min_y, max_x, max_y)
+
+
 def main():
     if len(sys.argv) != 3:
         print(f"Usage: {sys.argv[0]} <idle.jsonc> <output_dir>")
@@ -99,16 +139,31 @@ def main():
     print(f"Duration: {duration:.6f}s, FPS: {fps}, Frames: {num_frames}")
     print(f"Parts dir: {parts_dir}")
 
+    # Compute fixed canvas size across all frames
+    bbox = compute_canvas_size(data, parts_dir)
+    min_x, min_y, max_x, max_y = bbox
+    import math
+    canvas_w = math.ceil(max_x - min_x)
+    canvas_h = math.ceil(max_y - min_y)
+    offset_x = -min_x
+    offset_y = -min_y
+    print(f"Canvas: {canvas_w}x{canvas_h}, offset=({offset_x:.1f}, {offset_y:.1f})")
+
     for frame_idx in range(num_frames):
         frame_time = frame_idx / fps
         rig = generate_frame_rig(data, frame_time, parts_dir)
+
+        # Apply offset to all parts so content fits in fixed canvas
+        for part in rig["parts"]:
+            part["x"] += offset_x
+            part["y"] += offset_y
 
         # Write temporary rig.jsonc
         rig_path = output_dir / f"_rig_{frame_idx:03d}.jsonc"
         with open(rig_path, "w") as f:
             json.dump(rig, f, indent=2)
 
-        # Run composer
+        # Run composer with fixed canvas size
         frame_path = output_dir / f"frame_{frame_idx:03d}.png"
         result = subprocess.run(
             [
@@ -116,6 +171,8 @@ def main():
                 "--", "--input", str(parts_dir.parent),
                 "--rig", str(rig_path),
                 "--output", str(frame_path),
+                "--width", str(canvas_w),
+                "--height", str(canvas_h),
             ],
             capture_output=True,
             text=True,
