@@ -206,9 +206,14 @@ fn compose(cli: &Cli) -> Result<PathBuf, Box<dyn std::error::Error>> {
 
                 let iw = img.w as i32;
                 let ih = img.h as i32;
-                // GPU LINEAR filter: texel i covers [i-0.5, i+0.5), uv is sample coord
-                let fu = u - 0.5;
-                let fv = v - 0.5;
+                // GPU LINEAR + CLAMP_TO_EDGE (GLSL texture()): clamp the SAMPLE
+                // COORDINATE to [0, W]/[0, H] BEFORE deriving indices/weights, so a
+                // fragment just outside the texture samples the pure edge texel
+                // (alpha 0) instead of blending in the interior (which fattens edges).
+                let uc = u.clamp(0.0, img.w as f32);
+                let vc = v.clamp(0.0, img.h as f32);
+                let fu = uc - 0.5;
+                let fv = vc - 0.5;
                 let u0 = (fu.floor() as i32).clamp(0, iw - 1);
                 let v0 = (fv.floor() as i32).clamp(0, ih - 1);
                 let u1 = (u0 + 1).min(iw - 1);

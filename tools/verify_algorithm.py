@@ -88,13 +88,16 @@ def sample_track(track, t):
 
 # ── Bilinear 采样 ──────────────────────────────────────────────────
 def sample_bilinear(img_data, w, h, u, v):
-    """GPU LINEAR filter: pixel (i,j) 覆盖 [i-0.5, i+0.5)，uv 是采样坐标"""
-    # GPU 采样: floor(u - 0.5) 和 frac(u - 0.5)
-    fu = u - 0.5
-    fv = v - 0.5
+    """GPU LINEAR + CLAMP_TO_EDGE (GLSL texture()): clamp the sample COORDINATE
+    to [0,W]/[0,H] before deriving indices/weights, so a fragment just outside
+    the texture samples the pure edge texel (alpha 0) instead of blending in the
+    interior (which fattens edges)."""
+    uc = max(0.0, min(u, float(w)))
+    vc = max(0.0, min(v, float(h)))
+    fu = uc - 0.5
+    fv = vc - 0.5
     u0 = int(math.floor(fu))
     v0 = int(math.floor(fv))
-    # CLAMP_TO_EDGE
     u0 = max(0, min(u0, w - 1))
     v0 = max(0, min(v0, h - 1))
     u1 = min(u0 + 1, w - 1)
