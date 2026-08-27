@@ -1,167 +1,223 @@
 #!/usr/bin/env python3
-"""Convert Godot .tres animation to .jsonc format for Bevy."""
+"""Convert Godot Animation .tres to our animation JSONC format."""
 import json
 import re
 import sys
 from pathlib import Path
+from collections import OrderedDict
 
 
-def parse_tres(path):
-    """Parse a Godot .tres animation file."""
-    text = Path(path).read_text()
-
-    # Parse ext_resources
-    ext_resources = {}
+def parse_ext_resources(text):
+    """Parse ext_resource lines, return {id: path_basename}."""
+    resources = {}
     for m in re.finditer(
-        r'\[ext_resource type="Texture2D" uid="[^"]*" path="([^"]*)" id="([^"]*)"\]',
-        text,
+        r'\[ext_resource[^\]]*path="res://([^"]+)"[^\]]*id="([^"]+)"', text
     ):
-        ext_resources[m.group(2)] = m.group(1).split("/")[-1]
+        path, rid = m.group(1), m.group(2)
+        resources[rid] = Path(path).name
+    return resources
 
-    # Parse header
-    length = float(re.search(r"length = ([\d.]+)", text).group(1))
-    loop_mode = int(re.search(r"loop_mode = (\d+)", text).group(1))
-    step = float(re.search(r"step = ([\d.]+)", text).group(1))
+
+def parse_packed_array(text, dtype="float"):
+    """Parse PackedFloat32Array(...) or similar."""
+    m = re.search(r"PackedFloat32Array\(([^)]*)\)", text)
+    if not m:
+        return []
+    vals = m.group(1).strip()
+    if not vals:
+        return []
+    if dtype == "float":
+        return [float(x.strip()) for x in vals.split(",") if x.strip()]
+    elif dtype == "vector2":
+        # Not directly in PackedFloat32Array — values come as [Vector2(...), ...]
+        return vals
+    return vals
+
+
+def parse_values_block(text):
+    """Parse the values array which can contain scalars, Vector2, or ExtResource refs."""
+    # Find "values": [...] block
+    m = re.search(r'"values"\s*:\s*\[(.*?)\]', text, re.DOTALL)
+    if not m:
+        return []
+    raw = m.group(1).strip()
+    if not raw:
+        return []
+
+    values = []
+    # Split by comma, but respect nesting
+    depth = 0
+    current = ""
+    for ch in raw:
+        if ch in "([{" :
+            depth += 1
+            current += ch
+        elif ch in ")]}":
+            depth -= 1
+            current += ch
+        elif ch == "," and depth == 0:
+            values.append(current.strip())
+            current = ""
+        else:
+            current += ch
+    if current.strip():
+        values.append(current.strip())
+
+    return values
+
+
+def parse_vector2(text):
+    """Parse Vector2(x, y) to [x, y]."""
+    m = re.match(r"Vector2\(([^,]+),\s*([^)]+)\)", text.strip())
+    if m:
+        return [float(m.group(1)), float(m.group(2))]
+    return None
+
+
+def parse_ext_ref(text, ext_resources):
+    """Parse ExtResource("id") to filename."""
+    m = re.match(r'ExtResource\("([^"]+)"\)', text.strip())
+    if m:
+        return ext_resources.get(m.group(1), None)
+    return None
+
+
+def convert_tres_to_jsonc(tres_path):
+    """Convert a Godot .tres Animation file to our animation JSONC format."""
+    text = Path(tres_path).read_text()
+
+    ext_resources = parse_ext_resources(text)
+
+    # Parse metadata
+    length_m = re.search(r"length\s*=\s*([\d.]+)", text)
+    step_m = re.search(r"step\s*=\s*([\d.]+)", text)
+    loop_m = re.search(r"loop_mode\s*=\s*(\d+)", text)
+
+    duration = float(length_m.group(1)) if length_m else 2.0
+    step = float(step_m.group(1)) if step_m else 0.083333
+    fps = int(round(1.0 / step)) if step > 0 else 12
+    loop_anim = int(loop_m.group(1)) if loop_m else 0
 
     # Parse tracks
-    tracks = []
-    track_blocks = re.split(r"(?=\ntracks/\d+/type)", text)
-    for block in track_blocks:
-        m = re.search(r"tracks/(\d+)/path = NodePath\(\"([^\"]+)\"\)", block)
-        if not m:
-            continue
-        idx = int(m.group(1))
-        node_path = m.group(2)
+    # Split by tracks/N/
+    track_blocks = re.split(r"(?=\[node name=\"tracks/\d+/)", text) if False else []
 
-        # Extract property from path (last segment after ":")
-        prop_match = re.search(r":(\w+)$", node_path)
-        if not prop_match:
-            continue
-        prop = prop_match.group(1)
-        node = node_path.rsplit(":", 1)[0].split("/")[-1]
+    # Better: find all track blocks
+    track_pattern = re.compile(
+        r"tracks/(\d+)/type\s*=\s*\"([^\"]+)\".*?"
+        r"tracks/\1/path\s*=\s*NodePath\(\"([^\"]+)\"\).*?"
+        r"tracks/\1/keys\s*=\s*\{(.*?)\n\}",
+        re.DOTALL,
+    )
 
-        # Extract values
-        values_match = re.search(r'"values": \[(.*?)\]', block, re.DOTALL)
-        if not values_match:
-            continue
-        raw_values = values_match.group(1).strip()
-        values = parse_values(raw_values, prop)
+    nodes = OrderedDict()
 
-        # Extract times
-        times_match = re.search(r'"times": PackedFloat32Array\(([^)]+)\)', block)
-        if not times_match:
-            continue
-        times = [float(x) for x in times_match.group(1).split(",")]
+    for m in track_pattern.finditer(text):
+        track_type = m.group(2)
+        node_path = m.group(3)
+        keys_text = m.group(4)
 
-        tracks.append(
-            {
-                "node": node,
-                "property": prop,
-                "times": times,
-                "values": values,
+        if track_type != "value":
+            continue
+
+        # Parse path: "Body/BodyCorrect/NodeName:property"
+        path_m = re.match(r"Body/BodyCorrect/([^:]+):(.+)", node_path)
+        if not path_m:
+            continue
+
+        node_name = path_m.group(1)
+        property = path_m.group(2)
+
+        # Parse times
+        times_m = re.search(r'"times"\s*:\s*PackedFloat32Array\(([^)]*)\)', keys_text)
+        if not times_m:
+            continue
+        times_str = times_m.group(1).strip()
+        if not times_str:
+            continue
+        times = [float(t.strip()) for t in times_str.split(",") if t.strip()]
+
+        # Parse values
+        values = parse_values_block(keys_text)
+
+        if len(times) != len(values):
+            # skip mismatched tracks
+            continue
+
+        if node_name not in nodes:
+            nodes[node_name] = {
+                "visible": True,
+                "position": [],
+                "scale": [],
+                "rotation": [],
+                "skew": [],
+                "texture": None,
+                "_texture_name": None,
             }
-        )
 
-    return {
-        "ext_resources": ext_resources,
-        "length": length,
-        "loop": loop_mode > 0,
-        "step": step,
-        "tracks": tracks,
-    }
+        node = nodes[node_name]
 
+        if property == "position":
+            node["position"] = [(t, parse_vector2(v)) for t, v in zip(times, values) if parse_vector2(v)]
+        elif property == "scale":
+            node["scale"] = [(t, parse_vector2(v)) for t, v in zip(times, values) if parse_vector2(v)]
+        elif property == "rotation":
+            node["rotation"] = [(t, float(v)) for t, v in zip(times, values)]
+        elif property == "skew":
+            node["skew"] = [(t, float(v)) for t, v in zip(times, values)]
+        elif property == "texture":
+            # Texture track — take first value as the texture
+            ref = parse_ext_ref(values[0], ext_resources) if values else None
+            node["_texture_name"] = ref
+        elif property == "visible":
+            # Take first value
+            if values:
+                node["visible"] = values[0].strip() == "true"
 
-def parse_values(raw, prop):
-    """Parse Godot value literals into Python objects."""
-    if prop == "visible":
-        return [v.strip() == "true" for v in raw.split(",") if v.strip()]
-    elif prop == "texture":
-        vals = []
-        for v in raw.split(","):
-            v = v.strip()
-            m = re.search(r'ExtResource\("([^"]+)"\)', v)
-            if m:
-                vals.append(m.group(1))
-            else:
-                vals.append(None)
-        return vals
-    elif prop == "position":
-        return [
-            [float(x) for x in m.group(1).split(",")]
-            for m in re.finditer(r"Vector2\(([^)]+)\)", raw)
-        ]
-    elif prop == "scale":
-        return [
-            [float(x) for x in m.group(1).split(",")]
-            for m in re.finditer(r"Vector2\(([^)]+)\)", raw)
-        ]
-    elif prop in ("rotation", "skew"):
-        return [float(v) for v in raw.split(",") if v.strip()]
-    elif prop == "self_modulate":
-        return [
-            [float(x) for x in m.group(1).split(",")]
-            for m in re.finditer(r"Color\(([^)]+)\)", raw)
-        ]
-    else:
-        return raw
-
-
-def is_animated(track):
-    """Check if a track has changing values."""
-    vals = track["values"]
-    if len(vals) < 2:
-        return False
-    first = vals[0]
-    return any(v != first for v in vals[1:])
-
-
-def convert(tres_path, output_path):
-    """Convert .tres to .jsonc."""
-    data = parse_tres(tres_path)
-
-    ext_resources = data["ext_resources"]
-
-    # Build nodes dict
-    nodes = {}
-    for track in data["tracks"]:
-        node = track["node"]
-        prop = track["property"]
-
-        if node not in nodes:
-            nodes[node] = {}
-
-        if prop == "texture":
-            # Always include texture (static or animated)
-            nodes[node][prop] = ext_resources.get(track["values"][0], None)
-        elif prop == "visible":
-            # Always include visible (static or animated)
-            nodes[node][prop] = track["values"][0]
-        elif is_animated(track):
-            # Store animated properties as keyframes: [[time, value], ...]
-            keyframes = []
-            for t, v in zip(track["times"], track["values"]):
-                keyframes.append([round(t, 6), v])
-            nodes[node][prop] = keyframes
-        # Skip constant transform properties (they match defaults)
+    # Build JSONC output
+    out_nodes = OrderedDict()
+    for name, node in nodes.items():
+        out_node = OrderedDict()
+        out_node["visible"] = node["visible"]
+        if node["_texture_name"]:
+            out_node["texture"] = node["_texture_name"]
+        if node["position"]:
+            out_node["position"] = [[t, v] for t, v in node["position"]]
+        if node["scale"]:
+            out_node["scale"] = [[t, v] for t, v in node["scale"]]
+        if node["rotation"]:
+            out_node["rotation"] = [[t, v] for t, v in node["rotation"]]
+        if node["skew"]:
+            out_node["skew"] = [[t, v] for t, v in node["skew"]]
+        out_nodes[name] = out_node
 
     result = {
-        "duration": data["length"],
-        "fps": round(1.0 / data["step"]),
-        "loop": data["loop"],
-        "nodes": nodes,
+        "duration": duration,
+        "fps": fps,
+        "loop": loop_anim != 0,
+        "nodes": out_nodes,
     }
 
-    # Write JSONC
-    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, "w") as f:
-        json.dump(result, f, indent=2)
-    print(f"Converted {tres_path} -> {output_path}")
-    print(f"  Duration: {data['length']:.6f}s, FPS: {round(1.0/data['step'])}, Loop: {data['loop']}")
-    print(f"  Animated nodes: {len(nodes)}")
+    return result
 
 
-if __name__ == "__main__":
+def main():
     if len(sys.argv) != 3:
         print(f"Usage: {sys.argv[0]} <input.tres> <output.jsonc>")
         sys.exit(1)
-    convert(sys.argv[1], sys.argv[2])
+
+    tres_path = sys.argv[1]
+    out_path = sys.argv[2]
+
+    result = convert_tres_to_jsonc(tres_path)
+
+    with open(out_path, "w") as f:
+        json.dump(result, f, indent=2)
+
+    print(f"Converted {tres_path} -> {out_path}")
+    print(f"  duration={result['duration']}, fps={result['fps']}, loop={result['loop']}")
+    print(f"  nodes: {list(result['nodes'].keys())}")
+
+
+if __name__ == "__main__":
+    main()

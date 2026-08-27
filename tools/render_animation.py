@@ -1,103 +1,142 @@
 #!/usr/bin/env python3
-"""Pre-render animation frames from idle.jsonc using plant_composer."""
+"""Pre-render animation frames matching Godot real renderer (render_godot_frames.gd).
+
+The real Godot renderer loads the full PackedScene (e.g. plant_002_sun_flower.tscn)
+which includes the node hierarchy: Plant → Body(0,0) → BodyCorrect(-43,-69) → Sprites.
+So the tres positions are relative to BodyCorrect, and the actual canvas position is:
+  canvas_pos = RootNode(100,100) + BodyCorrect(-43,-69) + tres_pos
+
+Differences from Godot rendering that we accept:
+- plant_composer does software rasterization vs Godot hardware GPU rendering
+  (minor bilinear filtering / alpha blending differences)
+
+Everything else must match exactly:
+- 200x200 canvas, root at (100,100)
+- centered=false (top-left positioning)
+- BodyCorrect offset: (-43, -69)
+- TimeScale: 1.2 (from AnimationTree, anim_time = real_time * 1.2, looped)
+- Affine: R*Sk*S matching Godot Transform2D (skew uses sx)
+- Z-order = tres track order (matches scene tree child index)
+"""
 import json
 import math
+import re
 import subprocess
 import sys
 from pathlib import Path
 
+VIEWPORT_SIZE = 200
+ROOT_POSITION = (VIEWPORT_SIZE / 2.0, VIEWPORT_SIZE / 2.0)
+BODY_CORRECT = (-43.0, -69.0)
+TIME_SCALE = 1.2
+
 
 def lerp(a, b, t):
-    """Linear interpolation."""
     if isinstance(a, list):
         return [lerp(ai, bi, t) for ai, bi in zip(a, b)]
     return a + (b - a) * t
 
 
 def interpolate_keyframes(keyframes, time):
-    """Interpolate keyframes at a given time."""
+    """Linear interpolation matching Godot _lerp_vec2 / _lerp_f32."""
     if not keyframes:
         return None
     if len(keyframes) == 1:
         return keyframes[0][1]
-
-    # Find surrounding keyframes
     for i in range(len(keyframes) - 1):
         t0, v0 = keyframes[i]
         t1, v1 = keyframes[i + 1]
         if t0 <= time <= t1:
             if t1 - t0 < 1e-10:
                 return v0
-            frac = (time - t0) / (t1 - t0)
-            return lerp(v0, v1, frac)
-
-    # Return last value
+            return lerp(v0, v1, (time - t0) / (t1 - t0))
     return keyframes[-1][1]
 
 
+def closest_keyframe(keyframes, time):
+    """Find index of closest keyframe to given time, matching Godot _closest()."""
+    best = 0
+    best_dist = float("inf")
+    for i, (t, _) in enumerate(keyframes):
+        d = abs(t - time)
+        if d < best_dist:
+            best_dist = d
+            best = i
+    return best
+
+
 def make_affine(rot, skew, sx, sy):
-    """Compute the 2x2 affine matrix coefficients: a,b,c,d = R * Sk * S."""
+    """Match Godot Transform2D: columns[1] += columns[0] * tan(skew).
+
+    Godot source:
+      columns[0] = (cos(r)*sx, sin(r)*sx)
+      columns[1] = (-sin(r)*sy, cos(r)*sy)
+      columns[1] += columns[0] * tan(skew)
+
+    Result:
+      a = cos(r)*sx
+      b = cos(r)*sx*tan(k) - sin(r)*sy
+      c = sin(r)*sx
+      d = sin(r)*sx*tan(k) + cos(r)*sy
+    """
     cos_r = math.cos(rot)
     sin_r = math.sin(rot)
     tan_k = math.tan(skew)
     a = cos_r * sx
-    b = (cos_r * tan_k - sin_r) * sy
+    b = cos_r * sx * tan_k - sin_r * sy
     c = sin_r * sx
-    d = (sin_r * tan_k + cos_r) * sy
+    d = sin_r * sx * tan_k + cos_r * sy
     return a, b, c, d
 
 
-def compute_sprite_bbox(top_left_x, top_left_y, tex_w, tex_h, rot, skew, sx, sy):
-    """Compute bounding box of a sprite given top-left position and transform."""
-    a, b, c, d = make_affine(rot, skew, sx, sy)
-    corners = [
-        (top_left_x, top_left_y),
-        (top_left_x + a * tex_w, top_left_y + c * tex_w),
-        (top_left_x + b * tex_h, top_left_y + d * tex_h),
-        (top_left_x + a * tex_w + b * tex_h, top_left_y + c * tex_w + d * tex_h),
-    ]
-    xs = [p[0] for p in corners]
-    ys = [p[1] for p in corners]
-    return min(xs), min(ys), max(xs), max(ys)
-
-
-def top_left_to_center(top_left_x, top_left_y, tex_w, tex_h, rot, skew, sx, sy):
-    """Convert Godot centered=false top-left position to composer center position."""
+def top_left_to_center(tl_x, tl_y, tex_w, tex_h, rot, skew, sx, sy):
+    """Convert Godot centered=false top-left position to plant_composer center position."""
     a, b, c, d = make_affine(rot, skew, sx, sy)
     hw, hh = tex_w / 2, tex_h / 2
-    return top_left_x + a * hw + b * hh, top_left_y + c * hw + d * hh
+    return tl_x + a * hw + b * hh, tl_y + c * hw + d * hh
 
 
 def generate_frame_rig(jsonc_data, frame_time, parts_dir):
-    """Generate a rig.jsonc for a specific frame time.
-
-    idle.jsonc stores Godot centered=false positions (top-left corners).
-    The composer expects center positions, so we convert here.
-    """
+    """Generate a rig for one frame, matching Godot simplified renderer logic."""
     nodes = jsonc_data["nodes"]
-
     parts = []
     z_order = 0
 
-    # Process nodes in a consistent order
-    for node_name in sorted(nodes.keys()):
+    # Simplified renderer iterates _node_tracks in insertion order = tres track order.
+    # In Godot, child 0 drawn first (behind), child N drawn last (on top).
+    # plant_composer: lower z drawn first (behind), higher z drawn later (on top).
+    for node_name, props in nodes.items():
         props = nodes[node_name]
 
-        visible = props.get("visible", True)
+        # Godot: uses _closest() to snap visible to nearest keyframe
+        visible_track = props.get("visible_track")
+        if visible_track is not None:
+            idx = closest_keyframe(visible_track, frame_time)
+            visible = visible_track[idx][1]
+        else:
+            visible = props.get("visible", True)
         if not visible:
             continue
 
-        texture = props.get("texture")
+        texture_track = props.get("texture_track")
+        if texture_track:
+            idx = closest_keyframe(texture_track, frame_time)
+            texture = texture_track[idx][1]
+        else:
+            texture = props.get("texture")
         if not texture:
             continue
 
-        # Get transform properties (Godot centered=false: top-left positions)
         pos = interpolate_keyframes(props.get("position", []), frame_time) or [0, 0]
         rot = interpolate_keyframes(props.get("rotation", []), frame_time) or 0
         scale = interpolate_keyframes(props.get("scale", []), frame_time) or [1, 1]
         skew = interpolate_keyframes(props.get("skew", []), frame_time) or 0
 
-        # Load texture to get size for center conversion
+        # Godot: sprite.position = tres_value, centered=false
+        # Canvas pos = RootNode + BodyCorrect + tres_pos
+        tl_x = ROOT_POSITION[0] + BODY_CORRECT[0] + pos[0]
+        tl_y = ROOT_POSITION[1] + BODY_CORRECT[1] + pos[1]
+
         from PIL import Image
         tex_path = parts_dir / texture
         if not tex_path.exists():
@@ -105,10 +144,9 @@ def generate_frame_rig(jsonc_data, frame_time, parts_dir):
         img = Image.open(tex_path)
         tw, th = img.size
 
-        # Convert top-left to center for the composer
-        cx, cy = top_left_to_center(pos[0], pos[1], tw, th, rot, skew, scale[0], scale[1])
+        cx, cy = top_left_to_center(tl_x, tl_y, tw, th, rot, skew, scale[0], scale[1])
 
-        part = {
+        parts.append({
             "image": texture,
             "x": cx,
             "y": cy,
@@ -117,57 +155,10 @@ def generate_frame_rig(jsonc_data, frame_time, parts_dir):
             "scale_y": scale[1],
             "rotation": rot,
             "skew": skew,
-        }
-        parts.append(part)
+        })
         z_order += 1
 
     return {"scale": 1.0, "parts": parts}
-
-
-def compute_canvas_size(data, parts_dir):
-    """Compute the bounding box across all frames for a fixed canvas size.
-
-    Uses Godot centered=false top-left positions with full affine bounding boxes.
-    """
-    fps = data["fps"]
-    duration = data["duration"]
-    num_frames = int(duration * fps)
-
-    min_x, min_y = float("inf"), float("inf")
-    max_x, max_y = float("-inf"), float("-inf")
-
-    from PIL import Image
-
-    for fi in range(num_frames):
-        t = fi / fps
-        nodes = data["nodes"]
-        for node_name, props in nodes.items():
-            if not props.get("visible", True):
-                continue
-            texture = props.get("texture")
-            if not texture:
-                continue
-
-            pos = interpolate_keyframes(props.get("position", []), t) or [0, 0]
-            rot = interpolate_keyframes(props.get("rotation", []), t) or 0
-            scale = interpolate_keyframes(props.get("scale", []), t) or [1, 1]
-            skew = interpolate_keyframes(props.get("skew", []), t) or 0
-
-            tex_path = parts_dir / texture
-            if not tex_path.exists():
-                continue
-            img = Image.open(tex_path)
-            tw, th = img.size
-
-            bx0, by0, bx1, by1 = compute_sprite_bbox(
-                pos[0], pos[1], tw, th, rot, skew, scale[0], scale[1]
-            )
-            min_x = min(min_x, bx0)
-            min_y = min(min_y, by0)
-            max_x = max(max_x, bx1)
-            max_y = max(max_y, by1)
-
-    return (min_x, min_y, max_x, max_y)
 
 
 def main():
@@ -179,45 +170,28 @@ def main():
     output_dir = Path(sys.argv[2])
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Load animation data
-    with open(jsonc_path) as f:
-        data = json.load(f)
+    text = jsonc_path.read_text()
+    text = re.sub(r'//.*', '', text)
+    text = re.sub(r',\s*([}\]])', r'\1', text)
+    data = json.loads(text)
 
     duration = data["duration"]
     fps = data["fps"]
     num_frames = int(duration * fps)
-
-    # Find parts directory (sibling of animation/)
     parts_dir = jsonc_path.parent.parent / "parts"
 
-    print(f"Duration: {duration:.6f}s, FPS: {fps}, Frames: {num_frames}")
-    print(f"Parts dir: {parts_dir}")
-
-    # Compute fixed canvas size across all frames
-    bbox = compute_canvas_size(data, parts_dir)
-    min_x, min_y, max_x, max_y = bbox
-    import math
-    canvas_w = math.ceil(max_x - min_x)
-    canvas_h = math.ceil(max_y - min_y)
-    offset_x = -min_x
-    offset_y = -min_y
-    print(f"Canvas: {canvas_w}x{canvas_h}, offset=({offset_x:.1f}, {offset_y:.1f})")
+    print(f"Duration: {duration}s, FPS: {fps}, Frames: {num_frames}, TimeScale: {TIME_SCALE}")
+    print(f"Canvas: {VIEWPORT_SIZE}x{VIEWPORT_SIZE}, Root: {ROOT_POSITION}, BodyCorrect: {BODY_CORRECT}")
 
     for frame_idx in range(num_frames):
-        frame_time = frame_idx / fps
+        real_time = frame_idx / fps
+        frame_time = (real_time * TIME_SCALE) % duration
         rig = generate_frame_rig(data, frame_time, parts_dir)
 
-        # Apply offset to all parts so content fits in fixed canvas
-        for part in rig["parts"]:
-            part["x"] += offset_x
-            part["y"] += offset_y
-
-        # Write temporary rig.jsonc
         rig_path = output_dir / f"_rig_{frame_idx:03d}.jsonc"
         with open(rig_path, "w") as f:
             json.dump(rig, f, indent=2)
 
-        # Run composer with fixed canvas size
         frame_path = output_dir / f"frame_{frame_idx:03d}.png"
         result = subprocess.run(
             [
@@ -225,8 +199,8 @@ def main():
                 "--", "--input", str(parts_dir.parent),
                 "--rig", str(rig_path),
                 "--output", str(frame_path),
-                "--width", str(canvas_w),
-                "--height", str(canvas_h),
+                "--width", str(VIEWPORT_SIZE),
+                "--height", str(VIEWPORT_SIZE),
             ],
             capture_output=True,
             text=True,
@@ -235,9 +209,7 @@ def main():
             print(f"Frame {frame_idx} failed: {result.stderr}")
             continue
 
-        # Remove temporary rig
         rig_path.unlink()
-
         print(f"Frame {frame_idx:3d}/{num_frames} (t={frame_time:.4f}s) -> {frame_path.name}")
 
     print(f"\nDone! {num_frames} frames in {output_dir}")

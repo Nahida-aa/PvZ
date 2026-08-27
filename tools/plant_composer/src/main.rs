@@ -205,19 +205,24 @@ fn compose(cli: &Cli) -> Result<PathBuf, Box<dyn std::error::Error>> {
 
                 let u0 = u.floor() as i32;
                 let v0 = v.floor() as i32;
-                if u0 < 0 || v0 < 0 || u0 + 1 >= img.w as i32 || v0 + 1 >= img.h as i32 {
+                let iw = img.w as i32;
+                let ih = img.h as i32;
+                // Clamp to valid range instead of skipping — matches Godot edge behavior
+                if u0 < 0 || v0 < 0 || u0 >= iw || v0 >= ih {
                     continue;
                 }
-                let uf = u - u0 as f32;
-                let vf = v - v0 as f32;
+                let u1 = (u0 + 1).min(iw - 1);
+                let v1 = (v0 + 1).min(ih - 1);
+                let uf = (u - u0 as f32).min(1.0);
+                let vf = (v - v0 as f32).min(1.0);
 
-                let si = |pu: i32, pv: i32| ((pv * img.w as i32 + pu) * 4) as usize;
+                let si = |pu: i32, pv: i32| ((pv * iw + pu) * 4) as usize;
                 let ci = ((cy * canvas_w + cx) * 4) as usize;
 
                 let s00 = &img.px[si(u0, v0)..si(u0, v0) + 4];
-                let s10 = &img.px[si(u0 + 1, v0)..si(u0 + 1, v0) + 4];
-                let s01 = &img.px[si(u0, v0 + 1)..si(u0, v0 + 1) + 4];
-                let s11 = &img.px[si(u0 + 1, v0 + 1)..si(u0 + 1, v0 + 1) + 4];
+                let s10 = &img.px[si(u1, v0)..si(u1, v0) + 4];
+                let s01 = &img.px[si(u0, v1)..si(u0, v1) + 4];
+                let s11 = &img.px[si(u1, v1)..si(u1, v1) + 4];
 
                 let mut src = [0f32; 4];
                 for ch in 0..4 {
@@ -259,10 +264,12 @@ fn make_affine(img: &PartImage, offset_x: f32, offset_y: f32) -> Affine {
     let tan_k = img.skew.tan();
     let sx = img.scale_x;
     let sy = img.scale_y;
+    // Match Godot Transform2D: columns[1] += columns[0] * tan(skew)
+    // columns[0] = (cos(r)*sx, sin(r)*sx), columns[1] = (-sin(r)*sy, cos(r)*sy)
     let a = cos_r * sx;
-    let b = (cos_r * tan_k - sin_r) * sy;
+    let b = cos_r * sx * tan_k - sin_r * sy;
     let c = sin_r * sx;
-    let d = (sin_r * tan_k + cos_r) * sy;
+    let d = sin_r * sx * tan_k + cos_r * sy;
     let hw = img.w as f32 * 0.5;
     let hh = img.h as f32 * 0.5;
     Affine {

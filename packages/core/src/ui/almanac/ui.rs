@@ -67,7 +67,11 @@ fn build_index_page(parent: &mut ChildSpawnerCommands, assets: &GameAssets, w: f
                 height: Val::Px(h),
                 ..default()
             },
-            ImageNode::new(assets.almanac_index_back.clone()),
+            ImageNode {
+                image: assets.almanac_index_back.clone(),
+                image_mode: NodeImageMode::Stretch,
+                ..default()
+            },
         ))
         .with_children(|page| {
             page.spawn((
@@ -135,7 +139,11 @@ fn build_plant_page(
                 display: Display::None,
                 ..default()
             },
-            ImageNode::new(assets.almanac_plant_back.clone()),
+            ImageNode {
+                image: assets.almanac_plant_back.clone(),
+                image_mode: NodeImageMode::Stretch,
+                ..default()
+            },
         ))
         .with_children(|page| {
             page.spawn((
