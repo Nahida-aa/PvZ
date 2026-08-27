@@ -1,0 +1,9 @@
+{
+  "toughness": 300,
+  "sun_production": 25,
+  "sun_cost": 50,
+  "cooldown": 7.5,
+  "interval": 24.0,
+  "bg": "Day",
+  "preview_image": "plants/sun_flower/preview.png",
+}

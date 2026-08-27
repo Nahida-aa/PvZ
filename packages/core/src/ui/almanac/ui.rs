@@ -301,7 +301,6 @@ fn build_plant_page(
                         left: Val::Px(34.0),
                         top: Val::Px(340.0),
                         width: Val::Px(255.0),
-                        display: Display::None,
                         ..default()
                     },
                 ));

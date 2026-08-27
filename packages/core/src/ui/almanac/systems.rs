@@ -41,16 +41,17 @@ pub fn handle_encyclopedia_close_hover(
 
 pub fn handle_plant_button(
     interaction: Query<&Interaction, (Changed<Interaction>, With<AlmanacPlantButton>)>,
-    mut index_page: Query<&mut Visibility, With<AlmanacIndexPage>>,
-    mut plant_page: Query<&mut Visibility, With<AlmanacPlantPage>>,
+    mut pages: Query<(&mut Visibility, Option<&AlmanacIndexPage>, Option<&AlmanacPlantPage>)>,
 ) {
     for interaction in interaction.iter() {
         if *interaction == Interaction::Pressed {
-            for mut vis in index_page.iter_mut() {
-                *vis = Visibility::Hidden;
-            }
-            for mut vis in plant_page.iter_mut() {
-                *vis = Visibility::Inherited;
+            for (mut vis, index, plant) in pages.iter_mut() {
+                if index.is_some() {
+                    *vis = Visibility::Hidden;
+                }
+                if plant.is_some() {
+                    *vis = Visibility::Inherited;
+                }
             }
         }
     }
@@ -58,39 +59,43 @@ pub fn handle_plant_button(
 
 pub fn handle_return_button(
     interaction: Query<&Interaction, (Changed<Interaction>, With<AlmanacReturnButton>)>,
-    mut index_page: Query<&mut Visibility, With<AlmanacIndexPage>>,
-    mut plant_page: Query<&mut Visibility, With<AlmanacPlantPage>>,
+    mut pages: Query<(&mut Visibility, Option<&AlmanacIndexPage>, Option<&AlmanacPlantPage>)>,
 ) {
     for interaction in interaction.iter() {
         if *interaction == Interaction::Pressed {
-            for mut vis in index_page.iter_mut() {
-                *vis = Visibility::Inherited;
-            }
-            for mut vis in plant_page.iter_mut() {
-                *vis = Visibility::Hidden;
+            for (mut vis, index, plant) in pages.iter_mut() {
+                if index.is_some() {
+                    *vis = Visibility::Inherited;
+                }
+                if plant.is_some() {
+                    *vis = Visibility::Hidden;
+                }
             }
         }
     }
 }
 
-/// B0001 fix: single query for all AlmanacDetailText entities, dispatch by specific marker.
-pub fn handle_plant_card_click(
+/// B0001 fix: one mutable access per component type, Without filters for disjoint queries.
+pub(crate) fn handle_plant_card_click(
     interaction_query: Query<(&Interaction, &AlmanacPlantCard), Changed<Interaction>>,
     almanac: Res<AlmanacData>,
     asset_server: Res<AssetServer>,
-    mut bg_query: Query<&mut ImageNode, With<AlmanacDetailBg>>,
-    mut preview_query: Query<&mut ImageNode, (With<AlmanacDetailPreview>, Without<AlmanacDetailBg>)>,
-    mut texts: ParamSet<(
-        Query<(&mut Text, &AlmanacNameText), With<AlmanacDetailText>>,
-        Query<(&mut Text, &AlmanacDescText), With<AlmanacDetailText>>,
-        Query<(&mut Text, &AlmanacParamsText), With<AlmanacDetailText>>,
-        Query<(&mut Text, &AlmanacHintText), With<AlmanacDetailText>>,
-        Query<(&mut Text, &AlmanacIntroText), With<AlmanacDetailText>>,
-        Query<(&mut Text, &AlmanacCostText), With<AlmanacDetailText>>,
-        Query<(&mut Text, &AlmanacCooltimeText), With<AlmanacDetailText>>,
-    )>,
-    mut hint_node: Query<&mut Node, (With<AlmanacHintText>, Without<AlmanacDetailText>)>,
     assets: Res<GameAssets>,
+    mut images: Query<(
+        &mut ImageNode,
+        Option<&AlmanacDetailBg>,
+        Option<&AlmanacDetailPreview>,
+    ), Without<AlmanacDetailText>>,
+    mut all_texts: Query<(
+        &mut Text,
+        Option<&AlmanacNameText>,
+        Option<&AlmanacDescText>,
+        Option<&AlmanacParamsText>,
+        Option<&AlmanacHintText>,
+        Option<&AlmanacIntroText>,
+        Option<&AlmanacCostText>,
+        Option<&AlmanacCooltimeText>,
+    ), With<AlmanacDetailText>>,
 ) {
     for (interaction, card) in interaction_query.iter() {
         if *interaction != Interaction::Pressed {
@@ -100,44 +105,36 @@ pub fn handle_plant_card_click(
             continue;
         };
 
-        for mut img in bg_query.iter_mut() {
-            img.image = get_ground_bg(&data.bg, &assets);
-        }
-        for mut img in preview_query.iter_mut() {
-            img.image = asset_server.load(&data.preview_image);
-        }
-
-        if let Ok((mut text, _)) = texts.p0().single_mut() {
-            **text = data.name.clone();
-        }
-        if let Ok((mut text, _)) = texts.p1().single_mut() {
-            **text = data.desc.clone();
-        }
-        if let Ok((mut text, _)) = texts.p2().single_mut() {
-            let mut s = String::new();
-            for (k, v) in &data.params {
-                s.push_str(&format!("{k}: {v}\n"));
+        for (mut img, bg, preview) in images.iter_mut() {
+            if bg.is_some() {
+                img.image = get_ground_bg(&data.bg, &assets);
             }
-            **text = s;
-        }
-        if let Ok((mut text, _)) = texts.p3().single_mut() {
-            if let Some(ref hint) = data.hint {
-                **text = hint.clone();
+            if preview.is_some() {
+                img.image = asset_server.load(&data.preview_image);
             }
         }
-        if let Ok(mut node) = hint_node.single_mut() {
-            node.display = if data.hint.is_some() { Display::Flex } else { Display::None };
-        }
-        if let Ok((mut text, _)) = texts.p4().single_mut() {
-            **text = data.intro.clone();
-        }
 
-        let cost = card_visual::plant_sun_cost(&card.card_name);
-        if let Ok((mut text, _)) = texts.p5().single_mut() {
-            **text = format!("\u{82b1}\u{8d39}: {cost}");
-        }
-        if let Ok((mut text, _)) = texts.p6().single_mut() {
-            **text = "\u{51b7}\u{5374}\u{65f6}\u{95f4}: (\u{79d2})".to_string();
+        for (mut text, name, desc, params, hint, intro, cost, cooltime) in all_texts.iter_mut() {
+            if name.is_some() {
+                **text = data.name.clone();
+            } else if desc.is_some() {
+                **text = data.desc.clone();
+            } else if params.is_some() {
+                let mut s = String::new();
+                for (k, v) in &data.params {
+                    s.push_str(&format!("{k}: {v}\n"));
+                }
+                **text = s;
+            } else if hint.is_some() {
+                **text = data.hint.clone().unwrap_or_default();
+            } else if intro.is_some() {
+                **text = data.intro.clone();
+            } else if cost.is_some() {
+                let c = card_visual::plant_sun_cost(&card.card_name);
+                **text = format!("\u{82b1}\u{8d39}: {c}");
+            } else if cooltime.is_some() {
+                **text = "\u{51b7}\u{5374}\u{65f6}\u{95f4}: (\u{79d2})".to_string();
+            }
         }
 
         info!("\u{56fe}\u{9274}\u{9009}\u{4e2d}: {}", data.name);
