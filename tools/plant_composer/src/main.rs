@@ -235,12 +235,29 @@ fn compose(cli: &Cli) -> Result<PathBuf, Box<dyn std::error::Error>> {
                 let sa = src[3] / 255.0;
                 if sa < 0.001 { continue; }
                 let da = canvas[ci + 3] as f32 / 255.0;
-                let out_a = sa + da * (1.0 - sa);
-                if out_a > 0.0 {
+                // Godot uses premultiplied-alpha compositing internally.
+                // src is straight-alpha (from PNG), convert to premul before blend.
+                let sp = [
+                    src[0] / 255.0 * sa,
+                    src[1] / 255.0 * sa,
+                    src[2] / 255.0 * sa,
+                    sa,
+                ];
+                let dp = [
+                    canvas[ci] as f32 / 255.0 * da,
+                    canvas[ci + 1] as f32 / 255.0 * da,
+                    canvas[ci + 2] as f32 / 255.0 * da,
+                    da,
+                ];
+                // Premultiplied "over": out_pm = sp + dp * (1 - sa)
+                let out_a_pm = sp[3] + dp[3] * (1.0 - sp[3]);
+                if out_a_pm > 0.001 {
                     for ch in 0..3 {
-                        canvas[ci + ch] = ((src[ch] * sa + canvas[ci + ch] as f32 * da * (1.0 - sa)) / out_a) as u8;
+                        let pm = sp[ch] + dp[ch] * (1.0 - sp[3]);
+                        // Convert back to straight alpha for storage
+                        canvas[ci + ch] = (pm / out_a_pm * 255.0) as u8;
                     }
-                    canvas[ci + 3] = (out_a * 255.0) as u8;
+                    canvas[ci + 3] = (out_a_pm * 255.0) as u8;
                 }
             }
         }
