@@ -43,7 +43,7 @@ impl Plugin for CorePlugin {
             .add_plugins(lawn_mower::LawnMowerPlugin)
             .add_plugins(ui::menu::pause_menu::PauseMenuPlugin)
             .add_plugins(ui::menu::end_screen::EndScreenPlugin)
-            .insert_resource(ui::encyclopedia::AlmanacData::load())
+            .add_plugins(ui::almanac::AlmanacPlugin)
             .add_systems(
                 Update,
                 animation::animate_sprites
@@ -67,19 +67,6 @@ impl Plugin for CorePlugin {
                     ui::card_slot::systems::update_card_selection_visibility,
                     ui::card_slot::systems::update_seed_bank_visibility,
                 ),
-            )
-            // 图鉴系统
-            .add_systems(OnEnter(GameState::Encyclopedia), ui::card_slot::systems::setup_encyclopedia)
-            .add_systems(
-                Update,
-                (
-                    ui::encyclopedia::handle_encyclopedia_close,
-                    ui::encyclopedia::handle_encyclopedia_close_hover,
-                    ui::encyclopedia::handle_plant_button,
-                    ui::encyclopedia::handle_return_button,
-                    ui::encyclopedia::handle_plant_card_click,
-                )
-                    .run_if(in_state(GameState::Encyclopedia)),
             )
             .add_systems(OnExit(GameState::Encyclopedia), ui::card_slot::systems::cleanup_encyclopedia)
         ;

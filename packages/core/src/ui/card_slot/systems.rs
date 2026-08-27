@@ -3,8 +3,8 @@ use crate::assets::GameAssets;
 use crate::level::LevelDefinition;
 use crate::settings::CardConfig;
 use crate::state::GameState;
-use crate::ui::encyclopedia;
-use crate::ui::encyclopedia::AlmanacData;
+use crate::ui::almanac;
+use crate::ui::almanac::data::AlmanacData;
 use crate::ui::seed_bank::SeedBankRoot;
 use super::components::*;
 use super::ui::build_card_selection_ui;
@@ -132,13 +132,13 @@ pub fn setup_encyclopedia(
     almanac: Res<AlmanacData>,
 ) {
     info!("进入图鉴");
-    encyclopedia::build_encyclopedia(&mut commands, &assets, &almanac);
+    almanac::ui::build_encyclopedia(&mut commands, &assets, &almanac);
 }
 
 /// 离开图鉴状态时销毁图鉴 UI
 pub fn cleanup_encyclopedia(
     mut commands: Commands,
-    query: Query<Entity, With<encyclopedia::EncyclopediaRoot>>,
+    query: Query<Entity, With<almanac::components::EncyclopediaRoot>>,
     children_query: Query<&Children>,
 ) {
     for entity in query.iter() {
