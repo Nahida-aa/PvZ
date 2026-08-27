@@ -261,15 +261,18 @@ fn compose(cli: &Cli) -> Result<PathBuf, Box<dyn std::error::Error>> {
 fn make_affine(img: &PartImage, offset_x: f32, offset_y: f32) -> Affine {
     let cos_r = img.rotation.cos();
     let sin_r = img.rotation.sin();
-    let tan_k = img.skew.tan();
+    // Match Godot Transform2D constructor exactly:
+    //   columns[0] = (cos(r)*sx, sin(r)*sx)
+    //   columns[1] = (-sin(r+skew)*sy, cos(r+skew)*sy)
+    // Source: core/math/transform_2d.cpp:107-113
+    let cos_r_sk = (img.rotation + img.skew).cos();
+    let sin_r_sk = (img.rotation + img.skew).sin();
     let sx = img.scale_x;
     let sy = img.scale_y;
-    // Match Godot Transform2D: columns[1] += columns[0] * tan(skew)
-    // columns[0] = (cos(r)*sx, sin(r)*sx), columns[1] = (-sin(r)*sy, cos(r)*sy)
     let a = cos_r * sx;
-    let b = cos_r * sx * tan_k - sin_r * sy;
+    let b = -sin_r_sk * sy;
     let c = sin_r * sx;
-    let d = sin_r * sx * tan_k + cos_r * sy;
+    let d = cos_r_sk * sy;
     let hw = img.w as f32 * 0.5;
     let hh = img.h as f32 * 0.5;
     Affine {
