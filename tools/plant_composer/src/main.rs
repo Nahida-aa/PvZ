@@ -198,28 +198,23 @@ fn compose(cli: &Cli) -> Result<PathBuf, Box<dyn std::error::Error>> {
 
         for cy in cy_start..cy_end {
             for cx in cx_start..cx_end {
-                // GPU sampling: fragment at pixel CENTER (cx+0.5, cy+0.5)
-                let dx = (cx as f32 + 0.5) - aff.tx;
-                let dy = (cy as f32 + 0.5) - aff.ty;
+                let dx = cx as f32 - aff.tx;
+                let dy = cy as f32 - aff.ty;
                 let u = (aff.d * dx - aff.b * dy) * inv_det;
                 let v = (-aff.c * dx + aff.a * dy) * inv_det;
 
+                let u0 = u.floor() as i32;
+                let v0 = v.floor() as i32;
                 let iw = img.w as i32;
                 let ih = img.h as i32;
-                // GPU LINEAR + CLAMP_TO_EDGE (GLSL texture()): clamp the SAMPLE
-                // COORDINATE to [0, W]/[0, H] BEFORE deriving indices/weights, so a
-                // fragment just outside the texture samples the pure edge texel
-                // (alpha 0) instead of blending in the interior (which fattens edges).
-                let uc = u.clamp(0.0, img.w as f32);
-                let vc = v.clamp(0.0, img.h as f32);
-                let fu = uc - 0.5;
-                let fv = vc - 0.5;
-                let u0 = (fu.floor() as i32).clamp(0, iw - 1);
-                let v0 = (fv.floor() as i32).clamp(0, ih - 1);
+                // Clamp to valid range instead of skipping — matches Godot edge behavior
+                if u0 < 0 || v0 < 0 || u0 >= iw || v0 >= ih {
+                    continue;
+                }
                 let u1 = (u0 + 1).min(iw - 1);
                 let v1 = (v0 + 1).min(ih - 1);
-                let uf = (fu - fu.floor()).clamp(0.0, 1.0);
-                let vf = (fv - fv.floor()).clamp(0.0, 1.0);
+                let uf = (u - u0 as f32).min(1.0);
+                let vf = (v - v0 as f32).min(1.0);
 
                 let si = |pu: i32, pv: i32| ((pv * iw + pu) * 4) as usize;
                 let ci = ((cy * canvas_w + cx) * 4) as usize;
@@ -266,17 +261,15 @@ fn compose(cli: &Cli) -> Result<PathBuf, Box<dyn std::error::Error>> {
 fn make_affine(img: &PartImage, offset_x: f32, offset_y: f32) -> Affine {
     let cos_r = img.rotation.cos();
     let sin_r = img.rotation.sin();
+    let tan_k = img.skew.tan();
     let sx = img.scale_x;
     let sy = img.scale_y;
-    // Match Godot Transform2D constructor exactly:
-    //   columns[0] = (cos(r)*sx, sin(r)*sx)
-    //   columns[1] = (-sin(r+skew)*sy, cos(r+skew)*sy)
-    let cos_rsk = (img.rotation + img.skew).cos();
-    let sin_rsk = (img.rotation + img.skew).sin();
+    // Match Godot Transform2D: columns[1] += columns[0] * tan(skew)
+    // columns[0] = (cos(r)*sx, sin(r)*sx), columns[1] = (-sin(r)*sy, cos(r)*sy)
     let a = cos_r * sx;
-    let b = -sin_rsk * sy;
+    let b = cos_r * sx * tan_k - sin_r * sy;
     let c = sin_r * sx;
-    let d = cos_rsk * sy;
+    let d = sin_r * sx * tan_k + cos_r * sy;
     let hw = img.w as f32 * 0.5;
     let hh = img.h as f32 * 0.5;
     Affine {
