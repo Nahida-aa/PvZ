@@ -1,22 +1,8 @@
 #!/usr/bin/env python3
 """Pre-render animation frames matching Godot real renderer (render_godot_frames.gd).
 
-The real Godot renderer loads the full PackedScene (e.g. plant_002_sun_flower.tscn)
-which includes the node hierarchy: Plant → Body(0,0) → BodyCorrect(-43,-69) → Sprites.
-So the tres positions are relative to BodyCorrect, and the actual canvas position is:
-  canvas_pos = RootNode(100,100) + BodyCorrect(-43,-69) + tres_pos
-
-Differences from Godot rendering that we accept:
-- plant_composer does software rasterization vs Godot hardware GPU rendering
-  (minor bilinear filtering / alpha blending differences)
-
-Everything else must match exactly:
-- 200x200 canvas, root at (100,100)
-- centered=false (top-left positioning)
-- BodyCorrect offset: (-43, -69)
-- TimeScale: 1.2 (from AnimationTree, anim_time = real_time * 1.2, looped)
-- Affine: R*Sk*S matching Godot Transform2D (skew uses sx)
-- Z-order = tres track order (matches scene tree child index)
+Reads a scene JSONC file (with instance chain) + animation JSONC (from tres_to_jsonc.py).
+Resolves the instance inheritance chain recursively and merges nodes.
 """
 import json
 import math
@@ -25,10 +11,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-VIEWPORT_SIZE = 200
-ROOT_POSITION = (VIEWPORT_SIZE / 2.0, VIEWPORT_SIZE / 2.0)
-BODY_CORRECT = (-43.0, -69.0)
-TIME_SCALE = 1.2
+GODOT_DIR = Path("/home/aa/repos/game_ls/learn_ls/PVZ-Godot_dream_20260406_v1.2.0")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
 def lerp(a, b, t):
@@ -38,7 +22,6 @@ def lerp(a, b, t):
 
 
 def interpolate_keyframes(keyframes, time):
-    """Linear interpolation matching Godot _lerp_vec2 / _lerp_f32."""
     if not keyframes:
         return None
     if len(keyframes) == 1:
@@ -54,7 +37,6 @@ def interpolate_keyframes(keyframes, time):
 
 
 def closest_keyframe(keyframes, time):
-    """Find index of closest keyframe to given time, matching Godot _closest()."""
     best = 0
     best_dist = float("inf")
     for i, (t, _) in enumerate(keyframes):
@@ -66,55 +48,166 @@ def closest_keyframe(keyframes, time):
 
 
 def make_affine(rot, skew, sx, sy):
-    """Match Godot Transform2D: columns[1] += columns[0] * tan(skew).
-
-    Godot source:
-      columns[0] = (cos(r)*sx, sin(r)*sx)
-      columns[1] = (-sin(r)*sy, cos(r)*sy)
-      columns[1] += columns[0] * tan(skew)
-
-    Result:
-      a = cos(r)*sx
-      b = cos(r)*sx*tan(k) - sin(r)*sy
-      c = sin(r)*sx
-      d = sin(r)*sx*tan(k) + cos(r)*sy
-    """
     cos_r = math.cos(rot)
     sin_r = math.sin(rot)
-    tan_k = math.tan(skew)
+    cos_r_sk = math.cos(rot + skew)
+    sin_r_sk = math.sin(rot + skew)
     a = cos_r * sx
-    b = cos_r * sx * tan_k - sin_r * sy
+    b = -sin_r_sk * sy
     c = sin_r * sx
-    d = sin_r * sx * tan_k + cos_r * sy
+    d = cos_r_sk * sy
     return a, b, c, d
 
 
 def top_left_to_center(tl_x, tl_y, tex_w, tex_h, rot, skew, sx, sy):
-    """Convert Godot centered=false top-left position to plant_composer center position."""
     a, b, c, d = make_affine(rot, skew, sx, sy)
     hw, hh = tex_w / 2, tex_h / 2
     return tl_x + a * hw + b * hh, tl_y + c * hw + d * hh
 
 
-def generate_frame_rig(jsonc_data, frame_time, parts_dir):
-    """Generate a rig for one frame, matching Godot simplified renderer logic."""
+def load_jsonc(path):
+    text = Path(path).read_text()
+    lines = text.split("\n")
+    cleaned = []
+    for line in lines:
+        in_string = False
+        escape = False
+        comment_pos = len(line)
+        for i, ch in enumerate(line):
+            if escape:
+                escape = False
+                continue
+            if ch == "\\":
+                escape = True
+                continue
+            if ch == '"':
+                in_string = not in_string
+            elif ch == "/" and not in_string and i + 1 < len(line) and line[i + 1] == "/":
+                comment_pos = i
+                break
+        cleaned.append(line[:comment_pos])
+    text = "\n".join(cleaned)
+    text = re.sub(r',\s*([}\]])', r'\1', text)
+    return json.loads(text)
+
+
+def load_scene_tree(scene_jsonc_path):
+    """Recursively load scene JSONC via instance chain, merging nodes.
+
+    Returns merged { source, nodes } with the full inherited node tree.
+    Child nodes override parent nodes with the same name; new nodes are added.
+    """
+    data = load_jsonc(scene_jsonc_path)
+    instance = data.get("instance")
+
+    if not instance:
+        # Base case: no parent, return as-is
+        return {"source": data["source"], "nodes": dict(data["nodes"])}
+
+    # Resolve instance path: "res://scenes/character/character_000_base.jsonc"
+    # → PROJECT_ROOT / "scenes/character/character_000_base.jsonc"
+    rel = instance[len("res://"):]
+    parent_path = PROJECT_ROOT / rel
+    if not parent_path.exists():
+        raise FileNotFoundError(f"Instance target not found: {parent_path} (from {instance})")
+
+    # Recursively load parent
+    parent = load_scene_tree(parent_path)
+
+    # Merge: parent nodes first, child overrides
+    merged_nodes = dict(parent["nodes"])
+    for name, props in data["nodes"].items():
+        if name in merged_nodes:
+            # Override: merge properties (child wins)
+            merged = dict(merged_nodes[name])
+            merged.update(props)
+            merged_nodes[name] = merged
+        else:
+            merged_nodes[name] = props
+
+    return {"source": data["source"], "nodes": merged_nodes}
+
+
+def resolve_texture(texture_name, parts_dir):
+    if texture_name.startswith("res://"):
+        rel = texture_name[len("res://"):]
+        godot_path = GODOT_DIR / rel
+        if godot_path.exists():
+            return godot_path
+        bevy_path = PROJECT_ROOT / rel
+        if bevy_path.exists():
+            return bevy_path
+    else:
+        parts_path = parts_dir / texture_name
+        if parts_path.exists():
+            return parts_path
+    return None
+
+
+def build_scene_config(render_jsonc_path, merged_scene):
+    """Extract render config from render_frames.jsonc + merged scene tree."""
+    render = load_jsonc(render_jsonc_path)
+    nodes = merged_scene["nodes"]
+
+    vp_size = render["nodes"]["SubViewport"]["size"]
+    root_pos = render["nodes"]["RootNode"]["position"]
+    body_correct = nodes.get("BodyCorrect", {}).get("position", [0, 0])
+    time_scale = 1.2
+
+    shadow_node = nodes.get("Shadow", {})
+    shadow_texture = shadow_node.get("texture")
+
+    # Build child_index map for BodyCorrect children (z-order)
+    child_indices = {}
+    for name, props in nodes.items():
+        parent = props.get("parent", "")
+        if parent == "Body/BodyCorrect" and "index" in props:
+            child_indices[name] = props["index"]
+
+    return {
+        "viewport_size": vp_size,
+        "root_position": root_pos,
+        "body_correct": body_correct,
+        "time_scale": time_scale,
+        "shadow_texture": shadow_texture,
+        "child_indices": child_indices,
+    }
+
+
+def generate_frame_rig(jsonc_data, frame_time, parts_dir, scene, shadow_path=None, merged_scene=None):
     nodes = jsonc_data["nodes"]
     parts = []
-    z_order = 0
+    child_indices = scene["child_indices"]
+    root_pos = scene["root_position"]
+    body_correct = scene["body_correct"]
+    scene_nodes = merged_scene["nodes"] if merged_scene else {}
 
-    # Simplified renderer iterates _node_tracks in insertion order = tres track order.
-    # In Godot, child 0 drawn first (behind), child N drawn last (on top).
-    # plant_composer: lower z drawn first (behind), higher z drawn later (on top).
+    if shadow_path and shadow_path.exists():
+        from PIL import Image as PILImage
+        cx = root_pos[0]
+        cy = root_pos[1]
+        parts.append({
+            "image": shadow_path.name,
+            "x": cx,
+            "y": cy,
+            "z": 0.0,
+            "scale_x": 1.0,
+            "scale_y": 1.0,
+            "rotation": 0,
+            "skew": 0,
+        })
+
     for node_name, props in nodes.items():
         props = nodes[node_name]
+        scene_props = scene_nodes.get(node_name, {})
 
-        # Godot: uses _closest() to snap visible to nearest keyframe
+        # visible: 动画有 visible_track 用轨道值，否则用 scene 的 visible（默认 true）
         visible_track = props.get("visible_track")
         if visible_track is not None:
             idx = closest_keyframe(visible_track, frame_time)
             visible = visible_track[idx][1]
         else:
-            visible = props.get("visible", True)
+            visible = scene_props.get("visible", True)
         if not visible:
             continue
 
@@ -123,7 +216,7 @@ def generate_frame_rig(jsonc_data, frame_time, parts_dir):
             idx = closest_keyframe(texture_track, frame_time)
             texture = texture_track[idx][1]
         else:
-            texture = props.get("texture")
+            texture = props.get("texture") or scene_props.get("texture")
         if not texture:
             continue
 
@@ -132,61 +225,90 @@ def generate_frame_rig(jsonc_data, frame_time, parts_dir):
         scale = interpolate_keyframes(props.get("scale", []), frame_time) or [1, 1]
         skew = interpolate_keyframes(props.get("skew", []), frame_time) or 0
 
-        # Godot: sprite.position = tres_value, centered=false
-        # Canvas pos = RootNode + BodyCorrect + tres_pos
-        tl_x = ROOT_POSITION[0] + BODY_CORRECT[0] + pos[0]
-        tl_y = ROOT_POSITION[1] + BODY_CORRECT[1] + pos[1]
+        # centered: 默认 true (Sprite2D 默认)，但 scene 里可能写了 false
+        centered = scene_props.get("centered", True)
+
+        tl_x = root_pos[0] + body_correct[0] + pos[0]
+        tl_y = root_pos[1] + body_correct[1] + pos[1]
 
         from PIL import Image
-        tex_path = parts_dir / texture
-        if not tex_path.exists():
+        tex_path = resolve_texture(texture, parts_dir)
+        if not tex_path:
             continue
         img = Image.open(tex_path)
         tw, th = img.size
 
-        cx, cy = top_left_to_center(tl_x, tl_y, tw, th, rot, skew, scale[0], scale[1])
+        if centered:
+            # 中心在 (tl_x, tl_y)
+            cx, cy = tl_x, tl_y
+        else:
+            cx, cy = top_left_to_center(tl_x, tl_y, tw, th, rot, skew, scale[0], scale[1])
+
+        z = child_indices.get(node_name, 0) + 1
 
         parts.append({
-            "image": texture,
+            "image": tex_path.name,
             "x": cx,
             "y": cy,
-            "z": float(z_order),
+            "z": float(z),
             "scale_x": scale[0],
             "scale_y": scale[1],
             "rotation": rot,
             "skew": skew,
         })
-        z_order += 1
 
     return {"scale": 1.0, "parts": parts}
 
 
 def main():
-    if len(sys.argv) != 3:
-        print(f"Usage: {sys.argv[0]} <idle.jsonc> <output_dir>")
+    if len(sys.argv) != 4:
+        print(f"Usage: {sys.argv[0]} <scene.jsonc> <animation.jsonc> <output_dir>")
         sys.exit(1)
 
-    jsonc_path = Path(sys.argv[1])
-    output_dir = Path(sys.argv[2])
+    scene_path = Path(sys.argv[1])
+    anim_path = Path(sys.argv[2])
+    output_dir = Path(sys.argv[3])
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    text = jsonc_path.read_text()
-    text = re.sub(r'//.*', '', text)
-    text = re.sub(r',\s*([}\]])', r'\1', text)
-    data = json.loads(text)
-
+    # Load animation data
+    data = load_jsonc(anim_path)
     duration = data["duration"]
     fps = data["fps"]
     num_frames = int(duration * fps)
-    parts_dir = jsonc_path.parent.parent / "parts"
+    parts_dir = anim_path.parent.parent / "parts"
 
-    print(f"Duration: {duration}s, FPS: {fps}, Frames: {num_frames}, TimeScale: {TIME_SCALE}")
-    print(f"Canvas: {VIEWPORT_SIZE}x{VIEWPORT_SIZE}, Root: {ROOT_POSITION}, BodyCorrect: {BODY_CORRECT}")
+    # Load scene via instance chain
+    print(f"Loading scene tree: {scene_path}")
+    merged = load_scene_tree(scene_path)
+    print(f"  Merged {len(merged['nodes'])} nodes from instance chain")
+
+    # Build render config
+    tools_dir = Path(__file__).resolve().parent
+    scene = build_scene_config(tools_dir / "render_frames.jsonc", merged)
+
+    viewport_size = scene["viewport_size"]
+    root_pos = scene["root_position"]
+    body_correct = scene["body_correct"]
+    time_scale = scene["time_scale"]
+
+    print(f"Duration: {duration}s, FPS: {fps}, Frames: {num_frames}, TimeScale: {time_scale}")
+    print(f"Canvas: {viewport_size[0]}x{viewport_size[1]}, Root: {root_pos}, BodyCorrect: {body_correct}")
+
+    shadow_tex = scene["shadow_texture"]
+    shadow_path = resolve_texture(shadow_tex, parts_dir) if shadow_tex else None
+    if shadow_path:
+        # Shadow texture may live outside parts_dir; copy it in so plant_composer can find it
+        import shutil
+        dest = parts_dir / shadow_path.name
+        if not dest.exists():
+            shutil.copy(shadow_path, dest)
+        shadow_path = dest
+        print(f"Shadow: {shadow_path}")
 
     for frame_idx in range(num_frames):
         real_time = frame_idx / fps
-        frame_time = (real_time * TIME_SCALE) % duration
-        rig = generate_frame_rig(data, frame_time, parts_dir)
+        frame_time = (real_time * time_scale) % duration
+        rig = generate_frame_rig(data, frame_time, parts_dir, scene, shadow_path if shadow_path else None, merged)
 
         rig_path = output_dir / f"_rig_{frame_idx:03d}.jsonc"
         with open(rig_path, "w") as f:
@@ -199,8 +321,8 @@ def main():
                 "--", "--input", str(parts_dir.parent),
                 "--rig", str(rig_path),
                 "--output", str(frame_path),
-                "--width", str(VIEWPORT_SIZE),
-                "--height", str(VIEWPORT_SIZE),
+                "--width", str(viewport_size[0]),
+                "--height", str(viewport_size[1]),
             ],
             capture_output=True,
             text=True,

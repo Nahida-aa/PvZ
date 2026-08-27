@@ -1,0 +1,101 @@
+{
+  "source": "plant_000_base.tscn",
+  "instance": "res://scenes/character/character_000_base.jsonc",
+  "nodes": {
+    "Plant000Base": {
+      "type": "",
+      "parent": "."
+    },
+    "HpComponent": {
+      "type": "",
+      "parent": ".",
+      "index": 3
+    },
+    "SleepComponent": {
+      "type": "Node2D",
+      "parent": ".",
+      "index": 4,
+      "visible": false
+    },
+    "Body": {
+      "type": "Node2D",
+      "parent": "SleepComponent",
+      "index": 0
+    },
+    "Zzz": {
+      "type": "Sprite2D",
+      "parent": "SleepComponent/Body",
+      "index": 0,
+      "position": [
+        26.6553,
+        -48.9704
+      ],
+      "scale": [
+        0.119835,
+        0.126722
+      ],
+      "texture": "res://assets/image/plant/zzz.png"
+    },
+    "Zzz2": {
+      "type": "Sprite2D",
+      "parent": "SleepComponent/Body",
+      "index": 1,
+      "position": [
+        28.8682,
+        -28.6349
+      ],
+      "scale": [
+        0.119835,
+        0.126722
+      ],
+      "texture": "res://assets/image/plant/zzz.png",
+      "modulate": [
+        1.0,
+        1.0,
+        1.0,
+        0.651249
+      ]
+    },
+    "Zzz3": {
+      "type": "Sprite2D",
+      "parent": "SleepComponent/Body",
+      "index": 2,
+      "position": [
+        40.8844,
+        -71.048
+      ],
+      "scale": [
+        0.119835,
+        0.126722
+      ],
+      "texture": "res://assets/image/plant/zzz.png",
+      "modulate": [
+        1.0,
+        1.0,
+        1.0,
+        0.591891
+      ]
+    },
+    "BlinkComponent": {
+      "type": "Node2D",
+      "parent": ".",
+      "index": 5
+    },
+    "GardenComponent": {
+      "type": "Node2D",
+      "parent": ".",
+      "index": 6,
+      "z_index": 1
+    },
+    "HurtBoxDetection": {
+      "type": "",
+      "parent": "HurtBoxComponent",
+      "index": 0
+    },
+    "HurtBoxReal": {
+      "type": "",
+      "parent": "HurtBoxComponent",
+      "index": 1
+    }
+  }
+}

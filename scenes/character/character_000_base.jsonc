@@ -1,0 +1,35 @@
+{
+  "source": "character_000_base.tscn",
+  "nodes": {
+    "Character000Base": {
+      "type": "Node2D",
+      "parent": "."
+    },
+    "Shadow": {
+      "type": "Sprite2D",
+      "parent": ".",
+      "texture": "res://assets/image/plant/plantshadow.png"
+    },
+    "Body": {
+      "type": "Node2D",
+      "parent": "."
+    },
+    "BodyCorrect": {
+      "type": "Node2D",
+      "parent": "Body"
+    },
+    "AnimComponent": {
+      "type": "Node2D",
+      "parent": "."
+    },
+    "HpComponent": {
+      "type": "Node2D",
+      "parent": ".",
+      "z_index": 10
+    },
+    "HurtBoxComponent": {
+      "type": "Node2D",
+      "parent": "."
+    }
+  }
+}

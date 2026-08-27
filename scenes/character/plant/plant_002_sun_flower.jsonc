@@ -1,0 +1,518 @@
+{
+  "source": "plant_002_sun_flower.tscn",
+  "instance": "res://scenes/character/plant/plant_000_base.jsonc",
+  "nodes": {
+    "Plant002SunFlower": {
+      "type": "",
+      "parent": "."
+    },
+    "BodyCorrect": {
+      "type": "",
+      "parent": "Body",
+      "index": 0,
+      "position": [
+        -43.0,
+        -69.0
+      ]
+    },
+    "Backleaf": {
+      "type": "Sprite2D",
+      "parent": "Body/BodyCorrect",
+      "index": 0,
+      "position": [
+        27.6,
+        55.494194
+      ],
+      "scale": [
+        0.57894194,
+        0.4405849
+      ],
+      "texture": "res://assets/reanim/PeaShooter_backleaf.png",
+      "centered": false
+    },
+    "Backleaf_left_tip": {
+      "type": "Sprite2D",
+      "parent": "Body/BodyCorrect",
+      "index": 1,
+      "position": [
+        24.932365,
+        55.897095
+      ],
+      "scale": [
+        0.5972366,
+        0.4578795
+      ],
+      "rotation": 0.034805346,
+      "skew": 0.01278208,
+      "texture": "res://assets/reanim/PeaShooter_backleaf_lefttip.png",
+      "centered": false
+    },
+    "Backleaf_right_tip": {
+      "type": "Sprite2D",
+      "parent": "Body/BodyCorrect",
+      "index": 2,
+      "position": [
+        47.56473,
+        55.261826
+      ],
+      "scale": [
+        0.6521205,
+        0.45755586
+      ],
+      "rotation": 0.019147674,
+      "skew": 0.0063660606,
+      "texture": "res://assets/reanim/PeaShooter_backleaf_righttip.png",
+      "centered": false
+    },
+    "Stalk_bottom": {
+      "type": "Sprite2D",
+      "parent": "Body/BodyCorrect",
+      "index": 3,
+      "position": [
+        37.629463,
+        49.93817
+      ],
+      "scale": [
+        0.559,
+        0.69868076
+      ],
+      "rotation": 0.15728982,
+      "skew": -0.053953145,
+      "texture": "res://assets/reanim/PeaShooter_stalk_bottom.png",
+      "centered": false
+    },
+    "Stalk_top": {
+      "type": "Sprite2D",
+      "parent": "Body/BodyCorrect",
+      "index": 4,
+      "position": [
+        33.194195,
+        37.805805
+      ],
+      "scale": [
+        0.56097096,
+        0.8177678
+      ],
+      "rotation": 0.13757704,
+      "skew": -0.05338834,
+      "texture": "res://assets/reanim/PeaShooter_stalk_top.png",
+      "centered": false
+    },
+    "Frontleaf": {
+      "type": "Sprite2D",
+      "parent": "Body/BodyCorrect",
+      "index": 5,
+      "position": [
+        22.467634,
+        52.77054
+      ],
+      "scale": [
+        0.568971,
+        0.61353123
+      ],
+      "texture": "res://assets/reanim/PeaShooter_frontleaf.png",
+      "centered": false
+    },
+    "Frontleaf_right_tip": {
+      "type": "Sprite2D",
+      "parent": "Body/BodyCorrect",
+      "index": 6,
+      "position": [
+        55.535267,
+        54.470535
+      ],
+      "scale": [
+        0.68038607,
+        0.6238549
+      ],
+      "rotation": -0.11201247,
+      "texture": "res://assets/reanim/PeaShooter_frontleaf_righttip.png",
+      "centered": false
+    },
+    "Frontleaf_left_tip": {
+      "type": "Sprite2D",
+      "parent": "Body/BodyCorrect",
+      "index": 7,
+      "position": [
+        19.532366,
+        59.638172
+      ],
+      "scale": [
+        0.6318258,
+        0.6231785
+      ],
+      "rotation": 0.103336476,
+      "texture": "res://assets/reanim/PeaShooter_frontleaf_lefttip.png",
+      "centered": false
+    },
+    "SunFlower_leftpetal8": {
+      "type": "Sprite2D",
+      "parent": "Body/BodyCorrect",
+      "index": 8,
+      "position": [
+        25.891293,
+        43.002903
+      ],
+      "scale": [
+        0.80738175,
+        0.8
+      ],
+      "rotation": 0.018018106,
+      "skew": -0.018018106,
+      "texture": "res://assets/reanim/SunFlower_leftpetal8.png",
+      "centered": false
+    },
+    "SunFlower_leftpetal7": {
+      "type": "Sprite2D",
+      "parent": "Body/BodyCorrect",
+      "index": 9,
+      "position": [
+        17.691292,
+        38.27054
+      ],
+      "scale": [
+        1.0093818,
+        1.0
+      ],
+      "rotation": -0.006568198,
+      "skew": 0.006568198,
+      "texture": "res://assets/reanim/SunFlower_leftpetal7.png",
+      "centered": false
+    },
+    "SunFlower_leftpetal6": {
+      "type": "Sprite2D",
+      "parent": "Body/BodyCorrect",
+      "index": 10,
+      "position": [
+        12.291292,
+        33.93817
+      ],
+      "scale": [
+        0.8077054,
+        0.8
+      ],
+      "rotation": -0.006568198,
+      "skew": 0.006568198,
+      "texture": "res://assets/reanim/SunFlower_leftpetal6.png",
+      "centered": false
+    },
+    "SunFlower_leftpetal5": {
+      "type": "Sprite2D",
+      "parent": "Body/BodyCorrect",
+      "index": 11,
+      "position": [
+        8.991292,
+        28.676342
+      ],
+      "scale": [
+        0.8211161,
+        0.8
+      ],
+      "rotation": -0.12359934,
+      "skew": 0.12359934,
+      "texture": "res://assets/reanim/SunFlower_leftpetal5.png",
+      "centered": false
+    },
+    "SunFlower_leftpetal4": {
+      "type": "Sprite2D",
+      "parent": "Body/BodyCorrect",
+      "index": 12,
+      "position": [
+        11.491292,
+        20.608707
+      ],
+      "scale": [
+        0.8217924,
+        0.8
+      ],
+      "rotation": -0.1295011,
+      "skew": 0.1295011,
+      "texture": "res://assets/reanim/SunFlower_leftpetal4.png",
+      "centered": false
+    },
+    "SunFlower_leftpetal3": {
+      "type": "Sprite2D",
+      "parent": "Body/BodyCorrect",
+      "index": 13,
+      "position": [
+        15.691292,
+        14.141073
+      ],
+      "scale": [
+        0.81105804,
+        0.8
+      ],
+      "rotation": -0.056357272,
+      "skew": 0.056357272,
+      "texture": "res://assets/reanim/SunFlower_leftpetal3.png",
+      "centered": false
+    },
+    "SunFlower_leftpetal2": {
+      "type": "Sprite2D",
+      "parent": "Body/BodyCorrect",
+      "index": 14,
+      "position": [
+        22.891293,
+        8.235269
+      ],
+      "scale": [
+        1.0093818,
+        1.0
+      ],
+      "rotation": 0.018018106,
+      "skew": -0.018018106,
+      "texture": "res://assets/reanim/SunFlower_leftpetal2.png",
+      "centered": false
+    },
+    "SunFlower_leftpetal1": {
+      "type": "Sprite2D",
+      "parent": "Body/BodyCorrect",
+      "index": 15,
+      "position": [
+        29.258926,
+        6.5352683
+      ],
+      "scale": [
+        0.80738175,
+        0.8
+      ],
+      "rotation": 0.018018106,
+      "skew": -0.018018106,
+      "texture": "res://assets/reanim/SunFlower_leftpetal1.png",
+      "centered": false
+    },
+    "SunFlower_bottompetals": {
+      "type": "Sprite2D",
+      "parent": "Body/BodyCorrect",
+      "index": 16,
+      "position": [
+        33.891293,
+        44.102905
+      ],
+      "scale": [
+        0.80738175,
+        0.8
+      ],
+      "rotation": 0.018018106,
+      "skew": -0.018018106,
+      "texture": "res://assets/reanim/SunFlower_bottompetals.png",
+      "centered": false
+    },
+    "SunFlower_rightpetal9": {
+      "type": "Sprite2D",
+      "parent": "Body/BodyCorrect",
+      "index": 17,
+      "position": [
+        47.12656,
+        43.470535
+      ],
+      "scale": [
+        0.80738175,
+        0.8
+      ],
+      "rotation": 0.018018106,
+      "skew": -0.018018106,
+      "texture": "res://assets/reanim/SunFlower_rightpetal9.png",
+      "centered": false
+    },
+    "SunFlower_rightpetal8": {
+      "type": "Sprite2D",
+      "parent": "Body/BodyCorrect",
+      "index": 18,
+      "position": [
+        51.82656,
+        41.002903
+      ],
+      "scale": [
+        0.8077054,
+        0.8
+      ],
+      "rotation": 0.03264722,
+      "skew": -0.03264722,
+      "texture": "res://assets/reanim/SunFlower_rightpetal8.png",
+      "centered": false
+    },
+    "SunFlower_rightpetal7": {
+      "type": "Sprite2D",
+      "parent": "Body/BodyCorrect",
+      "index": 19,
+      "position": [
+        55.494194,
+        37.432365
+      ],
+      "scale": [
+        0.8117344,
+        0.8
+      ],
+      "rotation": 0.091162615,
+      "skew": -0.091162615,
+      "texture": "res://assets/reanim/SunFlower_rightpetal7.png",
+      "centered": false
+    },
+    "SunFlower_rightpetal6": {
+      "type": "Sprite2D",
+      "parent": "Body/BodyCorrect",
+      "index": 20,
+      "position": [
+        60.52656,
+        32.5
+      ],
+      "scale": [
+        0.8201161,
+        0.8
+      ],
+      "rotation": 0.13972014,
+      "skew": -0.13972014,
+      "texture": "res://assets/reanim/SunFlower_rightpetal6.png",
+      "centered": false
+    },
+    "SunFlower_rightpetal5": {
+      "type": "Sprite2D",
+      "parent": "Body/BodyCorrect",
+      "index": 21,
+      "position": [
+        62.12656,
+        26.297098
+      ],
+      "scale": [
+        0.8294978,
+        0.8
+      ],
+      "rotation": 0.18124567,
+      "skew": -0.18124567,
+      "texture": "res://assets/reanim/SunFlower_rightpetal5.png",
+      "centered": false
+    },
+    "SunFlower_rightpetal4": {
+      "type": "Sprite2D",
+      "parent": "Body/BodyCorrect",
+      "index": 22,
+      "position": [
+        60.161827,
+        18.0
+      ],
+      "scale": [
+        1.0134108,
+        1.0
+      ],
+      "rotation": 0.076533176,
+      "skew": -0.076533176,
+      "texture": "res://assets/reanim/SunFlower_rightpetal4.png",
+      "centered": false
+    },
+    "SunFlower_rightpetal3": {
+      "type": "Sprite2D",
+      "parent": "Body/BodyCorrect",
+      "index": 23,
+      "position": [
+        55.994194,
+        14.367634
+      ],
+      "scale": [
+        1.0093818,
+        1.0
+      ],
+      "rotation": 0.03264722,
+      "skew": -0.03264722,
+      "texture": "res://assets/reanim/SunFlower_rightpetal3.png",
+      "centered": false
+    },
+    "SunFlower_rightpetal2": {
+      "type": "Sprite2D",
+      "parent": "Body/BodyCorrect",
+      "index": 24,
+      "position": [
+        51.394196,
+        10.035269
+      ],
+      "scale": [
+        0.80738175,
+        0.8
+      ],
+      "rotation": 0.018018106,
+      "skew": -0.018018106,
+      "texture": "res://assets/reanim/SunFlower_rightpetal2.png",
+      "centered": false
+    },
+    "SunFlower_rightpetal1": {
+      "type": "Sprite2D",
+      "parent": "Body/BodyCorrect",
+      "index": 25,
+      "position": [
+        46.226563,
+        7.2352686
+      ],
+      "scale": [
+        0.80738175,
+        0.8
+      ],
+      "rotation": 0.018018106,
+      "skew": -0.018018106,
+      "texture": "res://assets/reanim/SunFlower_rightpetal1.png",
+      "centered": false
+    },
+    "SunFlower_toppetals": {
+      "type": "Sprite2D",
+      "parent": "Body/BodyCorrect",
+      "index": 26,
+      "position": [
+        35.558926,
+        6.3352685
+      ],
+      "scale": [
+        0.80738175,
+        0.84897536
+      ],
+      "rotation": 0.018018106,
+      "skew": -0.018018106,
+      "texture": "res://assets/reanim/SunFlower_toppetals.png",
+      "centered": false
+    },
+    "Anim_idle": {
+      "type": "Sprite2D",
+      "parent": "Body/BodyCorrect",
+      "index": 27,
+      "position": [
+        18.36183,
+        12.702903
+      ],
+      "scale": [
+        0.8,
+        0.8042946
+      ],
+      "texture": "res://assets/reanim/SunFlower_head.png",
+      "centered": false
+    },
+    "Anim_blink": {
+      "type": "Sprite2D",
+      "parent": "Body/BodyCorrect",
+      "index": 28,
+      "position": [
+        31.323658,
+        20.676342
+      ],
+      "scale": [
+        0.8,
+        0.8
+      ],
+      "texture": "res://assets/reanim/SunFlower_blink2.png",
+      "visible": false,
+      "centered": false
+    },
+    "SleepComponent": {
+      "type": "",
+      "parent": ".",
+      "index": 4
+    },
+    "BlinkComponent": {
+      "type": "",
+      "parent": ".",
+      "index": 5
+    },
+    "CreateSunComponent": {
+      "type": "Node2D",
+      "parent": ".",
+      "index": 10
+    }
+  }
+}

@@ -106,6 +106,7 @@ def convert_tres_to_jsonc(tres_path):
     track_pattern = re.compile(
         r"tracks/(\d+)/type\s*=\s*\"([^\"]+)\".*?"
         r"tracks/\1/path\s*=\s*NodePath\(\"([^\"]+)\"\).*?"
+        r"tracks/\1/interp\s*=\s*(\d+).*?"
         r"tracks/\1/keys\s*=\s*\{(.*?)\n\}",
         re.DOTALL,
     )
@@ -115,7 +116,8 @@ def convert_tres_to_jsonc(tres_path):
     for m in track_pattern.finditer(text):
         track_type = m.group(2)
         node_path = m.group(3)
-        keys_text = m.group(4)
+        interp = int(m.group(4))  # 0=Linear, 1=Step, 2=Cubic
+        keys_text = m.group(5)
 
         if track_type != "value":
             continue
@@ -146,25 +148,32 @@ def convert_tres_to_jsonc(tres_path):
 
         if node_name not in nodes:
             nodes[node_name] = {
-                "visible": True,
                 "position": [],
                 "scale": [],
                 "rotation": [],
                 "skew": [],
                 "texture": None,
                 "_texture_name": None,
+                "position_interp": 0,
+                "scale_interp": 0,
+                "rotation_interp": 0,
+                "skew_interp": 0,
             }
 
         node = nodes[node_name]
 
         if property == "position":
             node["position"] = [(t, parse_vector2(v)) for t, v in zip(times, values) if parse_vector2(v)]
+            node["position_interp"] = interp
         elif property == "scale":
             node["scale"] = [(t, parse_vector2(v)) for t, v in zip(times, values) if parse_vector2(v)]
+            node["scale_interp"] = interp
         elif property == "rotation":
             node["rotation"] = [(t, float(v)) for t, v in zip(times, values)]
+            node["rotation_interp"] = interp
         elif property == "skew":
             node["skew"] = [(t, float(v)) for t, v in zip(times, values)]
+            node["skew_interp"] = interp
         elif property == "texture":
             # Texture track — take first value as the texture
             ref = parse_ext_ref(values[0], ext_resources) if values else None
@@ -178,17 +187,22 @@ def convert_tres_to_jsonc(tres_path):
     out_nodes = OrderedDict()
     for name, node in nodes.items():
         out_node = OrderedDict()
-        out_node["visible"] = node["visible"]
+        if "visible" in node:
+            out_node["visible"] = node["visible"]
         if node["_texture_name"]:
             out_node["texture"] = node["_texture_name"]
         if node["position"]:
             out_node["position"] = [[t, v] for t, v in node["position"]]
+            out_node["position_interp"] = node["position_interp"]
         if node["scale"]:
             out_node["scale"] = [[t, v] for t, v in node["scale"]]
+            out_node["scale_interp"] = node["scale_interp"]
         if node["rotation"]:
             out_node["rotation"] = [[t, v] for t, v in node["rotation"]]
+            out_node["rotation_interp"] = node["rotation_interp"]
         if node["skew"]:
             out_node["skew"] = [[t, v] for t, v in node["skew"]]
+            out_node["skew_interp"] = node["skew_interp"]
         out_nodes[name] = out_node
 
     result = {

@@ -1,0 +1,36 @@
+{
+  "source": "render_frames.tscn",
+  "nodes": {
+    "Root": {
+      "type": "Node",
+      "parent": "."
+    },
+    "VpContainer": {
+      "type": "SubViewportContainer",
+      "parent": ".",
+      "size": [
+        200,
+        200
+      ],
+      "stretch": true
+    },
+    "SubViewport": {
+      "type": "SubViewport",
+      "parent": "VpContainer",
+      "size": [
+        200,
+        200
+      ],
+      "transparent_bg": true,
+      "render_target_update_mode": 3
+    },
+    "RootNode": {
+      "type": "Node2D",
+      "parent": "VpContainer/SubViewport",
+      "position": [
+        100.0,
+        100.0
+      ]
+    }
+  }
+}
