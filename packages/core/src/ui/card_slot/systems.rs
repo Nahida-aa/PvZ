@@ -4,6 +4,7 @@ use crate::level::LevelDefinition;
 use crate::settings::CardConfig;
 use crate::state::GameState;
 use crate::ui::encyclopedia;
+use crate::ui::encyclopedia::AlmanacData;
 use crate::ui::seed_bank::SeedBankRoot;
 use super::components::*;
 use super::ui::build_card_selection_ui;
@@ -128,9 +129,10 @@ pub fn handle_encyclopedia_button(
 pub fn setup_encyclopedia(
     mut commands: Commands,
     assets: Res<GameAssets>,
+    almanac: Res<AlmanacData>,
 ) {
     info!("进入图鉴");
-    encyclopedia::build_encyclopedia(&mut commands, &assets);
+    encyclopedia::build_encyclopedia(&mut commands, &assets, &almanac);
 }
 
 /// 离开图鉴状态时销毁图鉴 UI

@@ -84,6 +84,14 @@ pub struct GameAssets {
     pub almanac_index_button: Handle<Image>,
     pub almanac_index_button_highlight: Handle<Image>,
     pub almanac_plant_card: Handle<Image>,
+    pub almanac_ground_day: Handle<Image>,
+    pub almanac_ground_night: Handle<Image>,
+    pub almanac_ground_pool: Handle<Image>,
+    pub almanac_ground_fog: Handle<Image>,
+    pub almanac_ground_ice: Handle<Image>,
+    pub almanac_ground_roof: Handle<Image>,
+    pub almanac_close_button_mask: Handle<Image>,
+    pub almanac_index_button_mask: Handle<Image>,
 }
 
 pub struct GameAssetsPlugin;
@@ -180,6 +188,14 @@ impl Plugin for GameAssetsPlugin {
             almanac_index_button: server.load("image/Almanac/Almanac_IndexButton.png"),
             almanac_index_button_highlight: server.load("image/Almanac/Almanac_IndexButtonHighlight.png"),
             almanac_plant_card: server.load("image/Almanac/Almanac_PlantCard.png"),
+            almanac_ground_day: server.load("image/Almanac/Almanac_GroundDay.jpg"),
+            almanac_ground_night: server.load("image/Almanac/Almanac_GroundNight.jpg"),
+            almanac_ground_pool: server.load("image/Almanac/Almanac_GroundPool.jpg"),
+            almanac_ground_fog: server.load("image/Almanac/Almanac_GroundNightPool.jpg"),
+            almanac_ground_ice: server.load("image/Almanac/Almanac_GroundIce.jpg"),
+            almanac_ground_roof: server.load("image/Almanac/Almanac_GroundRoof.jpg"),
+            almanac_close_button_mask: server.load("image/Almanac/Almanac_CloseButton_Mask.png"),
+            almanac_index_button_mask: server.load("image/Almanac/Almanac_IndexButton_Mask.png"),
         };
         app.insert_resource(assets);
     }

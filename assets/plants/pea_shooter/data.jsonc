@@ -1,0 +1,9 @@
+{
+  "toughness": 300,
+  "damage": 20,
+  "interval": 1.4,
+  "sun_cost": 100,
+  "cooldown": 7.5,
+  "bg": "Day",
+  "preview_image": "plants/pea_shooter/preview.png",
+}
