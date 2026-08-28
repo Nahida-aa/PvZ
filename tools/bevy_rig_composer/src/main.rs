@@ -120,7 +120,6 @@ fn main() {
     app.insert_resource(TargetFrameCount(24));
     app.insert_resource(CurrentFrame::default());
     app.add_systems(Startup, setup)
-       .add_systems(Update, load_and_spawn)
        .add_systems(Update, update_sprites)
        .add_systems(Update, capture_loop);
     app.run();
@@ -139,47 +138,34 @@ fn setup(
         RenderTarget::target_headless(cw.0, ch.0, &mut images),
         CaptureBundle::default(),
     ));
-    // Spawn PendingSprite for first frame
+    // Spawn sprites for first rig directly (Startup: flushed before first Update)
     let first_rig = &rigs.0[0];
     for part in &first_rig.parts {
         if !part.visible { continue; }
         let path = parts_dir.0.join("parts").join(&part.image);
-        if !path.exists() {
-            let alt = parts_dir.0.join(&part.image);
-            if alt.exists() { commands.spawn(PendingSprite { part: part.clone(), path: alt }); }
+        let path = if path.exists() {
+            path
         } else {
-            commands.spawn(PendingSprite { part: part.clone(), path });
-        }
-    }
-}
-
-fn load_and_spawn(
-    mut commands: Commands,
-    mut images: ResMut<Assets<Image>>,
-    pending: Query<(Entity, &PendingSprite), Added<PendingSprite>>,
-) {
-    for (entity, ps) in pending.iter() {
-        let img = match load_png(&ps.path) {
+            let alt = parts_dir.0.join(&part.image);
+            if alt.exists() { alt } else { continue; }
+        };
+        let img = match load_png(&path) {
             Some(i) => i,
-            None => { commands.entity(entity).despawn(); continue; }
+            None => continue,
         };
         let tw = img.width() as f32;
         let th = img.height() as f32;
         let handle = images.add(img);
-        let part = &ps.part;
         let sx = part.scale_x.or(part.scale).unwrap_or(1.0);
         let sy = part.scale_y.or(part.scale).unwrap_or(1.0);
         let rot = part.rotation.unwrap_or(0.0);
-        // rig x,y are canvas coords (0-200), center at (100,100)
-        // Camera2d at (100,100): canvas = (100+bevy_x, 100-bevy_y)
         let bevy_x = part.x - 100.0;
         let bevy_y = 100.0 - part.y;
         let bevy_z = part.z + 1.0;
-        commands.entity(entity).despawn();
         commands.spawn((
             Sprite { image: handle.clone(), custom_size: Some(Vec2::new(tw * sx, th * sy)), ..default() },
             Transform::from_translation(Vec3::new(bevy_x, bevy_y, bevy_z)).with_rotation(Quat::from_rotation_z(rot)),
-            SpriteMeta { name: ps.part.image.clone(), tw, th },
+            SpriteMeta { name: part.image.clone(), tw, th },
         ));
     }
 }
@@ -187,7 +173,7 @@ fn load_and_spawn(
 fn update_sprites(
     mut sprites: Query<(&mut Transform, &mut Sprite, &SpriteMeta)>,
     rigs: Res<Rigs>,
-    mut frame: ResMut<CurrentFrame>,
+    frame: Res<CurrentFrame>,
 ) {
     let frame_idx = (frame.0 as usize) % rigs.0.len();
     let frame_rig = &rigs.0[frame_idx];
@@ -204,18 +190,24 @@ fn update_sprites(
             sp.custom_size = Some(Vec2::new(meta.tw * sx, meta.th * sy));
         }
     }
-    frame.0 += 1;
 }
 
 fn capture_loop(
     mut done: Local<bool>,
+    mut warmed_up: Local<bool>,
     mut captures: Query<&mut Capture>,
     cli_output: Res<CliOutput>,
     target: Res<TargetFrameCount>,
-    frame: Res<CurrentFrame>,
+    mut frame: ResMut<CurrentFrame>,
     mut app_exit: MessageWriter<AppExit>,
 ) {
     if *done { return; }
+    // Warm-up frame: GPU textures aren't uploaded until the first render,
+    // so skip capturing frame 0 (render once to warm up the pipeline).
+    if !*warmed_up {
+        *warmed_up = true;
+        return;
+    }
     let mut capture = match captures.single_mut() {
         Ok(c) => c,
         Err(_) => return,
@@ -223,15 +215,12 @@ fn capture_loop(
     if !capture.is_capturing() {
         use bevy_capture::encoder::frames::FramesEncoder;
         capture.start((FramesEncoder::new(cli_output.0.clone()),));
-
     }
+    frame.0 += 1;
     if frame.0 >= target.0 {
         println!("Captured {} frames to {:?}", frame.0, cli_output.0);
         *done = true;
-        capture.stop();
         app_exit.write(AppExit::Success);
     }
 }
 
-#[derive(Component, Clone)]
-struct PendingSprite { part: PartDef, path: PathBuf }
