@@ -1,0 +1,15 @@
+[package]
+name = "bevy_rig_composer"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+
+[dependencies]
+bevy = { workspace = true }
+bevy_capture = { path = "/home/aa/repos/game_ls/bevy_capture" }
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = { workspace = true }
+jsonc-parser = { workspace = true }
+png = "0.17"
+winit = "0.30"
