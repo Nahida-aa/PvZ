@@ -185,7 +185,7 @@ fn update_sprites(
             let bevy_x = part.x - 100.0;
             let bevy_y = 100.0 - part.y;
             tr.translation = Vec3::new(bevy_x, bevy_y, part.z + 1.0);
-            tr.rotation = Quat::from_rotation_z(rot);
+            tr.rotation = Quat::from_rotation_z(-rot);
             tr.scale = Vec3::splat(1.0);
             sp.custom_size = Some(Vec2::new(meta.tw * sx, meta.th * sy));
         }
